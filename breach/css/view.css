@@ -104,23 +104,12 @@ body {
 
 }
 
-#ws {
-	background-color: blue;
+
+#ws_wss {
 	color: white;
 }
 
-#wss {
-	background-color: green;
-	color: black;
-}
-
-#open {
-	background-color: red;
-	color: white;
-}
-
-#close {
-	background-color: black;
+#open_close {
 	color: white;
 }
 
