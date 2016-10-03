@@ -172,6 +172,7 @@ body {
 }
 
 #response_text {
+	opacity: .5;
 	font-size: 32 !important;
 	font-weight: bold !important;
 	font-family: monospace !important;
