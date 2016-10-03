@@ -11,6 +11,7 @@
 
 input[type=text] {
 	border-radius: 50px;
+	border: 0px;
 }
 
 
