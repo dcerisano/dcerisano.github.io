@@ -1,21 +1,29 @@
-*:focus {
-	outline: none;
+@font-face {
+	font-family: roboto;
+	src: url(../font/RobotoCondensed-Bold.ttf);
 }
+
+*:focus {
+	outline: none !important;
+}
+
+::-moz-focus-inner {border:0;}
 
 input[type=text] {
 	border-radius: 50px;
 }
 
-html{
+
+html {
 	overflow-y: scroll;
 }
+
 body {
+	font-size: 60px;
+	font-family: roboto;
+	line-height: 60px;
 	background-color: white;
 	overflow: none;
-	font-size: 60px;
-	line-height: 60px;
-	width: 100%;
-	padding: 50px;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;
@@ -23,32 +31,39 @@ body {
 	-ms-user-select: none;
 	user-select: none;
 	-webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+	-webkit-touch-callout: none;
+	padding:5%;
 }
 
 #entrance {
-	display: table;
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-    overflow:hidden;
+	font-size: 60px;
+	font-family: roboto;
+	line-height: 60px;
+	display: inline-table;
+	position: relative;
+	width: 90%;
+	height: 90%;
+	overflow: hidden;
 	z-index: 1000;
 	text-align: center;
-	padding: 50px;
+	overflow: hidden;
 }
 
-#login
-{
+#login {
+	font-size: 60px;
+	font-family: roboto;
+	line-height: 60px;
 	border-radius: 100px;
 	background-color: #ddd;
 	margin: 0 auto;
-	display: table-cell; 
-	vertical-align:middle;
+	display: table-cell;
+	vertical-align: middle;
 }
 
-#password
-{
+#password {
+	font-size: 60px;
+	font-family: roboto;
+	line-height: 60px;
 	padding: 0px 40px;
 	font-size: 100px;
 	margin: 0 auto;
@@ -58,12 +73,14 @@ body {
 }
 
 #main {
+
 	display: none;
 	margin: 0 auto;
 	padding: 50px;
 	text-align: center;
 	border-radius: 100px;
 	background-color: #ddd;
+
 }
 
 #inputs {
@@ -74,6 +91,8 @@ body {
 }
 
 #websocket {
+	font-family: roboto;
+	line-height: 60px;
 	padding: 0px 20px;
 	font-size: 50px;
 	margin: 30px 0px;
@@ -83,6 +102,8 @@ body {
 }
 
 #message {
+	font-family: roboto;
+	line-height: 60px;
 	padding: 0px 20px;
 	font-size: 50px;
 	margin: 30px 0px;
@@ -92,18 +113,19 @@ body {
 }
 
 .breach_button {
-    image: "Ym1WM0lGTm9ZWEpsWkZkdmNtdGxjaWdpZVhWcEwycHpMMjF2WkdWc0xXMXBiaTVxY3lJcE93PT0=";
+	font-size: 60px;
+	font-family: roboto;
+	line-height: 60px;
 	position: relative;
-	font-size: 50px;
+	font-size: 40px;
 	margin: 10px 10px 10px 10px;
 	font-weight: bold;
 	border-radius: 50px;
+	border-width: 4px;
 	padding: 4px 20px 5px 20px;
 	height: 100px;
 	width: 260px;
-
 }
-
 
 #ws_wss {
 	color: white;
@@ -123,23 +145,22 @@ body {
 	color: white;
 }
 
-#responses_outer
-{
+#responses_outer {
 	position: relative;
 	height: 500;
 	width: 100%;
 	border-radius: 50px ! important;
 	overflow: hidden;
-	z-index:1000
+	z-index: 1000;
 }
 
 #responses {
-	font-size: 32;
-	font-weight: bold;
-	font-family: monospace;
+	font-size: 32 !important;
+	font-weight: bold !important;
+	font-family: monospace !important;
+	line-height: 36px !important;
+	font-weight: regular !important;
 	text-align: left;
-	line-height: 36px;
-	font-weight: regular;
 	height: 500;
 	width: 100%;
 	overflow: auto;
@@ -148,6 +169,15 @@ body {
 	background-color: #000;
 	background-image: url("../img/hole.jpg");
 	background-repeat: no-repeat;
-	background-size: contain;
-	background-position: right;
+	background-size: auto 400px;
+	background-position: center;
+}
+
+#response_text
+{
+	font-size: 32 !important;
+	font-weight: bold !important;
+	font-family: monospace !important;
+	line-height: 36px !important;
+	font-weight: regular !important;
 }
