@@ -105,13 +105,13 @@ body {
 }
 
 #ws {
-	background-color: white;
-	color: blue;
+	background-color: blue;
+	color: white;
 }
 
 #wss {
-	background-color: white;
-	color: green;
+	background-color: green;
+	color: black;
 }
 
 #open {
