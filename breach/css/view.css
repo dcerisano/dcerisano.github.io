@@ -123,8 +123,17 @@ body {
 	color: white;
 }
 
-#responses {
+#responses_outer
+{
 	position: relative;
+	height: 500;
+	width: 100%;
+	border-radius: 50px ! important;
+	overflow: hidden;
+	z-index:1000
+}
+
+#responses {
 	font-size: 32;
 	font-weight: bold;
 	font-family: monospace;
@@ -133,7 +142,6 @@ body {
 	font-weight: regular;
 	height: 500;
 	width: 100%;
-	border-radius: 50px;
 	overflow: auto;
 	color: white;
 	padding: 40px;
