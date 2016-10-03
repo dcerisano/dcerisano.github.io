@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<!-- DO NOT AUTO INDENT -->
+<html>
+<head>
+<title>standard3d mobile vr apps</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="Description"
+	CONTENT="Cardboard, Glasses and Crosseye 3D YouTube & Movie Player Virtual Reality SBS, OU video and more">
+<link rel="icon" href="..\favicon.ico" type="image/x-icon">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Bootstrap -->
+<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.css">
+<!-- Main Style -->
+<link rel="stylesheet" type="text/css" href="assets/css/main.css">
+<!-- Responsive Style -->
+<link rel="stylesheet" type="text/css" href="assets/css/responsive.css">
+<!--Icon Font-->
+<link rel="stylesheet" media="screen"
+	href="assets/fonts/font-awesome/font-awesome.min.css">
+<!-- Extras -->
+<link rel="stylesheet" type="text/css" href="assets/extras/animate.css">
+<link rel="stylesheet" type="text/css" href="assets/slick/slick.css" />
+<link rel="stylesheet" type="text/css"
+	href="assets/slick/slick-theme.css" />
+<!-- Bootstrap JS -->
+<script type="text/javascript"
+	src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="assets/slick/slick.min.js"></script>
+<script src="assets/js/bootstrap.js"></script>
+<!-- feature Section Start -->
+
+</head>
+<body>
+	<div id="features">
+		<div class="text-center">
+			<img src="ssl.png">
+		</div>
+
+		<div class="mycarousel" style="outline: none;">
+
+			<div style="outline: none;">
+				<div>
+					<div class="wrapper">
+						<div class="h_iframe">
+							<iframe style="display: none"
+								onload="this.style.display = 'block';"
+								src="https://www.youtube.com/embed/Oou4S8LCNyo" frameborder=0;></iframe>
+						</div>
+					</div>
+				</div>
+				<div class="text-center">
+					<a class="btn btn-border btn-lg" id="3D-VR-Video-AndroidInstall"
+						href="https://play.google.com/store/apps/details?id=com.standard3d.vr.player.free"
+						onclick="EventHandler();"><i class="fa fa-android"></i>Android</a>
+					<a class="btn btn-border btn-lg" id="3D-VR-Video-IOSInstall"
+						href="https://itunes.apple.com/in/genre/ios-entertainment/id6016?mt=8"
+						onclick="EventHandler();"><i class="fa fa-apple"></i>iOS</a>
+				</div>
+			</div>
+
+			<div style="outline: none;">
+				<div style="outline: none;">
+					<div class="wrapper">
+						<div class="h_iframe">
+							<iframe style="display: none"
+								onload="this.style.display = 'block';"
+								src="https://www.youtube.com/embed/-CfDMK3QojI" frameborder=0;></iframe>
+						</div>
+					</div>
+				</div>
+				<div class="text-center">
+					<a class="btn btn-border btn-lg" id="3D-VR-Panorama-AndroidInstall"
+						href="https://play.google.com/store/apps/details?id=com.standard3d.holodeck.v1.free"
+						onclick="EventHandler();"><i class="fa fa-android"></i>Android</a>
+					<a class="btn btn-border btn-lg" id="3D-VR-Panorama-IOSInstall"
+						href="https://itunes.apple.com/in/genre/ios-entertainment/id6016?mt=8"
+						onclick="EventHandler();"><i class="fa fa-apple"></i>iOS</a>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+	<div class="text-center">
+		<a id="Facebook" class="social" target="_blank"
+			href="https://www.facebook.com/pages/Standard3D/1460412330928343"><i
+			class="fa fa-facebook fa-2x"></i></a> <a id="Twitter" class="social"
+			target="_blank" href="https://twitter.com/standard3d"><i
+			class="fa fa-twitter fa-2x"></i></a> <a id="GooglePlus" class="social"
+			target="_blank" href="https://plus.google.com/collection/gSIoAB"><i
+			class="fa fa-google-plus fa-2x"></i></a> <a id="LinkedIn" class="social"
+			target="_blank" href="https://www.linkedin.com/company/standard3d"><i
+			class="fa fa-linkedin fa-2x"></i></a>
+	</div>
+
+	<script type="text/javascript">
+           $(document).ready(function(){
+            $('.mycarousel').slick({
+            	infinite: true,
+            	slidesToShow: 1,
+            	slidesToScroll: 1,
+            	autoplay: true,
+                autoplaySpeed: 3000,
+             	arrows: false
+           });
+        });
+       </script>
+</body>
+</html>

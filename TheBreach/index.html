@@ -1,0 +1,50 @@
+<html>
+<head>
+<meta name="viewport" content="user-scalable=0"/> 
+<title>The Breach</title>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+<link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="css/view.css">
+<script type="text/javascript" src="js/util/jquery-1.11.2.min.js"></script>
+<script type="text/javascript" src="js/util/bootstrap.min.js"></script>
+<script type="text/javascript" src="yui/js/thebreach-min.js"></script>
+</head>
+<body>
+	<div id="entrance">
+		<div id="login">
+			<b>Enter Password</b><BR>
+	  	    <input id="password" type="password">
+	    </div>
+	</div>
+	<div id="main">
+		<div>
+			<img  src="img/breach.png"><span style="vertical-align:middle">  The Breach</span>
+		</div>
+		<BR>
+		<div id="inputs">
+			<input class="breach_button" id="ws"  type=button value="&#x1f513; ws">
+			<input class="breach_button" id="wss" type=button value="&#x1f512; wss">
+			<BR>
+			<input id="websocket" type="text">
+			<input class="breach_button" id="open"  type=button value="OPEN">
+			<input class="breach_button" id="close" type=button value="CLOSE">
+			<BR><BR>
+			<input name="message" id="message" type="text"> 
+			<input class="breach_button" id="send"  type=button  value="SEND">
+			<input class="breach_button" id="reset" type=button  value="RESET">
+		</div>
+		<BR>
+		<BR>
+		<BR>
+		<div id="responses">
+	    	<div id="response_text"></div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			init();
+		});
+	</script>
+	
+</body>
+</html>
