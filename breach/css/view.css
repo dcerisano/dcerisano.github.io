@@ -7,13 +7,14 @@
 	outline: none !important;
 }
 
-::-moz-focus-inner {border:0;}
+::-moz-focus-inner {
+	border: 0;
+}
 
 input[type=text] {
 	border-radius: 50px;
 	border: 0px;
 }
-
 
 html {
 	overflow-y: scroll;
@@ -33,7 +34,7 @@ body {
 	user-select: none;
 	-webkit-tap-highlight-color: rgba(255, 255, 255, 0);
 	-webkit-touch-callout: none;
-	padding:5%;
+	padding: 5%;
 }
 
 #entrance {
@@ -74,14 +75,12 @@ body {
 }
 
 #main {
-
 	display: none;
 	margin: 0 auto;
 	padding: 50px;
 	text-align: center;
 	border-radius: 100px;
 	background-color: #ddd;
-
 }
 
 #inputs {
@@ -114,13 +113,11 @@ body {
 }
 
 .breach_button {
-	font-size: 60px;
+	position: relative;
 	font-family: roboto;
 	line-height: 60px;
-	position: relative;
 	font-size: 40px;
 	margin: 10px 10px 10px 10px;
-	font-weight: bold;
 	border-radius: 50px;
 	border-width: 0px;
 	padding: 4px 20px 5px 20px;
@@ -170,12 +167,11 @@ body {
 	background-color: #000;
 	background-image: url("../img/hole.jpg");
 	background-repeat: no-repeat;
-	background-size: auto 400px;
-	background-position: center;
+	background-size: auto 500px;
+	background-position: 75% 0;
 }
 
-#response_text
-{
+#response_text {
 	font-size: 32 !important;
 	font-weight: bold !important;
 	font-family: monospace !important;
