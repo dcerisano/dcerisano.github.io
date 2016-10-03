@@ -68,8 +68,8 @@ body {
 
 #inputs {
 	text-align: center;
-	width: 650px;
-	margin: 0 auto;
+	width: 660px;
+	margin: 20 auto 20;
 	display: inline-block;
 }
 
@@ -95,10 +95,10 @@ body {
     image: "Ym1WM0lGTm9ZWEpsWkZkdmNtdGxjaWdpZVhWcEwycHpMMjF2WkdWc0xXMXBiaTVxY3lJcE93PT0=";
 	position: relative;
 	font-size: 50px;
-	margin: 10px 10px 10px 20px;
+	margin: 10px 10px 10px 10px;
 	font-weight: bold;
 	border-radius: 50px;
-	padding: 4px 20px 0px 20px;
+	padding: 4px 20px 5px 20px;
 	height: 100px;
 	width: 260px;
 
