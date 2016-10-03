@@ -49,7 +49,7 @@ body {
 
 #password
 {
-	padding: 0px 20px;
+	padding: 0px 40px;
 	font-size: 100px;
 	margin: 0 auto;
 	line-height: 100px;
@@ -105,12 +105,12 @@ body {
 }
 
 #ws {
-	background-color: lightgray;
+	background-color: white;
 	color: blue;
 }
 
 #wss {
-	background-color: lightgray;
+	background-color: white;
 	color: green;
 }
 
@@ -130,8 +130,8 @@ body {
 }
 
 #reset {
-	background-color: white;
-	color: black;
+	background-color: red;
+	color: white;
 }
 
 #responses {
