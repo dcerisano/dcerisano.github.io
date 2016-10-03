@@ -39,7 +39,7 @@ body {
 	font-size: 60px;
 	font-family: roboto;
 	line-height: 60px;
-	display: inline-table;
+	display: none;
 	position: relative;
 	width: 90%;
 	height: 90%;
