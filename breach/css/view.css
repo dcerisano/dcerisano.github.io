@@ -174,9 +174,8 @@ body {
 	padding: 40px 40px 0 40px;
 	width:100%;
 	opacity: .5;
-	font-size: 30 !important;
-	font-weight: bold !important;
-	font-family: monospace !important;
-	line-height: 32px !important;
-	font-weight: regular !important;
+	font-size: 30;
+	font-weight: bold;
+	font-family: monospace;
+	line-height: 32px;
 }
