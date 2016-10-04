@@ -18,10 +18,11 @@ input[type=text] {
 
 html {
 	overflow-y: scroll;
-	opacity: 0;
+
 }
 
 body {
+	opacity: 0;
 	font-size: 60px;
 	font-family: roboto;
 	line-height: 60px;
