@@ -18,6 +18,7 @@ input[type=text] {
 
 html {
 	overflow-y: scroll;
+	opacity: 0;
 }
 
 body {
