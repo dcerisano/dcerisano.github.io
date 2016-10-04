@@ -47,7 +47,6 @@ body {
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
-	z-index: 1000;
 	text-align: center;
 	overflow: hidden;
 }
@@ -55,7 +54,7 @@ body {
 #login {
 	font-size: 60px;
 	font-family: roboto;
-	line-height: 60px;
+	line-height: 50px !important;
 	border-radius: 100px;
 	background-color: #ddd;
 	margin: 0 auto;
