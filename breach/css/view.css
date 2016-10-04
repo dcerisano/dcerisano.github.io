@@ -56,7 +56,6 @@ body {
 	font-family: roboto;
 	line-height: 64px !important;
 	border-radius: 100px;
-	border-width: 0px;
 	background-color: #ddd;
 	margin: 0 auto;
 	display: table-cell;
@@ -72,6 +71,7 @@ body {
 	margin: 0 auto;
 	line-height: 100px;
 	border-radius: 50px;
+	border-width: 0px;
 	width: 500px;
 }
 
