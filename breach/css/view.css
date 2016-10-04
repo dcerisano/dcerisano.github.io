@@ -164,7 +164,7 @@ body {
 	background-color: #000;
 	background-image: url("../img/hole.jpg"); background-repeat : no-repeat;
 	background-size: auto 500px;
-	background-position: 75% 0;
+	background-position: 50% 0;
 	z-index: -1;
 	background-repeat: no-repeat;
 }
