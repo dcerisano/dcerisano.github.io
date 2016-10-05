@@ -17,6 +17,10 @@ input {
 	font-size: 60px;
 }
 
+input:focus {
+	font-size: 50px;
+}
+
 html {
 	overflow-y: scroll;
 }
