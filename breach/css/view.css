@@ -22,9 +22,9 @@ html {
 
 body {
 	opacity: 0;
-	font-size: 60px;
-	font-family: roboto;
-	line-height: 60px;
+	font-size: 60px !important;
+	font-family: roboto !important;
+	line-height: 60px !important;
 	background-color: white;
 	overflow: none;
 	-webkit-touch-callout: none;
@@ -39,9 +39,6 @@ body {
 }
 
 #entrance {
-	font-size: 60px;
-	font-family: roboto;
-	line-height: 60px;
 	display: inline-table;
 	position: relative;
 	width: 100%;
@@ -52,9 +49,6 @@ body {
 }
 
 #login {
-	font-size: 60px;
-	font-family: roboto;
-	line-height: 64px !important;
 	border-radius: 100px;
 	background-color: #ddd;
 	margin: 0 auto;
@@ -63,13 +57,11 @@ body {
 }
 
 #password {
-	font-size: 60px;
-	font-family: roboto;
-	line-height: 60px;
+	font-size: 80px !important;
 	padding: 0px 40px;
 	font-size: 100px;
 	margin: 0 auto;
-	line-height: 100px;
+	height: 100px !important;
 	border-radius: 50px;
 	border-width: 0px;
 	width: 500px;
@@ -92,25 +84,21 @@ body {
 }
 
 #websocket {
-	font-family: roboto;
-	line-height: 60px;
 	padding: 0px 40px;
 	font-size: 50px;
 	margin: 30px 0px;
-	line-height: 100px;
 	width: 630px;
 	border-radius: 50px;
+	height: 100px;
 }
 
 #message {
-	font-family: roboto;
-	line-height: 60px;
 	padding: 0px 40px;
 	font-size: 50px;
 	margin: 30px 0px;
-	line-height: 100px;
 	width: 630px;
 	border-radius: 50px;
+	height: 100px;
 }
 
 .breach_button {
