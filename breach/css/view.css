@@ -84,8 +84,9 @@ body {
 }
 
 #websocket {
+	font-size: 50px !important;
+	font-family: roboto !important;
 	padding: 0px 40px;
-	font-size: 50px;
 	margin: 30px 0px;
 	width: 630px;
 	border-radius: 50px;
@@ -93,6 +94,8 @@ body {
 }
 
 #message {
+	font-size: 50px !important;
+	font-family: roboto !important;
 	padding: 0px 40px;
 	font-size: 50px;
 	margin: 30px 0px;
