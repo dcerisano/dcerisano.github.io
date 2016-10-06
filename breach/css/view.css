@@ -86,7 +86,7 @@ body {
 	display: inline-block;
 }
 
-#websocket {
+#url {
 	font-size: 50px !important;
 	font-family: roboto !important;
 	padding: 0px 40px;
@@ -120,7 +120,7 @@ body {
 	width: 260px;
 }
 
-#ws_wss {
+#ssl_nossl {
 	color: white;
 }
 
