@@ -1,7 +1,3 @@
-@font-face {
-	font-family: roboto;
-	src: url(../font/RobotoCondensed-Bold.ttf);
-}
 
 *:focus {
 	outline: none !important;
