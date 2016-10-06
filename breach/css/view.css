@@ -89,7 +89,7 @@ body {
 #url {
 	font-size: 36px !important;
 	font-family: roboto !important;
-	padding: 0px 40px;
+	padding: 0px 10px;
 	margin: 30px 0px;
 	width: 630px;
 	border-radius: 50px;
@@ -99,7 +99,7 @@ body {
 #message {
 	font-size: 36px !important;
 	font-family: roboto !important;
-	padding: 0px 40px;
+	padding: 0px 10px;
 	font-size: 50px;
 	margin: 30px 0px;
 	width: 630px;
