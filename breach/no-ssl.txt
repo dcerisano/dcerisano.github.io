@@ -1,6 +1,6 @@
-This is a clear text HTML file,<BR>
+<BR>This is a clear text HTML file,<BR>
 sent without SSL encryption.<BR>
-
+<BR>
 Lorem ipsum dolor sit amet,<BR>
 consectetur adipiscing elit<BR>
 sed do eiusmod tempor <BR>

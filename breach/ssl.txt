@@ -1,4 +1,4 @@
-This is an encrypted text HTML file,<BR>
+<BR>This is an encrypted text HTML file,<BR>
 sent with secure SSL ciphering.<BR>
 <BR>
 Ut enim ad minim veniam,<BR> 
