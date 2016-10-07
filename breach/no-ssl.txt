@@ -1,8 +1,8 @@
-This is a clear text file, 
-sent without SSL encryption.
+This is a clear text HTML file,<BR>
+sent without SSL encryption.<BR>
 
-Lorem ipsum dolor sit amet, 
-consectetur adipiscing elit
-sed do eiusmod tempor 
-incididunt ut labore 
-et dolore magna aliqua.
+Lorem ipsum dolor sit amet,<BR>
+consectetur adipiscing elit<BR>
+sed do eiusmod tempor <BR>
+incididunt ut labore<BR>
+et dolore magna aliqua.<BR>
