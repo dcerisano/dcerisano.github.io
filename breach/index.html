@@ -1,0 +1,45 @@
+<html>
+<head>
+<title>The Breach</title>
+<link   type = "image/ico"       href = "favicon.ico"  rel = "shortcut icon"/>
+<link   type = "text/css"        href = "css/fonts.css" rel = "stylesheet">
+<link   type = "text/css"        href = "css/view.css" rel = "stylesheet">
+<script type = "text/javascript" src  = "yui/js/thebreach-min.js"></script>
+</head>
+<body>
+	<div id="entrance">
+		<div id="login">
+			<div>
+				<img  style="vertical-align:middle; display: inline-table;" src="img/breach.png"><span>  The Breach</span>
+			</div><BR>
+	  	    <input id="password" type="password"><BR>
+	  	    Enter Password
+	    </div>
+	</div>
+	<div id="main">
+		<div>
+			<a href="http://docs.google.com/gview?url=http://standard3d.com/breach/img/enter.same.password.pdf"><img  style="vertical-align:middle" src="img/info.png"></a>	
+		<span>  The Breach</span>
+		</div>
+		<div id="inputs">
+			<input name  = "url"           id = "url"        type = text >
+			<input class = "breach_button" id = "ssl_nossl"  type = button value = "WS">
+			<input class = "breach_button" id = "open_close" type = button value = "OPEN">
+			<input class = "breach_button" id = "reset"      type = button value = "RESET">
+			<input class = "breach_button" id = "send"       type = button value = "SEND">
+		    <input name  = "message"       id = "message"    type = text> 
+		</div>
+		<BR>
+		<div id="responses_outer">
+			<div id="responses">
+	    		<div id="response_text"></div>
+			</div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript">
+	document.addEventListener("DOMContentLoaded", function(event) {
+		  init();
+	});
+</script>
+</html>
