@@ -4,7 +4,7 @@
 #
 
 rm ~/git/dcerisano.github.io/holodeck/img/*
-mogrify -crop 1536x804+0+366 -path ~/git/dcerisano.github.io/holodeck/img ~/git/dcerisano.github.io/3D-VR-Panorama/assets/img/*.jpg
+mogrify -flop -crop 1536x804+0+366 -path ~/git/dcerisano.github.io/holodeck/img ~/git/dcerisano.github.io/3D-VR-Panorama/assets/img/*.jpg
 
 cd img/
 
