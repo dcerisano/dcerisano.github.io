@@ -21,7 +21,7 @@ $descr = $media[$index+2];
 <style>
 body {
     background-color: #000000
-    background-image: url(https://www.standard3d.com/holodeck/img//holodeck.svg);
+    background-image: url('https://www.standard3d.com/holodeck/holodeck.svg');
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-position: center; 
