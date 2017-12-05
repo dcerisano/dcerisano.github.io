@@ -1,6 +1,6 @@
 <?php
 $media = json_decode(file_get_contents("media.json"));
-$txt="My first bla";
+$txt="your first bla";
 ?>
 <HTML>
 <head>
