@@ -2,7 +2,7 @@
 $media = json_decode(file_get_contents("media.json"));
 $size  = count($media)/3;
 $index = rand(0, $size) * 3;
-$image = "https://www.standard3d.com/holodeck/img/" . $media[$index] . "?" . unique_id();
+$image = "https://www.standard3d.com/holodeck/img/" . $media[$index] . "?" .  uniqid();
 $title = $media[$index+1];
 $descr = $media[$index+2];
 ?>
