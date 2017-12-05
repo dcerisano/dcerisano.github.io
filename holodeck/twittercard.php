@@ -20,7 +20,8 @@ $descr = $media[$index+2];
 	content="0; url=https://play.google.com/store/apps/details?id=com.standard3d.holodeck.v1.free" />
 <style>
 body {
-    background-image: url(/Holodeck/img/holodeck.svg);
+    background-color: #000000
+    background-image: url(https://www.standard3d.com/holodeck/img//holodeck.svg);
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-position: center; 
