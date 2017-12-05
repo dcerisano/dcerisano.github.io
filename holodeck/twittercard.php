@@ -1,6 +1,6 @@
 <?php
 $media = json_decode(file_get_contents("media.json"));
-$size  = count($media)/3;
+$size  = count($media)/3 -1;
 $index = rand(0, $size) * 3;
 $image = "https://www.standard3d.com/holodeck/img/" . $media[$index] . "?u=" .  uniqid();
 $title = $media[$index+1] . " - " . $media[$index+2];
