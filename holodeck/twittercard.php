@@ -1,5 +1,5 @@
 <?php
-$metaKeywords="books,cars,bikes";
+$media = json_decode(file_get_contents("media.json"));
 ?>
 <HTML>
 <head>
@@ -22,6 +22,9 @@ body {
 </style>
 </head>
 <BODY>
+<?php
+echo $media;
+?>
 </BODY>
 </HTML>
 
