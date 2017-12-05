@@ -3,6 +3,7 @@ $media = json_decode(file_get_contents("media.json"));
 ?>
 <HTML>
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@standard3d">
 <meta name="twitter:creator" content="@standard3d">
