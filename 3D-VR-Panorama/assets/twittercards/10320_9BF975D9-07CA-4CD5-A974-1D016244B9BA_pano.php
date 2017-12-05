@@ -1,3 +1,6 @@
+<?php
+$metaKeywords="books,cars,bikes";
+?>
 <HTML>
 <head>
 <meta name="twitter:card" content="summary_large_image">
@@ -21,3 +24,5 @@ body {
 <BODY>
 </BODY>
 </HTML>
+
+
