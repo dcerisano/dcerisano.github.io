@@ -1,8 +1,10 @@
 <?php
 $media = json_decode(file_get_contents("media.json"));
-$image = "https://www.standard3d.com/3D-VR-Panorama/assets/twittercards/img/" . $media[0];
-$title = $media[1];
-$descr = $media[2];
+$size  = count($media)/3;
+$index = rand(0, $size) * 3;
+$image = "https://www.standard3d.com/3D-VR-Panorama/assets/twittercards/img/" . $media[$index];
+$title = $media[$index+1];
+$descr = $media[$index+2];
 ?>
 <HTML>
 <head>
