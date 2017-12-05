@@ -8,8 +8,8 @@ $txt="your first bla";
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@standard3d">
 <meta name="twitter:creator" content="@standard3d">
-<meta name="twitter:title" content=<?php echo $txt ?>>
-<meta name="twitter:description" content="Holodeck Mobile VR Viewer">
+<meta name="twitter:title" content="<?php echo $txt ?>">
+<meta name="twitter:description" content="<?php echo $txt ?>">
 <meta name="twitter:image" content="https://www.standard3d.com/3D-VR-Panorama/assets/twittercards/img/10320_9BF975D9-07CA-4CD5-A974-1D016244B9BA_pano.jpg">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="refresh"
