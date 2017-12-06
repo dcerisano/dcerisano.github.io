@@ -4,7 +4,7 @@ $size  = count($media)/3 - 1;
 $index = rand(0, $size) * 3;
 $image = "https://www.standard3d.com/holodeck/img/" . $media[$index] . "?u=" .  uniqid();
 $title = $media[$index+1] . " - " . $media[$index+2];
-$descr = "Holodeck Mobile VR Experience";
+$descr = "Experience Holodeck Mobile VR";
 ?>
 <HTML>
 <head>
