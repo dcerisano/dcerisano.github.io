@@ -1,0 +1,12 @@
+{ "metadata": [
+	{"name": "device","label":"DEVICE","datatype":"string","editable":true},
+	{"name": "shader","label":"SHADER","datatype":"string","editable":true}
+],
+
+"data": [
+	{"id":1, "values": {"device":"BLINKSTICK", "shader":"ambilight"}},
+	{"id":2, "values":{"device":"BLINKSTICK", "shader":"cpu_meter"}},
+	{"id":3, "values":{"device":"BLINKSTICK", "shader":"unicorn"}},
+	{"id":4, "values":{"device":"NCT6795D",   "shader":"ambilight"}},
+	{"id":5, "values":{"device":"EMULATOR",   "shader":"ambilight"}}
+]}

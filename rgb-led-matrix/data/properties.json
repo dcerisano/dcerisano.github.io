@@ -1,0 +1,12 @@
+{"metadata":[
+	{"name":"x","label":"X","datatype":"integer","editable":true},
+	{"name":"y","label":"Y","datatype":"integer","editable":true},
+	{"name":"width","label":"WIDTH","datatype":"integer","editable":true},
+	{"name":"height","label":"HEIGHT","datatype":"integer","editable":true},
+	{"name":"alpha","label":"ALPHA","datatype":"double(3)","editable":true},
+	{"name":"fps","label":"FPS","datatype":"integer(fps)","editable":true}
+],
+
+"data":[
+	{"id":1, "values":{"width":8,"height":1,"x":0,"y":0,"alpha":0.04,"fps":30}}
+]}
