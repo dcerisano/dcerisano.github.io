@@ -1,12 +1,22 @@
-{ "metadata": [
-	{"name": "device","label":"DEVICE","datatype":"string","editable":true},
-	{"name": "shader","label":"SHADER","datatype":"string","editable":true}
+{"metadata":[
+	{"name":"zone","label":"ZONE","datatype":"string","editable":true},
+	{"name":"device","label":"DEVICE","datatype":"string","editable":true},
+	{"name":"shader","label":"SHADER","datatype":"string","editable":true},
+	{"name":"add","label":"ADD","datatype":"boolean","editable":true},
+	{"name":"add","label":"COPY","datatype":"boolean","editable":true},
+	{"name":"up","label":"UP","datatype":"boolean","editable":true},
+	{"name":"down","label":"DOWN","datatype":"boolean","editable":true},
+	{"name":"delete","label":"DELETE","datatype":"boolean","editable":true}
 ],
 
-"data": [
-	{"id":1, "values": {"device":"BLINKSTICK", "shader":"ambilight"}},
-	{"id":2, "values":{"device":"BLINKSTICK", "shader":"cpu_meter"}},
-	{"id":3, "values":{"device":"BLINKSTICK", "shader":"unicorn"}},
-	{"id":4, "values":{"device":"NCT6795D",   "shader":"ambilight"}},
-	{"id":5, "values":{"device":"EMULATOR",   "shader":"ambilight"}}
+"data":[
+	{"id":1, "values":{"zone":"CASE WINDOW",     "device":"BLINKSTICK 1", "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
+	{"id":1, "values":{"zone":"CASE WINDOW",     "device":"BLINKSTICK 1", "shader":"CPU Meter",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
+	{"id":2, "values":{"zone":"CASE GPU",        "device":"BLINKSTICK 1", "shader":"CPU Meter",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
+	{"id":3, "values":{"zone":"CASE SSD",        "device":"BLINKSTICK 2", "shader":"Aurora",       "add":false, "copy":false, "up":false, "down":false, "delete":false}},
+	{"id":5, "values":{"zone":"MONITOR 1",       "device":"BLINKSTICK 2", "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
+	{"id":5, "values":{"zone":"MONITOR 1",       "device":"EMULATOR",     "shader":"CPU Meter",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
+	{"id":5, "values":{"zone":"MONITOR 2",       "device":"EMULATOR",     "shader":"Times Square", "add":false, "copy":false, "up":false, "down":false, "delete":false}},
+	{"id":4, "values":{"zone":"CASE MOBO",       "device":"NCT6795D",     "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
+	{"id":5, "values":{"zone":"HDTV",            "device":"EMULATOR",     "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}}
 ]}
