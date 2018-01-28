@@ -1,22 +1,18 @@
 {"metadata":[
-	{"name":"zone","label":"ZONE","datatype":"string","editable":true},
-	{"name":"device","label":"DEVICE","datatype":"string","editable":true},
-	{"name":"shader","label":"SHADER","datatype":"string","editable":true},
-	{"name":"add","label":"ADD","datatype":"boolean","editable":true},
-	{"name":"add","label":"COPY","datatype":"boolean","editable":true},
-	{"name":"up","label":"UP","datatype":"boolean","editable":true},
-	{"name":"down","label":"DOWN","datatype":"boolean","editable":true},
-	{"name":"delete","label":"DELETE","datatype":"boolean","editable":true}
+	{"name":"x","label":"X","datatype":"integer","editable":true},
+	{"name":"y","label":"Y","datatype":"integer","editable":true},
+	{"name":"width","label":"WIDTH","datatype":"integer","editable":true},
+	{"name":"height","label":"HEIGHT","datatype":"integer","editable":true},
+	{"name":"fps","label":"FPS","datatype":"integer(fps)","editable":true},
+	{"name":"alpha","label":"ALPHA","datatype":"double(3)","editable":true},
+	{"name":"gr","label":"GR","datatype":"double(3)","editable":true},
+	{"name":"gg","label":"GG","datatype":"double(3)","editable":true},
+	{"name":"gb","label":"GB","datatype":"double(3)","editable":true},
+	{"name":"sr","label":"SR","datatype":"double(3)","editable":true},
+	{"name":"sg","label":"SG","datatype":"double(3)","editable":true},
+	{"name":"sb","label":"SB","datatype":"double(3)","editable":true}
 ],
 
 "data":[
-	{"id":4, "values":{"zone":"CASE MOBO",       "device":"NCT6795D",                 "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":1, "values":{"zone":"CASE WINDOW",     "device":"BLINKSTICK #1",            "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":1, "values":{"zone":"CASE WINDOW",     "device":"BLINKSTICK #1",            "shader":"CPU Meter",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":2, "values":{"zone":"CASE GPU",        "device":"BLINKSTICK #1",            "shader":"CPU Meter",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":3, "values":{"zone":"CASE SSD",        "device":"BLINKSTICK #2",            "shader":"Aurora",       "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":5, "values":{"zone":"MONITOR 1",       "device":"BLINKSTICK #2",            "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":5, "values":{"zone":"MONITOR 1",       "device":"EMULATOR #1 192.168.2.20", "shader":"CPU Meter",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":5, "values":{"zone":"MONITOR 2",       "device":"EMULATOR #1 192.168.2.20", "shader":"Times Square", "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":5, "values":{"zone":"HDTV",            "device":"EMULATOR #2 192.168.2.20", "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}}
+	{"id":1, "values":{"width":8,"height":1,"x":0,"y":0, "fps":30, "alpha":0.04, "gr": 1.00,  "gg": 1.00,  "gb": 1.00,  "sr": 1.00,  "sg": 1.00,  "sb": 1.00}}
 ]}
