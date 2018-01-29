@@ -18,7 +18,7 @@ table.grid {
 	color: white;
 	background: #E5E5E530;
 	text-align: left;
-	width: 40%;
+	width: 100%;
 }
 
 table.grid td, table.grid th {
