@@ -1,22 +1,23 @@
 {"metadata":[
 	{"name":"zone","label":"ZONE","datatype":"string","editable":true},
-	{"name":"device","label":"DEVICE","datatype":"string","editable":true},
-	{"name":"shader","label":"SHADER","datatype":"string","editable":true},
-	{"name":"add","label":"ADD","datatype":"boolean","editable":true},
-	{"name":"add","label":"COPY","datatype":"boolean","editable":true},
-	{"name":"up","label":"UP","datatype":"boolean","editable":true},
-	{"name":"down","label":"DOWN","datatype":"boolean","editable":true},
-	{"name":"delete","label":"DELETE","datatype":"boolean","editable":true}
+	{"name":"device","label":"DEVICE","datatype":"string","editable":true,"values":	
+		{"BLINKSTICK":"BLINKSTICK","EMULATOR":"EMULATOR","NCT6795D":"NCT6795D"}
+	},
+	{"name":"shader","label":"SHADER","datatype":"string","editable":true,"values":	
+		{"ambilight":"Amblight","cpu_meter":"CPU Meter","aurora":"Aurora", "times_square":"Times Square"}
+	},
+	{"name":"actions","label":"ACTIONS","datatype":"html","editable":false}
+
 ],
 
 "data":[
-	{"id":4, "values":{"zone":"CASE MOBO",       "device":"NCT6795D",                 "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":1, "values":{"zone":"CASE WINDOW",     "device":"BLINKSTICK #1",            "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":1, "values":{"zone":"CASE WINDOW",     "device":"BLINKSTICK #1",            "shader":"CPU Meter",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":2, "values":{"zone":"CASE GPU",        "device":"BLINKSTICK #1",            "shader":"CPU Meter",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":3, "values":{"zone":"CASE SSD",        "device":"BLINKSTICK #2",            "shader":"Aurora",       "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":5, "values":{"zone":"MONITOR 1",       "device":"BLINKSTICK #2",            "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":5, "values":{"zone":"MONITOR 1",       "device":"EMULATOR #1 192.168.2.20", "shader":"CPU Meter",    "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":5, "values":{"zone":"MONITOR 2",       "device":"EMULATOR #1 192.168.2.20", "shader":"Times Square", "add":false, "copy":false, "up":false, "down":false, "delete":false}},
-	{"id":5, "values":{"zone":"HDTV",            "device":"EMULATOR #2 192.168.2.20", "shader":"Ambilight",    "add":false, "copy":false, "up":false, "down":false, "delete":false}}
+	{"id":1, "values":{"zone":"CASE MOBO",       "device":"NCT6795D",   "shader":"ambilight",    "actions":""}},
+	{"id":2, "values":{"zone":"CASE WINDOW 1",   "device":"BLINKSTICK", "shader":"ambilight",    "actions":""}},
+	{"id":3, "values":{"zone":"CASE WINDOW 2",   "device":"BLINKSTICK", "shader":"cpu_meter",    "actions":""}},
+	{"id":4, "values":{"zone":"CASE GPU",        "device":"BLINKSTICK", "shader":"cpu_meter",    "actions":""}},
+	{"id":5, "values":{"zone":"CASE SSD",        "device":"BLINKSTICK", "shader":"aurora",       "actions":""}},
+	{"id":6, "values":{"zone":"MONITOR 1",       "device":"BLINKSTICK", "shader":"ambilight",    "actions":""}},
+	{"id":7, "values":{"zone":"MONITOR 1",       "device":"EMULATOR",   "shader":"cpu_meter",    "actions":""}},
+	{"id":8, "values":{"zone":"MONITOR 2",       "device":"EMULATOR",   "shader":"times_square", "actions":""}},
+	{"id":9, "values":{"zone":"HDTV",            "device":"EMULATOR",   "shader":"ambilight",    "actions":""}}
 ]}

@@ -1,18 +1,15 @@
 {"metadata":[
-	{"name":"x","label":"X","datatype":"integer","editable":true},
-	{"name":"y","label":"Y","datatype":"integer","editable":true},
-	{"name":"width","label":"WIDTH","datatype":"integer","editable":true},
-	{"name":"height","label":"HEIGHT","datatype":"integer","editable":true},
-	{"name":"fps","label":"FPS","datatype":"integer(fps)","editable":true},
-	{"name":"alpha","label":"ALPHA","datatype":"double(3)","editable":true},
-	{"name":"gr","label":"GR","datatype":"double(3)","editable":true},
-	{"name":"gg","label":"GG","datatype":"double(3)","editable":true},
-	{"name":"gb","label":"GB","datatype":"double(3)","editable":true},
-	{"name":"sr","label":"SR","datatype":"double(3)","editable":true},
-	{"name":"sg","label":"SG","datatype":"double(3)","editable":true},
-	{"name":"sb","label":"SB","datatype":"double(3)","editable":true}
+	{"name":"property","label":"PROPERTY","datatype":"string","editable":false},
+	{"name":"value","label":"VALUE","datatype":"string","editable":true}
 ],
 
 "data":[
-	{"id":1, "values":{"width":8,"height":1,"x":0,"y":0, "fps":30, "alpha":0.04, "gr": 1.00,  "gg": 1.00,  "gb": 1.00,  "sr": 1.00,  "sg": 1.00,  "sb": 1.00}}
+	{"id":1, "values":{"property":"width","value":"8"}},
+	{"id":2, "values":{"property":"height","value":"1"}},
+	{"id":3, "values":{"property":"x","value":"0"}},
+	{"id":4, "values":{"property":"y","value":"0"}},
+	{"id":5, "values":{"property":"fps","value":"60"}},
+	{"id":6, "values":{"property":"alpha","value":"0.02"}},
+	{"id":7, "values":{"property":"gamma","value":"1.0, 1.0, 1.0"}},
+	{"id":8, "values":{"property":"saturation","value":"1.0, 1.0, 1.0"}}
 ]}
