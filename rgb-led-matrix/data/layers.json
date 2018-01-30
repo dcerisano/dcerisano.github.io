@@ -6,18 +6,18 @@
 	{"name":"shader","label":"SHADER","datatype":"string","editable":true,"values":	
 		{"ambilight":"Amblight","cpu_meter":"CPU Meter","aurora":"Aurora", "times_square":"Times Square"}
 	},
-	{"name":"actions","label":"ACTIONS","datatype":"html","editable":false}
+	{"name":"action","label":"","datatype":"html","editable":false}
 
 ],
 
 "data":[
-	{"id":1, "values":{"zone":"CASE MOBO",       "device":"NCT6795D",   "shader":"ambilight",    "actions":""}},
-	{"id":2, "values":{"zone":"CASE WINDOW 1",   "device":"BLINKSTICK", "shader":"ambilight",    "actions":""}},
-	{"id":3, "values":{"zone":"CASE WINDOW 2",   "device":"BLINKSTICK", "shader":"cpu_meter",    "actions":""}},
-	{"id":4, "values":{"zone":"CASE GPU",        "device":"BLINKSTICK", "shader":"cpu_meter",    "actions":""}},
-	{"id":5, "values":{"zone":"CASE SSD",        "device":"BLINKSTICK", "shader":"aurora",       "actions":""}},
-	{"id":6, "values":{"zone":"MONITOR 1",       "device":"BLINKSTICK", "shader":"ambilight",    "actions":""}},
-	{"id":7, "values":{"zone":"MONITOR 1",       "device":"EMULATOR",   "shader":"cpu_meter",    "actions":""}},
-	{"id":8, "values":{"zone":"MONITOR 2",       "device":"EMULATOR",   "shader":"times_square", "actions":""}},
-	{"id":9, "values":{"zone":"HDTV",            "device":"EMULATOR",   "shader":"ambilight",    "actions":""}}
+	{"id":1, "values":{"zone":"CASE MOBO",       "device":"NCT6795D",   "shader":"ambilight",    "action":""}},
+	{"id":2, "values":{"zone":"CASE WINDOW 1",   "device":"BLINKSTICK", "shader":"ambilight",    "action":""}},
+	{"id":3, "values":{"zone":"CASE WINDOW 2",   "device":"BLINKSTICK", "shader":"cpu_meter",    "action":""}},
+	{"id":4, "values":{"zone":"CASE GPU",        "device":"BLINKSTICK", "shader":"cpu_meter",    "action":""}},
+	{"id":5, "values":{"zone":"CASE SSD",        "device":"BLINKSTICK", "shader":"aurora",       "action":""}},
+	{"id":6, "values":{"zone":"MONITOR 1",       "device":"BLINKSTICK", "shader":"ambilight",    "action":""}},
+	{"id":7, "values":{"zone":"MONITOR 1",       "device":"EMULATOR",   "shader":"cpu_meter",    "action":""}},
+	{"id":8, "values":{"zone":"MONITOR 2",       "device":"EMULATOR",   "shader":"times_square", "action":""}},
+	{"id":9, "values":{"zone":"HDTV",            "device":"EMULATOR",   "shader":"ambilight",    "action":""}}
 ]}

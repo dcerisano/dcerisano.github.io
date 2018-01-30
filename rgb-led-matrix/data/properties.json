@@ -1,15 +1,16 @@
 {"metadata":[
-	{"name":"property","label":"PROPERTY","datatype":"string","editable":false},
-	{"name":"value","label":"VALUE","datatype":"string","editable":true}
+	{"name":"property","label":"PROPERTY", "datatype":"string", "editable":false},
+	{"name":"value",   "label":"VALUE",    "datatype":"string", "editable":true},
+	{"name":"action",  "label":"",         "datatype":"html",   "editable":false}
 ],
 
 "data":[
-	{"id":1, "values":{"property":"width","value":"8"}},
-	{"id":2, "values":{"property":"height","value":"1"}},
-	{"id":3, "values":{"property":"x","value":"0"}},
-	{"id":4, "values":{"property":"y","value":"0"}},
-	{"id":5, "values":{"property":"fps","value":"60"}},
-	{"id":6, "values":{"property":"alpha","value":"0.02"}},
-	{"id":7, "values":{"property":"gamma","value":"1.0, 1.0, 1.0"}},
-	{"id":8, "values":{"property":"saturation","value":"1.0, 1.0, 1.0"}}
+	{"id":1, "values":{"property":"width",     "value":"8",             "action":""}},
+	{"id":2, "values":{"property":"height",    "value":"1",             "action":""}},
+	{"id":3, "values":{"property":"x",         "value":"0",             "action":""}},
+	{"id":4, "values":{"property":"y",         "value":"0",             "action":""}},
+	{"id":5, "values":{"property":"fps",       "value":"60",            "action":""}},
+	{"id":6, "values":{"property":"alpha",     "value":"0.02",          "action":""}},
+	{"id":7, "values":{"property":"gamma",     "value":"1.0, 1.0, 1.0", "action":""}},
+	{"id":8, "values":{"property":"saturation","value":"1.0, 1.0, 1.0", "action":""}}
 ]}
