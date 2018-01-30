@@ -19,6 +19,7 @@ table.grid {
 	background: #E5E5E530;
 	text-align: left;
 	width: 100%;
+
 }
 
 table.grid td, table.grid th {
@@ -30,6 +31,11 @@ table.grid th {
 	background: #E5E5E5;
 	text-align: left;
 }
+
+table.grid td {
+	padding: 1%;
+}
+
 
 input.invalid {
 	background: red;
