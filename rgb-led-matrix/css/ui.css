@@ -28,6 +28,7 @@ html, body {
 	text-align: left;
 	z-index: 2;
 	background-color: none;
+	display: none;
 }
 
 #menu {

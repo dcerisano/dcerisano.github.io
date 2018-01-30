@@ -8,5 +8,6 @@
 	display: block;
 	overflow: hidden;
 	z-index: 0;
+	opacity: 1.0;
 }
 
