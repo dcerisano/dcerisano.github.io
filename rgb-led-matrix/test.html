@@ -63,7 +63,7 @@ void main(){
     //Render dot matrix, scaled to fit and centered with aspect ratio preserved
     if(x>xoff && y>yoff && x<xoff+twidth*size && y<yoff+theight*size){
         vec3  col      = texture2D(tex, vec2((x-xoff)/(twidth*size),1.0-(y-yoff)/(theight*size))).rgb;
-        float halftone = max(0.3, dot(col, vec3(0.2125, 0.7154, 0.0721)))*1.25;
+        float halftone = max(0.4, dot(col, vec3(0.2125, 0.7154, 0.0721)))*1.25;
 	    vec2  center   = floor((vec2(x-xoff, y-yoff))/size)*size+size*0.5;
     	float dist     = distance(center, vec2(x-xoff, y-yoff))/(size*0.4);
     	float alpha    = smoothstep(1.0, 0.95, dist/halftone);
