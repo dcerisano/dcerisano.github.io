@@ -1,0 +1,8 @@
+{
+  "name": "RGB LED Matrix",
+  "short_name": "rgb-led-matrix",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff",
+  "description": "RGB LED Matrix."
+}
