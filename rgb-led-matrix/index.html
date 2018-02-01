@@ -6,14 +6,6 @@
 <link rel="stylesheet" href="css/editablegrid.css" type="text/css">
 <link rel="stylesheet" href="css/ui.css" type="text/css">
 <link rel="stylesheet" href="css/canvas.css" type="text/css">
-<script src="js/util/jquery-3.3.1.min.js"></script>
-<script src="js/util/twgl.min.js"></script>
-<script src="js/grid/editablegrid.js"></script>
-<script src="js/grid/editablegrid_renderers.js"></script>
-<script src="js/grid/editablegrid_editors.js"></script>
-<script src="js/grid/editablegrid_validators.js"></script>
-<script src="js/grid/editablegrid_utils.js"></script>
-<script type="text/javascript" src="yui/js/rgb-min.js"></script>
 </head>
 <body>
 	<canvas id="canvas">Your browser does not support canvas.</canvas>
@@ -30,56 +22,15 @@
 </body>
 </html>
 
-<script id="fs" type="notjs">
-precision lowp float;
+<script id="fs" type="notjs"></script>
+<script id="vs" type="notjs"></script>
+<script src="js/util/jquery-3.3.1.min.js"></script>
+<script src="js/util/twgl.min.js"></script>
+<script src="js/grid/editablegrid.js"></script>
+<script src="js/grid/editablegrid_renderers.js"></script>
+<script src="js/grid/editablegrid_editors.js"></script>
+<script src="js/grid/editablegrid_validators.js"></script>
+<script src="js/grid/editablegrid_utils.js"></script>
+<script type="text/javascript" src="yui/js/rgb-min.js"></script>
 
-uniform vec2 canvas_resolution;
-uniform vec2 texture_resolution;
-uniform sampler2D tex;
-
-void main(){
-    float twidth   = texture_resolution.x; // Texture width
-    float theight  = texture_resolution.y; // Texture height
-    float cwidth   = canvas_resolution.x;  // Canvas  width
-    float cheight  = canvas_resolution.y;  // Canvas  height
-    float x        = gl_FragCoord.x;       // Canvas  x
-    float y        = gl_FragCoord.y;       // Canvas  y
-    float size     = 0.0;                  // Cell    size
-    
-    //Scale (preserving aspect ratio)
-   	float gridWidth  = cwidth/twidth;
-	float gridHeight = cheight/theight; 
-    
-    //Fit
- 	if (gridWidth> gridHeight)
-		size = gridHeight;
-	else
-		size = gridWidth;
-    
-    //Center
-	float xoff = (cwidth-twidth*size)*0.5;	   
-	float yoff = (cheight-theight*size)*0.5;
-    
-    //Render dot matrix, scaled to fit and centered with aspect ratio preserved
-    if(x>xoff && y>yoff && x<xoff+twidth*size && y<yoff+theight*size){
-        vec3  col      = texture2D(tex, vec2((x-xoff)/(twidth*size),1.0-(y-yoff)/(theight*size))).rgb;
-        float halftone = max(0.4, dot(col, vec3(0.2125, 0.7154, 0.0721)))*1.25;
-	    vec2  center   = floor((vec2(x-xoff, y-yoff))/size)*size+size*0.5;
-    	float dist     = distance(center, vec2(x-xoff, y-yoff))/(size*0.4);
-    	float alpha    = smoothstep(1.0, 0.95, dist/halftone);
-      	gl_FragColor.rgb  = col.rgb*alpha;
-     	gl_FragColor.a    = 1.0;
-    }
-    else
-        gl_FragColor      = vec4(0, 0, 0, 1);
-}
-</script>
-
-<script id="vs" type="notjs">
-attribute vec4 position;
-
-void main() {
-  gl_Position = position;
-}
-</script>
 
