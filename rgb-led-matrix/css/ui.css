@@ -49,4 +49,17 @@ canvas {
 	z-index: 2;
 	background: none;
 	color: gray;
+	display: flex;
+}
+
+#show_button, #layer_button, #shader_button, #device_button{
+	padding: 2%;
+	display: none;
+}
+#layer_grid, #shader_grid, #device_grid {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	display: none;
 }
