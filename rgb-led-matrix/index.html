@@ -10,11 +10,25 @@
 <link rel="stylesheet" href="css/canvas.css" type="text/css">
 </head>
 <body>
+	<div id="menu">
+		<div id="show_button">
+			<B>SHOW</B>
+		</div>
+		<div id="layer_button">
+			<B>LAYERS</B>
+		</div>
+		<div id="shader_button">
+			<B>SHADERS</B>
+		</div>
+		<div id="device_button">
+			<B>DEVICES</B>
+		</div>
+	</div>
 	<canvas id="canvas">Your browser does not support canvas.</canvas>
-	<div id="menu">SHOW</div>
 	<div id="ui">
-		<div id="layers"></div>
-		<div id="properties"></div>
+		<div id="layer_grid"></div>
+		<div id="shader_grid"></div>
+		<div id="device_grid"></div>
 	</div>
 	<script type="text/javascript">
 		window.onload = function() {
