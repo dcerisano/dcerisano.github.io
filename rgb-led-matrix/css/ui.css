@@ -51,7 +51,7 @@ canvas {
 	display: flex;
 }
 
-#show_button, #layer_button, #shader_button, #device_button{
+#show_button, #layer_button, #shader_button, #device_button,  #connect_button {
 	padding: 1%;
 	display: none;
 }
