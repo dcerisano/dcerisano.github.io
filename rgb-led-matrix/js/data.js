@@ -20,7 +20,6 @@ function json(method, params) {
 	return JSON.stringify(message);
 }
 
-
 function duplicate(rowIndex) 
 {
 	// copy values from given row
@@ -36,8 +35,6 @@ function duplicate(rowIndex)
 
 	set_data_req();
 };
-
-
 
 layerGrid = new EditableGrid("layerGrid"); 	
 console.log(layerGrid.name);
