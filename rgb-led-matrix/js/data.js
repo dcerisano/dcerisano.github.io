@@ -5,6 +5,19 @@ var layer_grid   = document.getElementById('layer_grid');
 var shader_grid  = document.getElementById('shader_grid');
 var device_grid  = document.getElementById('device_grid');
 
+function socket_send(method, params)
+{
+	DEBUG && console.log("WEBSOCKET: SENT MESSAGE TO SERVER: "+ json(method, params));
+
+	if (socket.readyState === socket.OPEN)
+		socket.send(json(method, params));	
+}
+
+function json(method, params) {
+	var message = {"method": method, "params": params};
+	console.log(JSON.stringify(message));
+	return JSON.stringify(message);
+}
 
 
 function duplicate(rowIndex) 
