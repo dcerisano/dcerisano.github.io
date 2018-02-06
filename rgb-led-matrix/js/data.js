@@ -1,3 +1,4 @@
+var DEBUG        = false;
 var layerGrid    = {};
 var shaderGrid   = {};
 var deviceGrid   = {};
