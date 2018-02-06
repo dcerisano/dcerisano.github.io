@@ -1,8 +1,9 @@
 {
-  "name": "RGB LED Matrix",
-  "short_name": "rgb-led-matrix",
-  "start_url": ".",
-  "display": "fullscreen",
+  "name":             "RGB LED Matrix",
+  "short_name":       "rgb-led-matrix",
+  "start_url":        ".",
+  "display":          "fullscreen",
+  "orientation":      "landscape",
   "background_color": "#000",
-  "description": "RGB LED Matrix."
+  "description":      "RGB LED Matrix."
 }
