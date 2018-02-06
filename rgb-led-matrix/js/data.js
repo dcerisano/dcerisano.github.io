@@ -5,17 +5,18 @@ var deviceGrid   = {};
 var layer_grid   = document.getElementById('layer_grid');
 var shader_grid  = document.getElementById('shader_grid');
 var device_grid  = document.getElementById('device_grid');
+var parameters   = {};
 
-function socket_send(method, params)
+function socket_send(method, p)
 {
-	DEBUG && console.log("WEBSOCKET: SENT MESSAGE TO SERVER: "+ json(method, params));
+	DEBUG && console.log("WEBSOCKET: SENT MESSAGE TO SERVER: "+ json(method, p));
 
 	if (socket.readyState === socket.OPEN)
-		socket.send(json(method, params));	
+		socket.send(json(method, p));	
 }
 
-function json(method, params) {
-	var message = {"method": method, "params": params};
+function json(method, p) {
+	var message = {"method": method, "params": p};
 	console.log(JSON.stringify(message));
 	return JSON.stringify(message);
 }
@@ -84,46 +85,46 @@ function get_data_ack(p)
 
 function set_data_req()
 {
-	params = {};
-	params.layers = {};
-	params.layers.data = [];
+	parameters = {};
+	parameters.layers = {};
+	parameters.layers.data = [];
 	for (var i=0; i<layerGrid.data.length; i++){
-		params.layers.data[i]={};
-		params.layers.data[i].id = layerGrid.data[i].id;
-		params.layers.data[i].values={};
-		params.layers.data[i].values.layer    = layerGrid.data[i].columns[0];
-		params.layers.data[i].values.shader   = layerGrid.data[i].columns[1];
-		params.layers.data[i].values.geometry = layerGrid.data[i].columns[2];
-		params.layers.data[i].values.device   = layerGrid.data[i].columns[3];
+		parameters.layers.data[i]={};
+		parameters.layers.data[i].id = layerGrid.data[i].id;
+		parameters.layers.data[i].values={};
+		parameters.layers.data[i].values.layer    = layerGrid.data[i].columns[0];
+		parameters.layers.data[i].values.shader   = layerGrid.data[i].columns[1];
+		parameters.layers.data[i].values.geometry = layerGrid.data[i].columns[2];
+		parameters.layers.data[i].values.device   = layerGrid.data[i].columns[3];
 	}
 
-	params.shaders = {};
-	params.shaders.data = [];
+	parameters.shaders = {};
+	parameters.shaders.data = [];
 	
 	for (var i=0; i<shaderGrid.data.length; i++){
-		params.shaders.data[i]={};
-		params.shaders.data[i].id = shaderGrid.data[i].id;
-		params.shaders.data[i].values={};
-		params.shaders.data[i].values.shader  = shaderGrid.data[i].columns[0];
-		params.shaders.data[i].values.fps     = shaderGrid.data[i].columns[1];
-		params.shaders.data[i].values.alpha   = shaderGrid.data[i].columns[2];
-		params.shaders.data[i].values.params  = shaderGrid.data[i].columns[3];
+		parameters.shaders.data[i]={};
+		parameters.shaders.data[i].id = shaderGrid.data[i].id;
+		parameters.shaders.data[i].values={};
+		parameters.shaders.data[i].values.shader  = shaderGrid.data[i].columns[0];
+		parameters.shaders.data[i].values.fps     = shaderGrid.data[i].columns[1];
+		parameters.shaders.data[i].values.alpha   = shaderGrid.data[i].columns[2];
+		parameters.shaders.data[i].values.parameters  = shaderGrid.data[i].columns[3];
 	}
 
-	params.devices = {};
-	params.devices.data = [];
+	parameters.devices = {};
+	parameters.devices.data = [];
 
 	for (var i=0; i<deviceGrid.data.length; i++){
-		params.devices.data[i]={};
-		params.devices.data[i].id = deviceGrid.data[i].id;
-		params.devices.data[i].values={};
-		params.devices.data[i].values.device   = deviceGrid.data[i].columns[0];
-		params.devices.data[i].values.width    = deviceGrid.data[i].columns[1];
-		params.devices.data[i].values.height   = deviceGrid.data[i].columns[2];
-		params.devices.data[i].values.gamma    = deviceGrid.data[i].columns[3];
-		params.devices.data[i].values.saturate = deviceGrid.data[i].columns[4];
+		parameters.devices.data[i]={};
+		parameters.devices.data[i].id = deviceGrid.data[i].id;
+		parameters.devices.data[i].values={};
+		parameters.devices.data[i].values.device   = deviceGrid.data[i].columns[0];
+		parameters.devices.data[i].values.width    = deviceGrid.data[i].columns[1];
+		parameters.devices.data[i].values.height   = deviceGrid.data[i].columns[2];
+		parameters.devices.data[i].values.gamma    = deviceGrid.data[i].columns[3];
+		parameters.devices.data[i].values.saturate = deviceGrid.data[i].columns[4];
 	}
 	console.log("SET DATA REQ");
-	socket_send("set_data_req", params);
+	socket_send("set_data_req", parameters);
 
 }
