@@ -38,37 +38,27 @@ function duplicate(rowIndex)
 
 function init_grids()
 {
+	console.log("init grids");
 	layerGrid = new EditableGrid("layerGrid"); 	
-	console.log(layerGrid.name);
 	layerGrid.modelChanged = set_data_req;
 	layerGrid.tableLoaded = function() { 
 		layerGrid.duplicate = duplicate;
-		this.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
+		layerGrid.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
 			cell.innerHTML = createActions(layerGrid, cell.rowIndex);
 		}})); 
-		this.renderGrid("layer_grid", "grid"); 
+		layerGrid.renderGrid("layer_grid", "grid"); 
 	};
-
 
 	shaderGrid = new EditableGrid("shaderGrid");
 	shaderGrid.modelChanged = set_data_req;
 	shaderGrid.tableLoaded = function() { 
-		shaderGrid.duplicate = duplicate;
-		this.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
-			cell.innerHTML = createActions(shaderGrid, cell.rowIndex);
-		}})); 
-		this.renderGrid("shader_grid", "grid"); 
+		shaderGrid.renderGrid("shader_grid", "grid"); 
 	};
-
 
 	deviceGrid = new EditableGrid("deviceGrid");
 	deviceGrid.modelChanged = set_data_req;
 	deviceGrid.tableLoaded = function() { 
-		deviceGrid.duplicate = duplicate;
-		this.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
-			cell.innerHTML = createActions(deviceGrid, cell.rowIndex);
-		}})); 
-		this.renderGrid("device_grid", "grid"); 
+		deviceGrid.renderGrid("device_grid", "grid"); 
 	};
 }
 
@@ -77,7 +67,7 @@ function createActions(grid, index)
 {
 	var inner;
 
-	inner = "<a onclick=\"if ("+grid.name+".data.length>1) "+grid.name+".remove(" + index + "); "+set_data_req.name+"(); \" style=\"cursor:pointer\">" +
+	inner = "<a onclick=\"if ("+grid.name+".data.length>1) "+grid.name+".remove(" + index + "); set_data_req(); \" style=\"cursor:pointer\">" +
 	"<img src=\"img/delete.png" + "\" border=\"0\" alt=\"delete\" title=\"Delete row\"/></a>";
 	inner+= "&nbsp;<a onclick=\""+grid.name+".duplicate(" + index + ");\" style=\"cursor:pointer\">" +
 	"<img src=\"img/duplicate.png" + "\" border=\"0\" alt=\"duplicate\" title=\"Duplicate row\"/></a>";	
@@ -86,7 +76,7 @@ function createActions(grid, index)
 
 function get_data_ack(p)
 {
-	console.log("GET DATA ACK");
+	console.log(p.layers);
 	layerGrid.processJSON(p.layers);   layerGrid.tableLoaded();
 	shaderGrid.processJSON(p.shaders); shaderGrid.tableLoaded();
 	deviceGrid.processJSON(p.devices); deviceGrid.tableLoaded();	
@@ -101,9 +91,37 @@ function set_data_req()
 		params.layers.data[i]={};
 		params.layers.data[i].id = layerGrid.data[i].id;
 		params.layers.data[i].values={};
-		params.layers.data[i].values.zone   = layerGrid.data[i].columns[0];
-		params.layers.data[i].values.device = layerGrid.data[i].columns[1];
-		params.layers.data[i].values.shader = layerGrid.data[i].columns[2];
+		params.layers.data[i].values.layer    = layerGrid.data[i].columns[0];
+		params.layers.data[i].values.shader   = layerGrid.data[i].columns[1];
+		params.layers.data[i].values.geometry = layerGrid.data[i].columns[2];
+		params.layers.data[i].values.device   = layerGrid.data[i].columns[3];
+	}
+
+	params.shaders = {};
+	params.shaders.data = [];
+	
+	for (var i=0; i<shaderGrid.data.length; i++){
+		params.shaders.data[i]={};
+		params.shaders.data[i].id = shaderGrid.data[i].id;
+		params.shaders.data[i].values={};
+		params.shaders.data[i].values.shader  = shaderGrid.data[i].columns[0];
+		params.shaders.data[i].values.fps     = shaderGrid.data[i].columns[1];
+		params.shaders.data[i].values.alpha   = shaderGrid.data[i].columns[2];
+		params.shaders.data[i].values.params  = shaderGrid.data[i].columns[3];
+	}
+
+	params.devices = {};
+	params.devices.data = [];
+
+	for (var i=0; i<deviceGrid.data.length; i++){
+		params.devices.data[i]={};
+		params.devices.data[i].id = deviceGrid.data[i].id;
+		params.devices.data[i].values={};
+		params.devices.data[i].values.device   = deviceGrid.data[i].columns[0];
+		params.devices.data[i].values.width    = deviceGrid.data[i].columns[1];
+		params.devices.data[i].values.height   = deviceGrid.data[i].columns[2];
+		params.devices.data[i].values.gamma    = deviceGrid.data[i].columns[3];
+		params.devices.data[i].values.saturate = deviceGrid.data[i].columns[4];
 	}
 	console.log("SET DATA REQ");
 	socket_send("set_data_req", params);
