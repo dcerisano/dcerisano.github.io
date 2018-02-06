@@ -36,38 +36,41 @@ function duplicate(rowIndex)
 	set_data_req();
 };
 
-layerGrid = new EditableGrid("layerGrid"); 	
-console.log(layerGrid.name);
-layerGrid.modelChanged = set_data_req;
-layerGrid.tableLoaded = function() { 
-	layerGrid.duplicate = duplicate;
-	this.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
-		cell.innerHTML = createActions(layerGrid, cell.rowIndex);
-	}})); 
-	this.renderGrid("layer_grid", "grid"); 
-};
+function init_grids()
+{
+	layerGrid = new EditableGrid("layerGrid"); 	
+	console.log(layerGrid.name);
+	layerGrid.modelChanged = set_data_req;
+	layerGrid.tableLoaded = function() { 
+		layerGrid.duplicate = duplicate;
+		this.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
+			cell.innerHTML = createActions(layerGrid, cell.rowIndex);
+		}})); 
+		this.renderGrid("layer_grid", "grid"); 
+	};
 
 
-shaderGrid = new EditableGrid("shaderGrid");
-shaderGrid.modelChanged = set_data_req;
-shaderGrid.tableLoaded = function() { 
-	shaderGrid.duplicate = duplicate;
-	this.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
-		cell.innerHTML = createActions(shaderGrid, cell.rowIndex);
-	}})); 
-	this.renderGrid("shader_grid", "grid"); 
-};
+	shaderGrid = new EditableGrid("shaderGrid");
+	shaderGrid.modelChanged = set_data_req;
+	shaderGrid.tableLoaded = function() { 
+		shaderGrid.duplicate = duplicate;
+		this.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
+			cell.innerHTML = createActions(shaderGrid, cell.rowIndex);
+		}})); 
+		this.renderGrid("shader_grid", "grid"); 
+	};
 
 
-deviceGrid = new EditableGrid("deviceGrid");
-deviceGrid.modelChanged = set_data_req;
-deviceGrid.tableLoaded = function() { 
-	deviceGrid.duplicate = duplicate;
-	this.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
-		cell.innerHTML = createActions(deviceGrid, cell.rowIndex);
-	}})); 
-	this.renderGrid("device_grid", "grid"); 
-};
+	deviceGrid = new EditableGrid("deviceGrid");
+	deviceGrid.modelChanged = set_data_req;
+	deviceGrid.tableLoaded = function() { 
+		deviceGrid.duplicate = duplicate;
+		this.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
+			cell.innerHTML = createActions(deviceGrid, cell.rowIndex);
+		}})); 
+		this.renderGrid("device_grid", "grid"); 
+	};
+}
 
 
 function createActions(grid, index)
