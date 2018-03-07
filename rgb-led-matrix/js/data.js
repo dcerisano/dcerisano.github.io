@@ -97,7 +97,6 @@ function set_data_req()
 		parameters.layers.data[i].values.geometry = layerGrid.data[i].columns[2];
 		parameters.layers.data[i].values.shader   = layerGrid.data[i].columns[3];
 		parameters.layers.data[i].values.options  = layerGrid.data[i].columns[4];
-
 	}
 
 	parameters.shaders = {};
