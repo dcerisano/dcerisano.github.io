@@ -2,6 +2,7 @@ var DEBUG        = false;
 var layerGrid    = {};
 var shaderGrid   = {};
 var deviceGrid   = {};
+var serv_grid    = document.getElementById('server_grid');
 var layer_grid   = document.getElementById('layer_grid');
 var shader_grid  = document.getElementById('shader_grid');
 var device_grid  = document.getElementById('device_grid');
@@ -17,7 +18,6 @@ function socket_send(method, p)
 
 function json(method, p) {
 	var message = {"method": method, "params": p};
-	console.log(JSON.stringify(message));
 	return JSON.stringify(message);
 }
 
@@ -61,6 +61,12 @@ function init_grids()
 	deviceGrid.tableLoaded = function() { 
 		deviceGrid.renderGrid("device_grid", "grid"); 
 	};
+	
+	serverGrid = new EditableGrid("serverGrid");
+	serverGrid.modelChanged = set_data_req;
+	serverGrid.tableLoaded = function() { 
+		serverGrid.renderGrid("server_grid", "grid"); 
+	};
 }
 
 
@@ -77,7 +83,7 @@ function createActions(grid, index)
 
 function get_data_ack(p)
 {
-	console.log(p.layers);
+	serverGrid.tableLoaded();
 	layerGrid.processJSON(p.layers);   layerGrid.tableLoaded();
 	shaderGrid.processJSON(p.shaders); shaderGrid.tableLoaded();
 	deviceGrid.processJSON(p.devices); deviceGrid.tableLoaded();	

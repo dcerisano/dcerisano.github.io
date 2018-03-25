@@ -51,12 +51,12 @@ canvas {
 	display: flex;
 }
 
-#show_button, #layer_button, #shader_button, #device_button,  #connect_button {
+#show_button, #server_button, #layer_button, #shader_button, #device_button,  #connect_button {
 	padding: 1%;
 	display: none;
 	cursor:  pointer;
 }
-#layer_grid, #shader_grid, #device_grid {
+#server_grid, #layer_grid, #shader_grid, #device_grid {
 	position: absolute;
 	top: 0;
 	left: 0;
