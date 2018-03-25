@@ -1,4 +1,5 @@
 var DEBUG        = false;
+var serverGrid   = {};
 var layerGrid    = {};
 var shaderGrid   = {};
 var deviceGrid   = {};
@@ -7,6 +8,7 @@ var layer_grid   = document.getElementById('layer_grid');
 var shader_grid  = document.getElementById('shader_grid');
 var device_grid  = document.getElementById('device_grid');
 var parameters   = {};
+var servers      = {};
 
 function socket_send(method, p)
 {
