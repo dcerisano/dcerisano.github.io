@@ -63,10 +63,22 @@ function init_grids()
 	};
 	
 	serverGrid = new EditableGrid("serverGrid");
-	serverGrid.modelChanged = set_data_req;
+
 	serverGrid.tableLoaded = function() { 
-		serverGrid.renderGrid("server_grid", "grid"); 
+	serverGrid.renderGrid("server_grid", "grid"); 
 	};
+	
+	servers = {};
+	servers.metadata = [];
+	servers.metadata[0] = {};
+	servers.metadata[0].name = "address";
+	servers.metadata[0].label= "Address";
+	servers.metadata[0].datatype = "string";
+	servers.metadata[0].editable = false;
+	
+	servers.data = [];
+	
+	serverGrid.processJSON(servers); serverGrid.tableLoaded();
 }
 
 
@@ -83,7 +95,9 @@ function createActions(grid, index)
 
 function get_data_ack(p)
 {
-	serverGrid.tableLoaded();
+	console.log(servers);
+	
+	serverGrid.processJSON(servers);   serverGrid.tableLoaded();
 	layerGrid.processJSON(p.layers);   layerGrid.tableLoaded();
 	shaderGrid.processJSON(p.shaders); shaderGrid.tableLoaded();
 	deviceGrid.processJSON(p.devices); deviceGrid.tableLoaded();	
