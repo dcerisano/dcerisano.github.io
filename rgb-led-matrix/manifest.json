@@ -2,7 +2,7 @@
   "name":             "RGB LED Matrix",
   "short_name":       "rgb-led-matrix",
   "start_url":        ".",
-  "display":          "fullscreen",
+  "display":          "standalone",
   "orientation":      "landscape",
   "background_color": "#000",
   "description":      "RGB LED Matrix."
