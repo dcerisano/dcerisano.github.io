@@ -10,18 +10,7 @@ var device_grid  = document.getElementById('device_grid');
 var parameters   = {};
 var servers      = {};
 
-function socket_send(method, p)
-{
-	DEBUG && console.log("WEBSOCKET: SENT MESSAGE TO SERVER: "+ json(method, p));
 
-	if (socket.readyState === socket.OPEN)
-		socket.send(json(method, p));	
-}
-
-function json(method, p) {
-	var message = {"method": method, "params": p};
-	return JSON.stringify(message);
-}
 
 function duplicate(rowIndex) 
 {
@@ -73,10 +62,25 @@ function init_grids()
 	servers = {};
 	servers.metadata = [];
 	servers.metadata[0] = {};
-	servers.metadata[0].name = "address";
-	servers.metadata[0].label= "Address";
+	servers.metadata[0].name = "hostname";
+	servers.metadata[0].label= "Hostname";
 	servers.metadata[0].datatype = "string";
 	servers.metadata[0].editable = false;
+	servers.metadata[1] = {};
+	servers.metadata[1].name = "platform";
+	servers.metadata[1].label= "Platform";
+	servers.metadata[1].datatype = "string";
+	servers.metadata[1].editable = false;
+	servers.metadata[2] = {};
+	servers.metadata[2].name = "address";
+	servers.metadata[2].label= "Address";
+	servers.metadata[2].datatype = "string";
+	servers.metadata[2].editable = false;
+	servers.metadata[3] = {};
+	servers.metadata[3].name = "status";
+	servers.metadata[3].label= "Status";
+	servers.metadata[3].datatype = "string";
+	servers.metadata[3].editable = false;
 	
 	servers.data = [];
 	
@@ -97,9 +101,6 @@ function createActions(grid, index)
 
 function get_data_ack(p)
 {
-	console.log(servers);
-	
-	serverGrid.processJSON(servers);   serverGrid.tableLoaded();
 	layerGrid.processJSON(p.layers);   layerGrid.tableLoaded();
 	shaderGrid.processJSON(p.shaders); shaderGrid.tableLoaded();
 	deviceGrid.processJSON(p.devices); deviceGrid.tableLoaded();	
@@ -140,7 +141,6 @@ function set_data_req()
 		parameters.devices.data[i].values={};
 		parameters.devices.data[i].values.options = deviceGrid.data[i].columns[0];
 	}
-	console.log("SET DATA REQ");
-	socket_send("set_data_req", parameters);
+	socket_send(selected_server, "set_data_req", parameters);
 
 }

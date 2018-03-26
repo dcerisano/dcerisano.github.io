@@ -11,7 +11,9 @@ html, body {
 	margin: 0;
 	overflow: none;
 	background: black;
+	color: white;
 }
+
 
 canvas {
 	display: block;
@@ -22,7 +24,7 @@ canvas {
 #ui {
 	font-family: sans-serif;
 	position: absolute;
-	top: 10%;
+	top: 15%;
 	left: 0;
 	background-color: none;
 	color: white;
@@ -36,6 +38,18 @@ canvas {
 	z-index: 3;
 	background-color: none;
 	display: none;
+}
+
+#server_name
+{
+	color: white;
+	background-color: none;
+	font-family: sans-serif;
+	font-weight: bold;
+	font-size: 150%;
+	position: absolute;
+	top: 10%;
+	left: 0;
 }
 
 #menu {
