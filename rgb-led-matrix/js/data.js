@@ -145,14 +145,5 @@ function set_data_req()
 
 }
 
-function get_info_ack(p){
-	for (var i=0; i<num_servers; i++){
-		if (p.ip === servers.data[i].values.address){
-			servers.data[i].values.hostname  = p.hostname;
-			servers.data[i].values.platform  = p.platform;
-			servers.data[i].values.status    = p.status;
-		}
-	}
-	serverGrid.processJSON(servers);   
-	serverGrid.tableLoaded();
-}
+
+
