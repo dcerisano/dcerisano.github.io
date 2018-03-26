@@ -24,7 +24,7 @@ canvas {
 #ui {
 	font-family: sans-serif;
 	position: absolute;
-	top: 15%;
+	top: 25%;
 	left: 0;
 	background-color: none;
 	color: white;
@@ -48,7 +48,7 @@ canvas {
 	font-weight: bold;
 	font-size: 150%;
 	position: absolute;
-	top: 10%;
+	top: 15%;
 	left: 0;
 }
 
