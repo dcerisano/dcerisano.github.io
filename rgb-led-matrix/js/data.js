@@ -31,7 +31,8 @@ function duplicate(rowIndex)
 
 function init_grids()
 {
-	console.log("init grids");
+	var gridConfig = {enableSort:false};
+	
 	layerGrid = new EditableGrid("layerGrid"); 	
 	layerGrid.modelChanged = set_data_req;
 	layerGrid.tableLoaded = function() { 
@@ -54,7 +55,7 @@ function init_grids()
 		deviceGrid.renderGrid("device_grid", "grid"); 
 	};
 
-	serverGrid = new EditableGrid("serverGrid");
+	serverGrid = new EditableGrid("serverGrid", gridConfig);
 	serverGrid.modelChanged = serverChanged;
 	serverGrid.tableLoaded = function() { 
 		serverGrid.renderGrid("server_grid", "grid"); 
