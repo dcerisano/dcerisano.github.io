@@ -9,6 +9,7 @@ var shader_grid  = document.getElementById('shader_grid');
 var device_grid  = document.getElementById('device_grid');
 var parameters   = {};
 var servers      = {};
+var selected_server = 0;
 
 
 
@@ -160,7 +161,7 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 	else
 	{
 		//clear all
-		for (var i=0; i<num_servers; i++)
+		for (var i=0; i<servers.data.length; i++)
 			servers.data[i].values.selected = false;
 		//reselect
 		servers.data[rowIdx].values.selected = true;
@@ -172,4 +173,17 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 	serverGrid.processJSON(servers);   
 	serverGrid.tableLoaded();
 
+}
+
+function socket_send(selected, method, p)
+{
+	DEBUG && console.log("WEBSOCKET: SENT MESSAGE TO SERVER: "+ json(method, p));
+
+	if (servers.data[selected].socket.readyState === servers.data[selected].socket.OPEN)
+		servers.data[selected].socket.send(json(method, p));	
+}
+
+function json(method, p) {
+	var message = {"method": method, "params": p};
+	return JSON.stringify(message);
 }
