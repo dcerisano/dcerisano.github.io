@@ -52,38 +52,43 @@ function init_grids()
 	deviceGrid.tableLoaded = function() { 
 		deviceGrid.renderGrid("device_grid", "grid"); 
 	};
-	
-	serverGrid = new EditableGrid("serverGrid");
 
+	serverGrid = new EditableGrid("serverGrid");
+	serverGrid.modelChanged = serverChanged;
 	serverGrid.tableLoaded = function() { 
-	serverGrid.renderGrid("server_grid", "grid"); 
+		serverGrid.renderGrid("server_grid", "grid"); 
 	};
-	
+
 	servers = {};
 	servers.metadata = [];
 	servers.metadata[0] = {};
-	servers.metadata[0].name = "hostname";
-	servers.metadata[0].label= "Hostname";
-	servers.metadata[0].datatype = "string";
-	servers.metadata[0].editable = false;
+	servers.metadata[0].name = "selected";
+	servers.metadata[0].label= "Selected";
+	servers.metadata[0].datatype = "boolean";
+	servers.metadata[0].editable = true;
 	servers.metadata[1] = {};
-	servers.metadata[1].name = "platform";
-	servers.metadata[1].label= "Platform";
+	servers.metadata[1].name = "hostname";
+	servers.metadata[1].label= "Hostname";
 	servers.metadata[1].datatype = "string";
 	servers.metadata[1].editable = false;
 	servers.metadata[2] = {};
-	servers.metadata[2].name = "address";
-	servers.metadata[2].label= "Address";
+	servers.metadata[2].name = "platform";
+	servers.metadata[2].label= "Platform";
 	servers.metadata[2].datatype = "string";
 	servers.metadata[2].editable = false;
 	servers.metadata[3] = {};
-	servers.metadata[3].name = "status";
-	servers.metadata[3].label= "Status";
+	servers.metadata[3].name = "address";
+	servers.metadata[3].label= "Address";
 	servers.metadata[3].datatype = "string";
 	servers.metadata[3].editable = false;
-	
+	servers.metadata[4] = {};
+	servers.metadata[4].name = "status";
+	servers.metadata[4].label= "Status";
+	servers.metadata[4].datatype = "string";
+	servers.metadata[4].editable = false;
+
 	servers.data = [];
-	
+
 	serverGrid.processJSON(servers); serverGrid.tableLoaded();
 }
 
@@ -124,7 +129,7 @@ function set_data_req()
 
 	parameters.shaders = {};
 	parameters.shaders.data = [];
-	
+
 	for (var i=0; i<shaderGrid.data.length; i++){
 		parameters.shaders.data[i]={};
 		parameters.shaders.data[i].id = shaderGrid.data[i].id;
@@ -146,4 +151,25 @@ function set_data_req()
 }
 
 
+function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
+{
+	//Cannot unselect - one server must always be selected
+	if (newValue==false){
+		servers.data[rowIdx].values.selected = true;
+	}
+	else
+	{
+		//clear all
+		for (var i=0; i<num_servers; i++)
+			servers.data[i].values.selected = false;
+		//reselect
+		servers.data[rowIdx].values.selected = true;
+		selected_server = rowIdx;
+		socket_send(selected_server, "get_data_req", null);
+		server_name.innerHTML="Configuring: "+servers.data[selected_server].values.hostname;
+	}
+	
+	serverGrid.processJSON(servers);   
+	serverGrid.tableLoaded();
 
+}
