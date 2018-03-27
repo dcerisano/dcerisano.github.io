@@ -33,7 +33,7 @@ function init_grids()
 {
 	var gridConfig = {enableSort:false};
 	
-	layerGrid = new EditableGrid("layerGrid"); 	
+	layerGrid = new EditableGrid("layerGrid", gridConfig); 	
 	layerGrid.modelChanged = set_data_req;
 	layerGrid.tableLoaded = function() { 
 		layerGrid.duplicate = duplicate;
@@ -43,13 +43,13 @@ function init_grids()
 		layerGrid.renderGrid("layer_grid", "grid"); 
 	};
 
-	shaderGrid = new EditableGrid("shaderGrid");
+	shaderGrid = new EditableGrid("shaderGrid", gridConfig);
 	shaderGrid.modelChanged = set_data_req;
 	shaderGrid.tableLoaded = function() { 
 		shaderGrid.renderGrid("shader_grid", "grid"); 
 	};
 
-	deviceGrid = new EditableGrid("deviceGrid");
+	deviceGrid = new EditableGrid("deviceGrid", gridConfig);
 	deviceGrid.modelChanged = set_data_req;
 	deviceGrid.tableLoaded = function() { 
 		deviceGrid.renderGrid("device_grid", "grid"); 
