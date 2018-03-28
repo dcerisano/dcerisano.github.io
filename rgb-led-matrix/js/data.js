@@ -3,10 +3,6 @@ var serverGrid   = {};
 var layerGrid    = {};
 var shaderGrid   = {};
 var deviceGrid   = {};
-var serv_grid    = document.getElementById('server_grid');
-var layer_grid   = document.getElementById('layer_grid');
-var shader_grid  = document.getElementById('shader_grid');
-var device_grid  = document.getElementById('device_grid');
 var parameters   = {};
 var servers      = {};
 var selected_server = 0;
@@ -197,9 +193,9 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 		servers.data[rowIdx].values.selected = true;
 		selected_server = rowIdx;
 		socket_send(selected_server, "get_data_req", null);
-		server_name.innerHTML="Configuring: "+servers.data[selected_server].values.hostname;
-	}
+   	}
 
+	server_menu.selectedIndex = selected_server;
 	serverGrid.processJSON(servers);   
 	serverGrid.tableLoaded();
 
@@ -234,9 +230,11 @@ function data_close(ip)
 			if (selected_server>=0){	
 				servers.data[selected_server].values.selected = true;
 				socket_send(selected_server, "get_data_req", null);
-				server_name.innerHTML="Configuring: "+servers.data[selected_server].values.hostname;
-			}
 
+			}
+			
+            server_menu.selectedIndex = selected_server;
+            
 			serverGrid.processJSON(servers);   
 			serverGrid.tableLoaded();
 
@@ -251,4 +249,22 @@ function findFirstUp()
 		if (servers.data[i].values.status == "UP")
 			return i;
 	return -1;
+}
+
+function update_server_menu()
+{		
+	server_menu.innerText = null
+	
+	for (var i=0; i<servers.data.length; i++){
+		var option = document.createElement("option");
+		option.text = servers.data[i].values.hostname;
+		server_menu.add(option);
+	}
+	
+	server_menu.onchange=server_menu_onchange;
+}
+
+function server_menu_onchange()
+{
+	serverChanged(server_menu.selectedIndex, 0, false, true, null)
 }
