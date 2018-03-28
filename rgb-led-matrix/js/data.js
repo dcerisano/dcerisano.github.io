@@ -11,7 +11,8 @@ var parameters   = {};
 var servers      = {};
 var selected_server = 0;
 
-
+//Editable grid cannot be obfuscated, so data.js is clear.
+//Obfuscated files can call in, but data.js cannot call out.
 
 function duplicate(rowIndex) 
 {
@@ -32,7 +33,7 @@ function duplicate(rowIndex)
 function init_grids()
 {
 	var gridConfig = {enableSort:false};
-	
+
 	layerGrid = new EditableGrid("layerGrid", gridConfig); 	
 	layerGrid.modelChanged = set_data_req;
 	layerGrid.tableLoaded = function() { 
@@ -58,6 +59,12 @@ function init_grids()
 	serverGrid = new EditableGrid("serverGrid", gridConfig);
 	serverGrid.modelChanged = serverChanged;
 	serverGrid.tableLoaded = function() { 
+		serverGrid.reconnect = reconnect;
+		serverGrid.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
+			cell.innerHTML = createServerActions(serverGrid, cell.rowIndex, cell);
+			servers.data[cell.rowIndex].cell = cell;
+			
+		}})); 
 		serverGrid.renderGrid("server_grid", "grid"); 
 	};
 
@@ -84,16 +91,19 @@ function init_grids()
 	servers.metadata[3].datatype = "string";
 	servers.metadata[3].editable = false;
 	servers.metadata[4] = {};
-	servers.metadata[4].name = "status";
+	servers.metadata[4].name = "action";
 	servers.metadata[4].label= "Status";
-	servers.metadata[4].datatype = "string";
+	servers.metadata[4].datatype = "html";
 	servers.metadata[4].editable = false;
-
 	servers.data = [];
 
 	serverGrid.processJSON(servers); serverGrid.tableLoaded();
 }
 
+function reconnect(index)
+{
+	window.location.reload();
+}
 
 function createActions(grid, index)
 {
@@ -103,6 +113,21 @@ function createActions(grid, index)
 	"<img src=\"img/delete.png" + "\" border=\"0\" alt=\"delete\" title=\"Delete row\"/></a>";
 	inner+= "&nbsp;<a onclick=\""+grid.name+".duplicate(" + index + ");\" style=\"cursor:pointer\">" +
 	"<img src=\"img/duplicate.png" + "\" border=\"0\" alt=\"duplicate\" title=\"Duplicate row\"/></a>";	
+	return inner;
+}
+
+function createServerActions(grid, index)
+{
+	var inner;
+
+	var connect = "closed";
+
+	if (servers.data[index].values.status=="UP")
+        connect = "open";
+	
+	inner= "&nbsp;<a onclick=\""+grid.name+".reconnect("+ index + ");\" style=\"cursor:pointer\">" +
+	"<img src=\"img/"+connect+".png" + "\" border=\"0\" alt=\"connect\" title=\"Reconnect\"/></a>";
+
 	return inner;
 }
 
@@ -155,9 +180,13 @@ function set_data_req()
 
 function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 {
+
 	//Cannot unselect - one server must always be selected
 	if (newValue==false){
 		servers.data[rowIdx].values.selected = true;
+	}
+	else if (servers.data[rowIdx].values.status == "DOWN"){
+		servers.data[rowIdx].values.selected = false;
 	}
 	else
 	{
@@ -170,7 +199,7 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 		socket_send(selected_server, "get_data_req", null);
 		server_name.innerHTML="Configuring: "+servers.data[selected_server].values.hostname;
 	}
-	
+
 	serverGrid.processJSON(servers);   
 	serverGrid.tableLoaded();
 
@@ -187,4 +216,39 @@ function socket_send(selected, method, p)
 function json(method, p) {
 	var message = {"method": method, "params": p};
 	return JSON.stringify(message);
+}
+
+function data_close(ip)
+{
+	for (var i=0; i<servers.data.length; i++){
+		if (servers.data[i].values.address == ip){
+			servers.data[i].values.status="DOWN";
+
+			if (servers.data[i].values.selected){
+				servers.data[i].values.selected=false;
+				selected_server = findFirstUp();	
+			}
+
+			console.log(selected_server);
+
+			if (selected_server>=0){	
+				servers.data[selected_server].values.selected = true;
+				socket_send(selected_server, "get_data_req", null);
+				server_name.innerHTML="Configuring: "+servers.data[selected_server].values.hostname;
+			}
+
+			serverGrid.processJSON(servers);   
+			serverGrid.tableLoaded();
+
+			return selected_server;
+		}
+	}
+}
+
+function findFirstUp()
+{
+	for (var i=0; i<servers.data.length; i++)
+		if (servers.data[i].values.status == "UP")
+			return i;
+	return -1;
 }
