@@ -197,7 +197,6 @@ function findFirstUp()
 
 function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 {
-
 	//Cannot unselect - one server must always be selected
 	if (newValue==false){
 		servers.data[rowIdx].values.selected = true;
@@ -217,7 +216,6 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 	}
 
 	server_menu.selectedIndex = selected_server;
-	update_server_menu();
 	serverGrid.processJSON(servers);   
 	serverGrid.tableLoaded();
 
