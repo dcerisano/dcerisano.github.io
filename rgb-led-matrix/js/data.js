@@ -59,7 +59,7 @@ function init_grids()
 		serverGrid.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
 			cell.innerHTML = createServerActions(serverGrid, cell.rowIndex, cell);
 			servers.data[cell.rowIndex].cell = cell;
-			
+
 		}})); 
 		serverGrid.renderGrid("server_grid", "grid"); 
 	};
@@ -119,8 +119,8 @@ function createServerActions(grid, index)
 	var connect = "closed";
 
 	if (servers.data[index].values.status=="UP")
-        connect = "open";
-	
+		connect = "open";
+
 	inner= "&nbsp;<a onclick=\""+grid.name+".reconnect("+ index + ");\" style=\"cursor:pointer\">" +
 	"<img src=\"img/"+connect+".png" + "\" border=\"0\" alt=\"connect\" title=\"Reconnect\"/></a>";
 
@@ -193,7 +193,7 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 		servers.data[rowIdx].values.selected = true;
 		selected_server = rowIdx;
 		socket_send(selected_server, "get_data_req", null);
-   	}
+	}
 
 	server_menu.selectedIndex = selected_server;
 	serverGrid.processJSON(servers);   
@@ -225,16 +225,13 @@ function data_close(ip)
 				selected_server = findFirstUp();	
 			}
 
-			console.log(selected_server);
-
 			if (selected_server>=0){	
 				servers.data[selected_server].values.selected = true;
 				socket_send(selected_server, "get_data_req", null);
-
 			}
-			
-            server_menu.selectedIndex = selected_server;
-            
+
+			server_menu.selectedIndex = selected_server;
+
 			serverGrid.processJSON(servers);   
 			serverGrid.tableLoaded();
 
@@ -248,23 +245,10 @@ function findFirstUp()
 	for (var i=0; i<servers.data.length; i++)
 		if (servers.data[i].values.status == "UP")
 			return i;
+
+	connected = false;
+
 	return -1;
 }
 
-function update_server_menu()
-{		
-	server_menu.innerText = null
-	
-	for (var i=0; i<servers.data.length; i++){
-		var option = document.createElement("option");
-		option.text = servers.data[i].values.hostname;
-		server_menu.add(option);
-	}
-	
-	server_menu.onchange=server_menu_onchange;
-}
 
-function server_menu_onchange()
-{
-	serverChanged(server_menu.selectedIndex, 0, false, true, null)
-}
