@@ -55,7 +55,6 @@ function init_grids()
 	serverGrid = new EditableGrid("serverGrid", gridConfig);
 	serverGrid.modelChanged = serverChanged;
 	serverGrid.tableLoaded = function() { 
-		serverGrid.reconnect = reconnect;
 		serverGrid.setCellRenderer("action", new CellRenderer({render: function(cell, value) {
 			cell.innerHTML = createServerActions(serverGrid, cell.rowIndex, cell);
 			servers.data[cell.rowIndex].cell = cell;
@@ -96,36 +95,7 @@ function init_grids()
 	serverGrid.processJSON(servers); serverGrid.tableLoaded();
 }
 
-function reconnect(index)
-{
-	window.location.reload();
-}
 
-function createActions(grid, index)
-{
-	var inner;
-
-	inner = "<a onclick=\"if ("+grid.name+".data.length>1) "+grid.name+".remove(" + index + "); set_data_req(); \" style=\"cursor:pointer\">" +
-	"<img src=\"img/delete.png" + "\" border=\"0\" alt=\"delete\" title=\"Delete row\"/></a>";
-	inner+= "&nbsp;<a onclick=\""+grid.name+".duplicate(" + index + ");\" style=\"cursor:pointer\">" +
-	"<img src=\"img/duplicate.png" + "\" border=\"0\" alt=\"duplicate\" title=\"Duplicate row\"/></a>";	
-	return inner;
-}
-
-function createServerActions(grid, index)
-{
-	var inner;
-
-	var connect = "closed";
-
-	if (servers.data[index].values.status=="UP")
-		connect = "open";
-
-	inner= "&nbsp;<a onclick=\""+grid.name+".reconnect("+ index + ");\" style=\"cursor:pointer\">" +
-	"<img src=\"img/"+connect+".png" + "\" border=\"0\" alt=\"connect\" title=\"Reconnect\"/></a>";
-
-	return inner;
-}
 
 function get_data_ack(p)
 {
@@ -170,36 +140,9 @@ function set_data_req()
 		parameters.devices.data[i].values.options = deviceGrid.data[i].columns[0];
 	}
 	socket_send(selected_server, "set_data_req", parameters);
-
 }
 
 
-function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
-{
-
-	//Cannot unselect - one server must always be selected
-	if (newValue==false){
-		servers.data[rowIdx].values.selected = true;
-	}
-	else if (servers.data[rowIdx].values.status == "DOWN"){
-		servers.data[rowIdx].values.selected = false;
-	}
-	else
-	{
-		//clear all
-		for (var i=0; i<servers.data.length; i++)
-			servers.data[i].values.selected = false;
-		//reselect
-		servers.data[rowIdx].values.selected = true;
-		selected_server = rowIdx;
-		socket_send(selected_server, "get_data_req", null);
-	}
-
-	server_menu.selectedIndex = selected_server;
-	serverGrid.processJSON(servers);   
-	serverGrid.tableLoaded();
-
-}
 
 function socket_send(selected, method, p)
 {
@@ -251,4 +194,32 @@ function findFirstUp()
 	return -1;
 }
 
+
+function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
+{
+
+	//Cannot unselect - one server must always be selected
+	if (newValue==false){
+		servers.data[rowIdx].values.selected = true;
+	}
+	else if (servers.data[rowIdx].values.status == "DOWN"){
+		servers.data[rowIdx].values.selected = false;
+	}
+	else
+	{
+		//clear all
+		for (var i=0; i<servers.data.length; i++)
+			servers.data[i].values.selected = false;
+		//reselect
+		servers.data[rowIdx].values.selected = true;
+		selected_server = rowIdx;
+		socket_send(selected_server, "get_data_req", null);
+	}
+
+	server_menu.selectedIndex = selected_server;
+	update_server_menu();
+	serverGrid.processJSON(servers);   
+	serverGrid.tableLoaded();
+
+}
 
