@@ -223,3 +223,28 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 
 }
 
+
+function createActions(grid, index)
+{
+	var inner;
+
+	inner = "<a onclick=\"if ("+grid.name+".data.length>1) "+grid.name+".remove(" + index + "); set_data_req(); \" style=\"cursor:pointer\">" +
+	"<img src=\"img/delete.png" + "\" border=\"0\" alt=\"delete\" title=\"Delete row\"/></a>";
+	inner+= "&nbsp;<a onclick=\""+grid.name+".duplicate(" + index + ");\" style=\"cursor:pointer\">" +
+	"<img src=\"img/duplicate.png" + "\" border=\"0\" alt=\"duplicate\" title=\"Duplicate row\"/></a>";	
+	return inner;
+}
+
+function createServerActions(grid, index)
+{
+	var inner;
+	var connect = "closed";
+
+	if (servers.data[index].values.status=="UP")
+		connect = "open";
+
+	inner= "&nbsp;<a style=\"cursor:pointer\">" +
+	"<img src=\"img/"+connect+".png" + "\" border=\"0\" alt=\"connect\" title=\"Reconnect\"/></a>";
+
+	return inner;
+}
