@@ -168,6 +168,57 @@ function findFirstUp()
 	return -1;
 }
 
+function data_close(ip)
+{
+	for (var i=0; i<servers.data.length; i++){
+		if (servers.data[i].values.address == ip){
+			servers.data[i].values.status="DOWN";
+
+			if (servers.data[i].values.selected){
+				servers.data[i].values.selected=false;
+				selected_server = findFirstUp();	
+			}
+
+			if (selected_server>=0){	
+				servers.data[selected_server].values.selected = true;
+				socket_send(selected_server, "get_data_req", null);
+			}
+
+			server_menu.selectedIndex = selected_server;
+			serverGrid.processJSON(servers);   
+			serverGrid.tableLoaded();
+
+			return selected_server;
+		}
+	}
+}
+
+
+function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
+{
+	//Cannot unselect - one server must always be selected
+	if (newValue==false){
+		servers.data[rowIdx].values.selected = true;
+	}
+	else if (servers.data[rowIdx].values.status == "DOWN"){
+		servers.data[rowIdx].values.selected = false;
+	}
+	else
+	{
+		//clear all
+		for (var i=0; i<servers.data.length; i++)
+			servers.data[i].values.selected = false;
+		//reselect
+		servers.data[rowIdx].values.selected = true;
+		selected_server = rowIdx;
+		socket_send(selected_server, "get_data_req", null);
+	}
+
+	server_menu.selectedIndex = selected_server;
+	serverGrid.processJSON(servers);   
+	serverGrid.tableLoaded();
+}
+
 
 function createActions(grid, index)
 {
