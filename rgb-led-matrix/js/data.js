@@ -157,32 +157,6 @@ function json(method, p) {
 	return JSON.stringify(message);
 }
 
-function data_close(ip)
-{
-	for (var i=0; i<servers.data.length; i++){
-		if (servers.data[i].values.address == ip){
-			servers.data[i].values.status="DOWN";
-
-			if (servers.data[i].values.selected){
-				servers.data[i].values.selected=false;
-				selected_server = findFirstUp();	
-			}
-
-			if (selected_server>=0){	
-				servers.data[selected_server].values.selected = true;
-				socket_send(selected_server, "get_data_req", null);
-			}
-
-			server_menu.selectedIndex = selected_server;
-
-			serverGrid.processJSON(servers);   
-			serverGrid.tableLoaded();
-
-			return selected_server;
-		}
-	}
-}
-
 function findFirstUp()
 {
 	for (var i=0; i<servers.data.length; i++)
@@ -195,40 +169,13 @@ function findFirstUp()
 }
 
 
-function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
-{
-	//Cannot unselect - one server must always be selected
-	if (newValue==false){
-		servers.data[rowIdx].values.selected = true;
-	}
-	else if (servers.data[rowIdx].values.status == "DOWN"){
-		servers.data[rowIdx].values.selected = false;
-	}
-	else
-	{
-		//clear all
-		for (var i=0; i<servers.data.length; i++)
-			servers.data[i].values.selected = false;
-		//reselect
-		servers.data[rowIdx].values.selected = true;
-		selected_server = rowIdx;
-		socket_send(selected_server, "get_data_req", null);
-	}
-
-	server_menu.selectedIndex = selected_server;
-	serverGrid.processJSON(servers);   
-	serverGrid.tableLoaded();
-
-}
-
-
 function createActions(grid, index)
 {
 	var inner;
 
 	inner = "<a onclick=\"if ("+grid.name+".data.length>1) "+grid.name+".remove(" + index + "); set_data_req(); \" style=\"cursor:pointer\">" +
 	"<img src=\"img/delete.png" + "\" border=\"0\" alt=\"delete\" title=\"Delete row\"/></a>";
-	inner+= "&nbsp;<a onclick=\""+grid.name+".duplicate(" + index + ");\" style=\"cursor:pointer\">" +
+	inner+= "&nbsp;<a onclick=\""+grid.name+".duplicate(" + index + ");  set_data_req();\" style=\"cursor:pointer\">" +
 	"<img src=\"img/duplicate.png" + "\" border=\"0\" alt=\"duplicate\" title=\"Duplicate row\"/></a>";	
 	return inner;
 }
