@@ -6,6 +6,8 @@ var deviceGrid   = {};
 var parameters   = {};
 var servers      = {};
 var selected_server = 0;
+var connected    = false;
+var num_servers  = 0;
 
 //Editable grid cannot be obfuscated, so data.js is clear.
 //Obfuscated files can call in, but data.js cannot call out.
@@ -174,6 +176,7 @@ function data_close(ip)
 		if (servers.data[i].values.address == ip){
 			servers.data[i].values.status="DOWN";
 
+			//Mark as closed, find first open
 			if (servers.data[i].values.selected){
 				servers.data[i].values.selected=false;
 				selected_server = findFirstUp();	
@@ -181,16 +184,23 @@ function data_close(ip)
 
 			if (selected_server>=0){	
 				servers.data[selected_server].values.selected = true;
-				socket_send(selected_server, "get_data_req", null);
+				socket_send(selected_server, "get_data_req", null);	
+			
 			}
 
-			server_menu.selectedIndex = selected_server;
+			update_server_menu();
+			
 			serverGrid.processJSON(servers);   
 			serverGrid.tableLoaded();
 
 			return selected_server;
 		}
 	}
+}
+
+function server_menu_onchange()
+{
+	serverChanged(server_menu.selectedIndex, 0, false, true, null);
 }
 
 
@@ -219,6 +229,26 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 	serverGrid.tableLoaded();
 }
 
+function update_server_menu()
+{		
+	server_menu.innerText = null
+
+	if (!connected)
+	{
+		var option = document.createElement("option");
+		option.text = "None";
+		server_menu.add(option);
+	}
+	else
+	{
+		for (var i=0; i<num_servers; i++){
+			var option = document.createElement("option");
+			option.text = servers.data[i].values.hostname;
+			server_menu.add(option);
+		}
+		server_menu.selectedIndex = selected_server;
+	}
+}
 
 function createActions(grid, index)
 {
