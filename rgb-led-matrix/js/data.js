@@ -119,7 +119,6 @@ function set_data_req()
 		parameters.layers.data[i].values.device   = layerGrid.data[i].columns[1];
 		parameters.layers.data[i].values.geometry = layerGrid.data[i].columns[2];
 		parameters.layers.data[i].values.shader   = layerGrid.data[i].columns[3];
-		parameters.layers.data[i].values.options  = layerGrid.data[i].columns[4];
 	}
 
 	parameters.shaders = {};
@@ -129,7 +128,13 @@ function set_data_req()
 		parameters.shaders.data[i]={};
 		parameters.shaders.data[i].id = shaderGrid.data[i].id;
 		parameters.shaders.data[i].values={};
-		parameters.shaders.data[i].values.options = shaderGrid.data[i].columns[0];
+		parameters.shaders.data[i].values.shader             = shaderGrid.data[i].columns[0];
+		parameters.shaders.data[i].values.width              = parseInt(shaderGrid.data[i].columns[1]);
+		parameters.shaders.data[i].values.height             = parseInt(shaderGrid.data[i].columns[2]);
+		parameters.shaders.data[i].values.producer_framerate = parseInt(shaderGrid.data[i].columns[3]);
+		parameters.shaders.data[i].values.alpha              = shaderGrid.data[i].columns[4].split(",").map(parseFloat);
+		parameters.shaders.data[i].values.options            = shaderGrid.data[i].columns[5];
+
 	}
 
 	parameters.devices = {};
@@ -139,7 +144,12 @@ function set_data_req()
 		parameters.devices.data[i]={};
 		parameters.devices.data[i].id = deviceGrid.data[i].id;
 		parameters.devices.data[i].values={};
-		parameters.devices.data[i].values.options = deviceGrid.data[i].columns[0];
+		parameters.devices.data[i].values.device     = deviceGrid.data[i].columns[0];
+		parameters.devices.data[i].values.serial     = deviceGrid.data[i].columns[1];
+		parameters.devices.data[i].values.width      = parseInt(deviceGrid.data[i].columns[2]);
+		parameters.devices.data[i].values.height     = parseInt(deviceGrid.data[i].columns[3]);
+		parameters.devices.data[i].values.gamma      = deviceGrid.data[i].columns[4].split(",").map(parseFloat);
+		parameters.devices.data[i].values.saturation = deviceGrid.data[i].columns[5].split(",").map(parseFloat);
 	}
 	socket_send(selected_server, "set_data_req", parameters);
 }
