@@ -132,7 +132,7 @@ function set_data_req()
 		parameters.shaders.data[i].values.width              = parseInt(shaderGrid.data[i].columns[1]);
 		parameters.shaders.data[i].values.height             = parseInt(shaderGrid.data[i].columns[2]);
 		parameters.shaders.data[i].values.producer_framerate = parseInt(shaderGrid.data[i].columns[3]);
-		parameters.shaders.data[i].values.alpha              = shaderGrid.data[i].columns[4].split(",").map(parseFloat);
+		parameters.shaders.data[i].values.alpha              = parseFloat(shaderGrid.data[i].columns[4]);
 		parameters.shaders.data[i].values.options            = shaderGrid.data[i].columns[5];
 
 	}
