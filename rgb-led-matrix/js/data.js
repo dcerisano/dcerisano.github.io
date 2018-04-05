@@ -149,7 +149,6 @@ function set_data_req()
 		parameters.devices.data[i].values.width      = parseInt(deviceGrid.data[i].columns[2]);
 		parameters.devices.data[i].values.height     = parseInt(deviceGrid.data[i].columns[3]);
 		parameters.devices.data[i].values.gamma      = deviceGrid.data[i].columns[4].split(",").map(parseFloat);
-		parameters.devices.data[i].values.saturation = deviceGrid.data[i].columns[5].split(",").map(parseFloat);
 	}
 	socket_send(selected_server, "set_data_req", parameters);
 }
