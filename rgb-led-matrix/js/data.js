@@ -278,8 +278,8 @@ function createServerActions(grid, index)
 	if (servers.data[index].values.status=="UP")
 		connect = "open";
 
-	inner= "&nbsp;<a style=\"cursor:pointer\">" +
-	"<img src=\"img/"+connect+".png" + "\" border=\"0\" alt=\"connect\" title=\"Reconnect\"/></a>";
+	inner= "&nbsp;" +
+	"<img src=\"img/"+connect+".png" + "\" border=\"0\"/>";
 
 	return inner;
 }
