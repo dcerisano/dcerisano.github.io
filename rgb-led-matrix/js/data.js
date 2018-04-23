@@ -5,6 +5,9 @@ var shaderGrid   = {};
 var deviceGrid   = {};
 var parameters   = {};
 var servers      = {};
+var shaders      = {};
+var layers       = {};
+var devices      = {};
 var selected_server = 0;
 var connected    = false;
 var num_servers  = 0;
@@ -101,6 +104,10 @@ function init_grids()
 
 function get_data_ack(p)
 {
+	layers  = p.layers;
+	shaders = p.shaders;
+	devices = p.devices;
+	
 	layerGrid.processJSON(p.layers);   layerGrid.tableLoaded();
 	shaderGrid.processJSON(p.shaders); shaderGrid.tableLoaded();
 	deviceGrid.processJSON(p.devices); deviceGrid.tableLoaded();	
@@ -148,7 +155,8 @@ function set_data_req()
 		parameters.devices.data[i].values.serial     = deviceGrid.data[i].columns[1];
 		parameters.devices.data[i].values.width      = parseInt(deviceGrid.data[i].columns[2]);
 		parameters.devices.data[i].values.height     = parseInt(deviceGrid.data[i].columns[3]);
-		parameters.devices.data[i].values.gamma      = deviceGrid.data[i].columns[4].split(",").map(parseFloat);
+		parameters.devices.data[i].values.framerate  = parseInt(deviceGrid.data[i].columns[4]);
+		parameters.devices.data[i].values.gamma      = parseFloat(deviceGrid.data[i].columns[5]);
 	}
 	socket_send(selected_server, "set_data_req", parameters);
 }
