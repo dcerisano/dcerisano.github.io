@@ -141,6 +141,7 @@ function set_data_req()
 		parameters.shaders.data[i].values.producer_framerate = parseInt(shaderGrid.data[i].columns[3]);
 		parameters.shaders.data[i].values.alpha              = parseFloat(shaderGrid.data[i].columns[4]);
 		parameters.shaders.data[i].values.options            = shaderGrid.data[i].columns[5];
+		parameters.shaders.data[i].values.active             = parseInt(shaderGrid.data[i].columns[6]);
 
 	}
 
