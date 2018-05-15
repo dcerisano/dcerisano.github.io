@@ -126,6 +126,7 @@ function set_data_req()
 		parameters.layers.data[i].values.device   = layerGrid.data[i].columns[1];
 		parameters.layers.data[i].values.geometry = layerGrid.data[i].columns[2];
 		parameters.layers.data[i].values.shader   = layerGrid.data[i].columns[3];
+		parameters.layers.data[i].values.alpha    = parseFloat(layerGrid.data[i].columns[4]);
 	}
 
 	parameters.shaders = {};
@@ -138,7 +139,7 @@ function set_data_req()
 		parameters.shaders.data[i].values.shader             = shaderGrid.data[i].columns[0];
 		parameters.shaders.data[i].values.width              = parseInt(shaderGrid.data[i].columns[1]);
 		parameters.shaders.data[i].values.height             = parseInt(shaderGrid.data[i].columns[2]);
-		parameters.shaders.data[i].values.producer_framerate = parseInt(shaderGrid.data[i].columns[3]);
+		parameters.shaders.data[i].values.framerate = parseInt(shaderGrid.data[i].columns[3]);
 		parameters.shaders.data[i].values.alpha              = parseFloat(shaderGrid.data[i].columns[4]);
 		parameters.shaders.data[i].values.options            = shaderGrid.data[i].columns[5];
 		parameters.shaders.data[i].values.active             = parseInt(shaderGrid.data[i].columns[6]);
