@@ -48,7 +48,6 @@ button {
 	height: 34px;
 }
 
-
 #server_config
 {
 	color: white;
@@ -61,10 +60,7 @@ button {
     display:flex; 
     justify-content: center; 
     align-items: center;
-    
 }
-
-
 
 #menu {
 	position: absolute;
