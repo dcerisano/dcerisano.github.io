@@ -1,4 +1,4 @@
-var DEBUG        = false;
+var DEBUG        = true;
 var serverGrid   = {};
 var layerGrid    = {};
 var shaderGrid   = {};
@@ -241,11 +241,14 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 		servers.data[rowIdx].values.selected = true;
 		selected_server = rowIdx;
 		socket_send(selected_server, "get_data_req", null);
+		update_project_menu(servers.data[rowIdx].projects);
 	}
 
 	server_menu.selectedIndex = selected_server;
 	serverGrid.processJSON(servers);   
 	serverGrid.tableLoaded();
+	
+	
 }
 
 function update_server_menu()
@@ -266,6 +269,28 @@ function update_server_menu()
 			server_menu.add(option);
 		}
 		server_menu.selectedIndex = selected_server;
+		update_project_menu(servers.data[selected_server].projects);
+	}
+}
+
+function update_project_menu(projects)
+{		
+	project_menu.innerText = null
+
+	if (!connected)
+	{
+		var option = document.createElement("option");
+		option.text = "None";
+		server_menu.add(option);
+	}
+	else
+	{   console.log(projects)
+		for (var project in projects){
+			var option = document.createElement("option");
+			option.text = projects[project];
+			project_menu.add(option);
+		}
+		//project_menu.selectedIndex = selected_project;
 	}
 }
 
