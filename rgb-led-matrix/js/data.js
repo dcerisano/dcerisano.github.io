@@ -8,7 +8,8 @@ var servers      = {};
 var shaders      = {};
 var layers       = {};
 var devices      = {};
-var selected_server = 0;
+var selected_server  = 0;
+var selected_project = 0;
 var connected    = false;
 var num_servers  = 0;
 
@@ -100,14 +101,48 @@ function init_grids()
 	serverGrid.processJSON(servers); serverGrid.tableLoaded();
 }
 
+function createActions(grid, index)
+{
+	var inner;
 
+	inner = "<a onclick=\"if ("+grid.name+".data.length>1) "+grid.name+".remove(" + index + "); set_data_req(); \" style=\"cursor:pointer\">" +
+	"<img src=\"img/delete.png" + "\" border=\"0\" alt=\"delete\" title=\"Delete row\"/></a>";
+	inner+= "&nbsp;<a onclick=\""+grid.name+".duplicate(" + index + ");  set_data_req();\" style=\"cursor:pointer\">" +
+	"<img src=\"img/duplicate.png" + "\" border=\"0\" alt=\"duplicate\" title=\"Duplicate row\"/></a>";	
+	return inner;
+}
+
+function createServerActions(grid, index)
+{
+	var inner;
+	var connect = "closed";
+
+	if (servers.data[index].values.status=="UP")
+		connect = "open";
+
+	inner= "&nbsp;" +
+	"<img src=\"img/"+connect+".png" + "\" border=\"0\"/>";
+
+	return inner;
+}
 
 function get_data_ack(p)
 {
+	for (var project in p.projects){
+		console.log(p.projects[project]+" "+p.project);
+		if (p.projects[project] == p.project)
+			selected_project = project;
+	}
+
+	update_project_menu(p.projects);
+	
+
+	save_filename.value = p.project;
+	
 	layers  = p.layers;
 	shaders = p.shaders;
 	devices = p.devices;
-	
+
 	layerGrid.processJSON(p.layers);   layerGrid.tableLoaded();
 	shaderGrid.processJSON(p.shaders); shaderGrid.tableLoaded();
 	deviceGrid.processJSON(p.devices); deviceGrid.tableLoaded();	
@@ -204,11 +239,11 @@ function data_close(ip)
 			if (selected_server>=0){	
 				servers.data[selected_server].values.selected = true;
 				socket_send(selected_server, "get_data_req", null);	
-			
+
 			}
 
 			update_server_menu();
-			
+
 			serverGrid.processJSON(servers);   
 			serverGrid.tableLoaded();
 
@@ -247,8 +282,6 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 	server_menu.selectedIndex = selected_server;
 	serverGrid.processJSON(servers);   
 	serverGrid.tableLoaded();
-	
-	
 }
 
 function update_server_menu()
@@ -273,8 +306,12 @@ function update_server_menu()
 	}
 }
 
-function update_project_menu(projects)
+function update_project_menu(p)
 {		
+	var projects = p;
+	
+	servers.data[selected_server].projects = projects;
+	
 	project_menu.innerText = null
 
 	if (!connected)
@@ -284,37 +321,34 @@ function update_project_menu(projects)
 		server_menu.add(option);
 	}
 	else
-	{   console.log(projects)
+	{   
 		for (var project in projects){
 			var option = document.createElement("option");
 			option.text = projects[project];
 			project_menu.add(option);
 		}
-		//project_menu.selectedIndex = selected_project;
+		project_menu.selectedIndex = selected_project;
 	}
 }
 
-function createActions(grid, index)
-{
-	var inner;
 
-	inner = "<a onclick=\"if ("+grid.name+".data.length>1) "+grid.name+".remove(" + index + "); set_data_req(); \" style=\"cursor:pointer\">" +
-	"<img src=\"img/delete.png" + "\" border=\"0\" alt=\"delete\" title=\"Delete row\"/></a>";
-	inner+= "&nbsp;<a onclick=\""+grid.name+".duplicate(" + index + ");  set_data_req();\" style=\"cursor:pointer\">" +
-	"<img src=\"img/duplicate.png" + "\" border=\"0\" alt=\"duplicate\" title=\"Duplicate row\"/></a>";	
-	return inner;
+function project_menu_onchange()
+{
+	var params = {};
+	selected_project = project_menu.selectedIndex;
+	console.log("!!!"+selected_project+" "+servers.data[selected_server].projects[selected_project])
+	params.project = servers.data[selected_server].projects[selected_project];
+	socket_send(selected_server, "load_project_req", params);
 }
 
-function createServerActions(grid, index)
+function project_onsave()
 {
-	var inner;
-	var connect = "closed";
-
-	if (servers.data[index].values.status=="UP")
-		connect = "open";
-
-	inner= "&nbsp;" +
-	"<img src=\"img/"+connect+".png" + "\" border=\"0\"/>";
-
-	return inner;
+	var params = {};
+	
+	//validate filename
+	params.project = save_filename.value;
+	socket_send(selected_server, "save_project_req", params);
 }
+
+
+
