@@ -12,6 +12,7 @@ var selected_server  = 0;
 var selected_project = 0;
 var connected    = false;
 var num_servers  = 0;
+var dirty        = false;
 
 //Editable grid cannot be obfuscated, so data.js is clear.
 //Obfuscated files can call in, but data.js cannot call out.
@@ -128,24 +129,28 @@ function createServerActions(grid, index)
 
 function get_data_ack(p)
 {
-	for (var project in p.projects){
-		console.log(p.projects[project]+" "+p.project);
+	for (var project in p.projects)
 		if (p.projects[project] == p.project)
 			selected_project = project;
-	}
 
 	update_project_menu(p.projects);
-	
+
 
 	save_filename.value = p.project;
-	
+
 	layers  = p.layers;
 	shaders = p.shaders;
 	devices = p.devices;
 
 	layerGrid.processJSON(p.layers);   layerGrid.tableLoaded();
 	shaderGrid.processJSON(p.shaders); shaderGrid.tableLoaded();
-	deviceGrid.processJSON(p.devices); deviceGrid.tableLoaded();	
+	deviceGrid.processJSON(p.devices); deviceGrid.tableLoaded();
+
+	if (p.dirty)
+		save_button.style.color = 'red';
+	else
+		save_button.style.color = 'black';
+
 }
 
 function set_data_req()
@@ -309,9 +314,9 @@ function update_server_menu()
 function update_project_menu(p)
 {		
 	var projects = p;
-	
+
 	servers.data[selected_server].projects = projects;
-	
+
 	project_menu.innerText = null
 
 	if (!connected)
@@ -336,15 +341,15 @@ function project_menu_onchange()
 {
 	var params = {};
 	selected_project = project_menu.selectedIndex;
-	console.log("!!!"+selected_project+" "+servers.data[selected_server].projects[selected_project])
 	params.project = servers.data[selected_server].projects[selected_project];
 	socket_send(selected_server, "load_project_req", params);
+
 }
 
 function project_onsave()
 {
 	var params = {};
-	
+
 	//validate filename
 	params.project = save_filename.value;
 	socket_send(selected_server, "save_project_req", params);
