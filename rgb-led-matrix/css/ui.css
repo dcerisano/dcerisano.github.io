@@ -72,7 +72,7 @@ button {
 
 #menu {
 	position: absolute;
-	top: 75px;
+	top: 90px;
 	left: 0;
 	width: 100%;
 	height: 50px;
@@ -80,6 +80,19 @@ button {
 	background: none;
 	color: gray;
 	display: flex;
+}
+
+#server_name {
+	position: absolute;
+	top: 60px;
+	left: 10;
+	width: 100%;
+	height: 50px;
+	z-index: 2;
+	background: none;
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
 }
 
 #show_button, #server_button, #layer_button, #shader_button,

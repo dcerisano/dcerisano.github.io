@@ -289,6 +289,7 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 	server_menu.selectedIndex = selected_server;
 	serverGrid.processJSON(servers);   
 	serverGrid.tableLoaded();
+	server_name.innerHTML = servers.data[rowIdx].values.hostname;
 }
 
 function update_server_menu()
