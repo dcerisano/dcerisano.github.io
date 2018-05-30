@@ -284,12 +284,13 @@ function serverChanged(rowIdx, colIdx, oldValue, newValue, row)
 		selected_server = rowIdx;
 		socket_send(selected_server, "get_data_req", null);
 		update_project_menu(servers.data[rowIdx].projects);
+		server_name.innerHTML = servers.data[rowIdx].values.hostname;
 	}
 
 	server_menu.selectedIndex = selected_server;
 	serverGrid.processJSON(servers);   
 	serverGrid.tableLoaded();
-	server_name.innerHTML = servers.data[rowIdx].values.hostname;
+	
 }
 
 function update_server_menu()
@@ -311,6 +312,7 @@ function update_server_menu()
 		}
 		server_menu.selectedIndex = selected_server;
 		update_project_menu(servers.data[selected_server].projects);
+		server_name.innerHTML = servers.data[selected_server].values.hostname;
 	}
 }
 
