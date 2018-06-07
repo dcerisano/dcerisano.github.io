@@ -85,8 +85,8 @@ button {
 #server_name {
 	position: absolute;
 	top: 60px;
-	left: 10;
-	width: 100%;
+	left: 10px;
+	width: 150px;
 	height: 50px;
 	z-index: 2;
 	background: none;
@@ -94,6 +94,19 @@ button {
     font-size: 32px;
     font-weight: bold;
 }
+
+#server_volume {
+	position: absolute;
+	top: 55px;
+	left: 150px;
+	width: 150px;
+	height: 50px;
+	z-index: 2;
+	background: none;
+    color: white;
+    font-size: 16px;
+}
+
 
 #show_button, #server_button, #layer_button, #shader_button,
 	#device_button, #connect_button {

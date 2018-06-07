@@ -150,6 +150,8 @@ function get_data_ack(p)
 		save_button.style.color = 'red';
 	else
 		save_button.style.color = 'black';
+	
+	server_volume.value = p.volume;
 
 }
 
@@ -358,6 +360,14 @@ function project_onsave()
 	//validate filename
 	params.project = save_filename.value;
 	socket_send(selected_server, "save_project_req", params);
+}
+
+
+function server_volume_onchange()
+{
+	var params = {};
+	params.volume = server_volume.value;
+	socket_send(selected_server, "set_volume_req", params);
 }
 
 
