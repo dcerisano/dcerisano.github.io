@@ -107,6 +107,15 @@ button {
     font-size: 16px;
 }
 
+#volume_icon {
+	position: absolute;
+	top: 60px;
+	left: 310px;
+	width: 40px;
+	height: 40px;
+	z-index: 2;
+	background: none;
+}
 
 #show_button, #server_button, #layer_button, #shader_button,
 	#device_button, #connect_button {
