@@ -1,0 +1,9 @@
+{
+  "name":             "Detector",
+  "short_name":       "Detector",
+  "start_url":        ".",
+  "display":          "standalone",
+  "orientation":      "landscape",
+  "background_color": "#FFF",
+  "description":      "BS Detector"
+}
