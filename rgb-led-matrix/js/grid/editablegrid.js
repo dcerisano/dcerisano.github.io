@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2018 Dominic Cerisano.
+ * All rights reserved.
+ */
+
 if (typeof _$ == 'undefined') {
 	function _$(elementId) { return document.getElementById(elementId); }
 }

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2018 Dominic Cerisano.
+ * All rights reserved.
+ */
+
 EditableGrid.prototype._convertOptions = function(optionValues)
 {
 	// option values should be an *ordered* array of value/label pairs, but to stay compatible with existing enum providers 

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2018 Dominic Cerisano.
+ * All rights reserved.
+ */
+
 var DEBUG        = false;
 var serverGrid   = {};
 var layerGrid    = {};
