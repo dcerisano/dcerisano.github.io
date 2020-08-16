@@ -12,13 +12,28 @@
       background-image: url('https://dcerisano.github.io/distributed-renderer/background.png');
       background-size: cover;
     }
+ 
+    .button {
+      border: none;
+      color: white;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      background-color: #4CAF50;
+    }
+
     </style>
+    
     <script src="https://demo-scheduler.distributed.computer/etc/dcp-config.js"></script>
     <script src="https://demo-scheduler.distributed.computer/dcp-client/dcp-client.js"></script>
     <script src="js/main.bundle.js"></script>
 </head>
 <body>
-    <button id="start-button">Go</button>
+    <button class="button" id="start-button">Go</button>
 </body>
 </html>
 
