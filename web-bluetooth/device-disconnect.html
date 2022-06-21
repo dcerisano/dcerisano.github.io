@@ -8,14 +8,14 @@ index: index.html
 ---
 
 
-
-  <input id="service" type="text" list="services" autofocus placeholder="Bluetooth Service">
-  <input id="name" type="text" placeholder="Device Name">
-  <input id="namePrefix" type="text" placeholder="Device Name Prefix">
-  <button id="scan">Scan</button>
-  <button id="disconnect">Disconnect</button>
-  <button id="reconnect">Reconnect</button>
-
+<ul>
+  <li><input id="service" type="text" list="services" autofocus placeholder="Bluetooth Service"></li>
+  <li><input id="name" type="text" placeholder="Device Name"></li>
+  <li><input id="namePrefix" type="text" placeholder="Device Name Prefix"></li>
+  <li><button id="scan">Scan</button></li>
+  <li><button id="disconnect">Disconnect</button></li>
+  <li><button id="reconnect">Reconnect</button></li>
+</ul>
 
 
 {% include_relative _includes/datalist-services.html %}
