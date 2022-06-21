@@ -7,6 +7,10 @@ icon_url: icon.png
 index: index.html
 ---
 
+
+<script type="text/javascript" src="device-disconnect.js"></script>
+
+
 <form>
   <input id="service" type="text" list="services" autofocus placeholder="Bluetooth Service">
   <input id="name" type="text" placeholder="Device Name">
@@ -16,7 +20,8 @@ index: index.html
   <button id="reconnect">Reconnect</button>
 </form>
 
-<script type="text/javascript" src="device-disconnect.js"></script>
+{% include_relative _includes/datalist-services.html %}
+
 
 <script>
   document.querySelector('#scan').addEventListener('click', function(event) {
@@ -46,3 +51,4 @@ index: index.html
   });
 </script>
 
+{% include_relative _includes/utils.html %}
