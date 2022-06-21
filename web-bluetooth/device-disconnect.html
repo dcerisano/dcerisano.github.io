@@ -1,53 +1,55 @@
---- feature_name: Web Bluetooth / Device Disconnect chrome_version: 50
-check_min_version: true feature_id: 5264933985976320 icon_url: icon.png
-index: index.html ---
+---
+feature_name: Web Bluetooth / Device Disconnect
+chrome_version: 50
+check_min_version: true
+feature_id: 5264933985976320
+icon_url: icon.png
+index: index.html
+---
 
 
-<div id="centeringDiv" style="display: flex;">
-	<form>
-		<input id="service" type="text" list="services" autofocus
-			placeholder="Bluetooth Service"> <input id="name" type="text"
-			placeholder="Device Name"> <input id="namePrefix" type="text"
-			placeholder="Device Name Prefix">
-		<button id="scan">Scan</button>
-		<button id="disconnect">Disconnect</button>
-		<button id="reconnect">Reconnect</button>
-	</form>
-</div>
 
-{% include_relative _includes/datalist-services.html %} {% include
-output_helper.html %}
+  <input id="service" type="text" list="services" autofocus placeholder="Bluetooth Service">
+  <input id="name" type="text" placeholder="Device Name">
+  <input id="namePrefix" type="text" placeholder="Device Name Prefix">
+  <button id="scan">Scan</button>
+  <button id="disconnect">Disconnect</button>
+  <button id="reconnect">Reconnect</button>
+
+
+
+{% include_relative _includes/datalist-services.html %}
+
+{% include output_helper.html %}
 
 <script src="device-disconnect.js"></script>
 
 <script>
-	document.querySelector('#scan').addEventListener('click', function(event) {
-		event.stopPropagation();
-		event.preventDefault();
+  document.querySelector('#scan').addEventListener('click', function(event) {
+    event.stopPropagation();
+    event.preventDefault();
 
-		if (isWebBluetoothEnabled()) {
-			ChromeSamples.clearLog();
-			onScanButtonClick();
-		}
-	});
-	document.querySelector('#disconnect').addEventListener('click',
-			function(event) {
-				event.stopPropagation();
-				event.preventDefault();
+    if (isWebBluetoothEnabled()) {
+      ChromeSamples.clearLog();
+      onScanButtonClick();
+    }
+  });
+  document.querySelector('#disconnect').addEventListener('click', function(event) {
+    event.stopPropagation();
+    event.preventDefault();
 
-				if (isWebBluetoothEnabled()) {
-					onDisconnectButtonClick();
-				}
-			});
-	document.querySelector('#reconnect').addEventListener('click',
-			function(event) {
-				event.stopPropagation();
-				event.preventDefault();
+    if (isWebBluetoothEnabled()) {
+      onDisconnectButtonClick();
+    }
+  });
+  document.querySelector('#reconnect').addEventListener('click', function(event) {
+    event.stopPropagation();
+    event.preventDefault();
 
-				if (isWebBluetoothEnabled()) {
-					onReconnectButtonClick();
-				}
-			});
+    if (isWebBluetoothEnabled()) {
+      onReconnectButtonClick();
+    }
+  });
 </script>
 
 {% include_relative _includes/utils.html %}
