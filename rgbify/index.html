@@ -489,7 +489,7 @@
           }
         }
         connectButton.className = "btn btn-success";
-        msg(`Connected to BLE device "${device.name}"`);
+        msg("Connected to " +device.name);
         connected = true;
         connectButton.disabled = false;
       } catch (error) {
