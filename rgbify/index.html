@@ -163,7 +163,7 @@
               step="1"
               min="0"
               max="60"
-              value="0"
+              value="0"fetchNotifications();
             />
           </div>
           <div class="col-sm-2">
@@ -208,6 +208,7 @@
     ></script>
 
     <script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   </body>
 
   <script type="text/javascript">
@@ -215,6 +216,8 @@
       return new Promise((resolve) => setTimeout(resolve, milliseconds));
     };
 
+    console.log("WTF");
+  
     const SERVICE_UUID      = "8bc01404-0000-4bf4-95d1-ce27a0477183";
     const POWER_UUID        = "8bc01404-0001-4bf4-95d1-ce27a0477183";
     const VOLUME_UUID       = "8bc01404-0002-4bf4-95d1-ce27a0477183";
@@ -642,5 +645,13 @@
         BLEwriteTo("palette");
       }
     }
+  
+    async function   fetchNotifications() {
+      const response = await Axios.get("https://mail.google.com/mail/u/0/feed/atom");
+      console.log(response.data);
+    }
+    
+   
+
   </script>
 </html>
