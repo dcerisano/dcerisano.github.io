@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta property="og:image" content="https://dcerisano.github.io/karai/karai-hd.png" />
-<link rel="shortcut icon" href="../favicon.ico" />
+<meta property="og:image" content="../assets/karai-hd.png" />
+<link rel="shortcut icon" href="../assets/favicon.ico" />
 <a href="https://github.com/dcerisano/karai">
 <img  src="sio2web.png" alt="KARAI"></a>
 <title>ASYNC SIO2WEB</title>
@@ -33,20 +33,20 @@ async function connectAtari() {
       outputDiv.append('CONNECTED (reload page or turn off Atari to disconnect)\n');
       document.getElementById("connect-button").style.visibility = 'hidden';
     } catch(error) {
-      outputDiv.append('\n'+error.message+'\n');
+      outputDiv.append('\n'+error.message);
       setTimeout(() => { location.reload(); }, 1000)
     }
   } else {
-    outputDiv.append('Web Serial doesn\'t seem to be enabled in your browser.\n')
+    outputDiv.append('Web Serial doesn\'t seem to be enabled in your browser.')
   }
 }
 
 
 window.onload =async function(){
-  const myFont = new FontFace('sio2web', 'url(sio2web.ttf)');
+  const myFont = new FontFace('atari8bit', 'url(../assets/atari8bit.ttf)');
   await myFont.load();
   document.fonts.add(myFont);
-  document.body.style.fontFamily = 'sio2web';
+  document.body.style.fontFamily = 'atari8bit';
 }
 
 async function readInto(reader,buffer) {
@@ -72,7 +72,7 @@ outputDiv.append("\n");
 
 document.body.style.backgroundColor="#1111dd";    
 document.body.style.color="white";
-document.getElementById("connect-button").style.fontFamily = 'sio2web';
+document.getElementById("connect-button").style.fontFamily = 'atari8bit';
 document.getElementById("connect-button").style.color = 'blue';
 document.getElementById("connect-button").style.backgroundColor = 'white';
 document.getElementById("connect-button").style.height = '35px';
@@ -91,7 +91,7 @@ connectButton.addEventListener('click', async () => {
       outputDiv.append(ser+"\n");
     }
   } catch (error) {
-    outputDiv.append(error.message+'\n');
+    outputDiv.append(error.message);
     setTimeout(() => { location.reload(); }, 1000); 
   }
 });
