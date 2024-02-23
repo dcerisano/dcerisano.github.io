@@ -9,4 +9,6 @@ Below is a summary of our privacy policy:
 4) Third-Party Services: Our app does not integrate with any third-party services that may collect user data.
 5) Updates: Any changes to our privacy policy will be communicated through app updates or notifications.
 
-By using our app, you agree to this privacy policy. If you have any questions or concerns regarding your privacy while using our app, please contact us at [contact email]. Thank you for choosing our app and trusting us with your privacy.
+By using our app, you agree to this privacy policy. 
+If you have any questions or concerns regarding your privacy while using our app, please contact us at [contact email]. 
+Thank you for choosing our app and trusting us with your privacy.
