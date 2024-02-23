@@ -1,8 +1,11 @@
-Privacy Policy: Thank you for using our app! We are committed to protecting your privacy and ensuring the security of your personal information. Our app does not collect any data from users, ensuring a safe and private experience. Below is a summary of our privacy policy:
+Privacy Policy: Thank you for using our app! 
+We are committed to protecting your privacy and ensuring the security of your personal information. 
+Our app does not collect any data from users, ensuring a safe and private experience. 
+Below is a summary of our privacy policy:
 
 1) No Data Collection: Our app does not collect any personal information, browsing history, or any other data from users.
-2) Permissions: Our app only requests necessary permissions to function properly, such as access to device storage for saving files or access to camera for taking photos.
-3) Data Security: We take the security of your information seriously. Any data stored locally on your device is encrypted and protected.
+2) Permissions: Our app only requests necessary permissions to function properly, such as access to device storage for saving files.
+3) Data Security: No personal information is stored or transmitted.
 4) Third-Party Services: Our app does not integrate with any third-party services that may collect user data.
 5) Updates: Any changes to our privacy policy will be communicated through app updates or notifications.
 
