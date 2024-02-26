@@ -77,7 +77,6 @@ window.addEventListener("load", init);
 
 function init() 
 {
-	initWebSocket(); 
 	// CANVAS SET UP
 	
 	document.body.appendChild(canvas); 
