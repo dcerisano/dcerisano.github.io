@@ -161,8 +161,6 @@ const connectButton = document.getElementById("connectButton");
 const ambienceButton = document.getElementById("ambienceButton");
 const offButton = document.getElementById("offButton");
 const onButton = document.getElementById("onButton");
-const form = document.getElementById("form");
-const message = document.getElementById("message");
 
 
 offButton.onclick = () => {
@@ -257,13 +255,6 @@ if ("mediaDevices" in navigator) {
 form.addEventListener("submit", function(event) {
 	event.preventDefault();
 	updateText(message.value);
-});
-
-message.addEventListener("keydown", function(event) {
-	if (event.key === "Enter") {
-		event.preventDefault();
-		updateText(message.value);
-	}
 });
 
 let device = null;
