@@ -231,9 +231,13 @@ if ("bluetooth" in navigator) {
 	});
 } else {
 	connectButton.className = "btn btn-danger";
-	alert(
-		"Error: This browser doesn't support Web Bluetooth. Try using Chrome."
-	);
+	let reason = "This browser doesn't support Web Bluetooth.";
+	if (!window.isSecureContext) {
+		reason += "\n\nWeb Bluetooth requires a secure context. Serve this page over HTTPS or from localhost.";
+	} else if (/Linux/i.test(navigator.platform)) {
+		reason += "\n\nOn Linux, Web Bluetooth is experimental. Enable the flag in Chrome:\nchrome://flags/#enable-experimental-web-platform-features\n(requires Linux Kernel 3.19+ and BlueZ 5.41+)";
+	}
+	alert("Error: " + reason + "\n\nTry using Chrome.");
 }
 
 if ("mediaDevices" in navigator) {
@@ -340,7 +344,7 @@ async function BLEwriteTo(key) {
 	if (setting.writeBusy) return;
 	setting.writeBusy = true;
 	await setting.characteristic
-		.writeValue(setting.writeValue)
+		.writeValueWithResponse(setting.writeValue)
 		.then((_) => {
 			setting.writeBusy = false;
 		})
