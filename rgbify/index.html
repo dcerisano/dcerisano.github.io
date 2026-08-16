@@ -89,9 +89,9 @@ canvas {
 				<label class="col-form-label">Video</label>
 				<div>
 					<div class="btn-group" role="group" aria-label="Video">
-						<button id="offButton" type="button" class="btn btn-primary">
+						<button id="offButton" type="button" class="btn btn-danger" disabled>
 							Off</button>
-						<button id="onButton" type="button" class="btn btn-secondary">
+						<button id="onButton" type="button" class="btn btn-secondary" disabled>
 							On</button>
 					</div>
 				</div>
@@ -102,9 +102,9 @@ canvas {
 				<label class="col-form-label">Audio</label>
 				<div>
 					<div class="btn-group" role="group" aria-label="Audio">
-						<button id="soffButton" type="button" class="btn btn-primary">
+						<button id="soffButton" type="button" class="btn btn-danger" disabled>
 							Off</button>
-						<button id="sonButton" type="button" class="btn btn-secondary">
+						<button id="sonButton" type="button" class="btn btn-secondary" disabled>
 							On</button>
 					</div>
 				</div>
@@ -115,9 +115,9 @@ canvas {
 				<label class="col-form-label">Screensaver</label>
 				<div>
 					<div class="btn-group" role="group" aria-label="Screensaver">
-						<button id="poffButton" type="button" class="btn btn-primary">
+						<button id="poffButton" type="button" class="btn btn-danger" disabled>
 							Off</button>
-						<button id="ponButton" type="button" class="btn btn-secondary">
+						<button id="ponButton" type="button" class="btn btn-secondary" disabled>
 							On</button>
 					</div>
 				</div>
@@ -128,7 +128,7 @@ canvas {
 				<label class="col-form-label">Brightness</label>
 				<div>
 					<input id="brightnessRange" class="custom-range" type="range"
-						step="1" min="16" max="255" value="0" />
+						step="1" min="16" max="255" value="0" disabled />
 				</div>
 			</div>
 
@@ -137,7 +137,7 @@ canvas {
 				<label class="col-form-label">Volume</label>
 				<div>
 					<input id="volumeRange" class="custom-range" type="range" step="1"
-						min="1" max="10" value="0" />
+						min="1" max="10" value="0" disabled />
 				</div>
 			</div>
 
