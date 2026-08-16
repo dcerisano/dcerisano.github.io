@@ -333,6 +333,7 @@ async function connect() {
 		connectButton.className = "btn btn-success";
 		connectButton.disabled = true;
 		connectButton.innerText = "Connected";
+		document.body.classList.add("connected");
 		message.disabled = false;
 		message.placeholder = "Enter text";
 		offButton.disabled = false;
