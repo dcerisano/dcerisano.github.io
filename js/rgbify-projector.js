@@ -536,7 +536,10 @@ async function connectAmbience() {
 	ambienceButton.className = "btn btn-secondary";
 	ambienceButton.disabled = true;
 
-	await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: "monitor" } }).then(stream => {
+	const isAndroid = /Android/i.test(navigator.userAgent);
+	const constraints = isAndroid ? { video: true } : { video: { displaySurface: "monitor" } };
+
+	await navigator.mediaDevices.getDisplayMedia(constraints).then(stream => {
 		track = stream.getVideoTracks()[0];
 		capture = new ImageCapture(track);
 		track.addEventListener('ended', () => onAmbienceDisconnected());
