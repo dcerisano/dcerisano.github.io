@@ -536,7 +536,7 @@ async function connectAmbience() {
 		console.log('requestMedia error:');
 		console.log(err);
 		ambience = false;
-		ambienceButton.className = "btn btn-primary";
+		ambienceButton.className = "btn btn-danger";
 		ambienceButton.disabled = true;
 		ambienceButton.innerText = "Connect";
 		canvas.style.display = "none";
@@ -547,7 +547,7 @@ async function connectAmbience() {
 // Reset ambience UI state when the shared screen track ends.
 function onAmbienceDisconnected() {
 	ambience = false;
-	ambienceButton.className = "btn btn-primary";
+	ambienceButton.className = "btn btn-danger";
 	ambienceButton.disabled = false;
 	ambienceButton.innerText = "Connect";
 	clearInterval(interval);
