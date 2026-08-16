@@ -168,6 +168,7 @@ const connectButton = document.getElementById("connectButton");
 const ambienceButton = document.getElementById("ambienceButton");
 const offButton = document.getElementById("offButton");
 const onButton = document.getElementById("onButton");
+const message = document.getElementById("message");
 
 
 // Video on/off buttons.
@@ -343,6 +344,7 @@ async function connect() {
 		connectButton.className = "btn btn-success";
 		connectButton.disabled = true;
 		connectButton.innerText = "Connected";
+		message.disabled = false;
 	} catch (error) {
 		console.error(error.message);
 		location.reload();
