@@ -9,7 +9,6 @@ const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
 const SCREENSAVER_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
 
 let ambience = false;
-const maxRecords = 128;
 const FPS = 30;
 
 let server = null;
@@ -392,10 +391,7 @@ function handleIncoming(setting, dataReceived) {
 		try {
 			var dataViewFn = typeMap[dataType].fn.bind(dataReceived);
 			var unpackedValue = dataViewFn(packetPointer, true);
-			setting.data[columns[i]].push(unpackedValue);
-			if (setting.data[columns[i]].length > maxRecords) {
-				setting.data[columns[i]].shift();
-			}
+			setting.data[columns[i]][0] = unpackedValue;
 			packetPointer += typeMap[dataType].bytes;
 		} catch (error) {
 			console.error(error);
