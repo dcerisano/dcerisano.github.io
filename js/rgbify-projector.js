@@ -9,7 +9,6 @@ const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
 const SCREENSAVER_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
 
 let ambience = false;
-const maxRecords = 128;
 const FPS = 30;
 
 let server = null;
@@ -91,19 +90,19 @@ const settings = {
 			volumeRange.value = self.data.V[0];
 		},
 	},
-	// Write-only: 256-byte 8x8 RGBA ambience frame.
+	// Read/write: 256-byte 8x8 RGBA ambience frame.
 	projector: {
 		uuid: PROJECTOR_UUID,
-		properties: ["BLEWrite"],
+		properties: ["BLERead", "BLEWrite"],
 		structure: ["Uint8"],
 		data: { V: [] },
 		writeBusy: false,
 		writeValue: null
 	},
-	// Write-only: user message text.
+	// Read/write: user message text.
 	text: {
 		uuid: TEXT_UUID,
-		properties: ["BLEWrite"],
+		properties: ["BLERead", "BLEWrite"],
 		structure: ["Uint8"],
 		data: { V: [] },
 		writeBusy: false,
@@ -276,23 +275,6 @@ form.addEventListener("submit", function(event) {
 
 let device = null;
 
-// Reuse a previously granted device if one exists.
-async function findDevice() {
-	try {
-		await navigator.bluetooth.getDevices()
-			.then(devices => {
-				for (const d of devices) {
-					device = d;
-					console.log(device.name + ' (' + device.id + ')');
-				}
-			})
-			.catch(error => {
-				console.log('Argh! ' + error);
-			});
-
-	} catch (e) { console.log(e); }
-}
-
 
 
 
@@ -304,7 +286,6 @@ async function connect() {
 	connectButton.innerText = "Connecting";
 
 	try {
-		await findDevice();
 		if (device == null) {
 			device = await navigator.bluetooth.requestDevice({
 				filters: [
@@ -329,11 +310,36 @@ async function connect() {
 				const setting = settings[key];
 				setting.characteristic = await service.getCharacteristic(setting.uuid);
                 
-				if (setting.properties.includes("BLERead")) {
-					await setting.characteristic.readValue().then((data) => {
+			if (setting.properties.includes("BLERead")) {
+				for (let attempt = 0; ; attempt++) {
+					try {
+						const data = await setting.characteristic.readValue();
 						handleIncoming(setting, data);
-					});
+						break;
+					} catch (error) {
+						if (attempt >= 3) throw error;
+						await sleep(200);
+					}
 				}
+			}
+
+			// Subscribe to notifications so changes from any client update this page.
+			// Retry: back-to-back GATT operations during connect can transiently
+			// fail with "GATT operation failed" on Android.
+			if (setting.characteristic.properties.notify) {
+				setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
+					handleIncoming(setting, event.target.value);
+				});
+				for (let attempt = 0; ; attempt++) {
+					try {
+						await setting.characteristic.startNotifications();
+						break;
+					} catch (error) {
+						if (attempt >= 3) throw error;
+						await sleep(200);
+					}
+				}
+			}
 
 				setting.rendered = false;
 			} catch (error) {
@@ -402,10 +408,7 @@ function handleIncoming(setting, dataReceived) {
 		try {
 			var dataViewFn = typeMap[dataType].fn.bind(dataReceived);
 			var unpackedValue = dataViewFn(packetPointer, true);
-			setting.data[columns[i]].push(unpackedValue);
-			if (setting.data[columns[i]].length > maxRecords) {
-				setting.data[columns[i]].shift();
-			}
+			setting.data[columns[i]][0] = unpackedValue;
 			packetPointer += typeMap[dataType].bytes;
 		} catch (error) {
 			console.error(error);
