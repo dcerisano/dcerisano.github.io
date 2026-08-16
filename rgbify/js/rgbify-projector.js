@@ -91,19 +91,19 @@ const settings = {
 			volumeRange.value = self.data.V[0];
 		},
 	},
-	// Write-only: 256-byte 8x8 RGBA ambience frame.
+	// Read/write: 256-byte 8x8 RGBA ambience frame.
 	projector: {
 		uuid: PROJECTOR_UUID,
-		properties: ["BLEWrite"],
+		properties: ["BLERead", "BLEWrite"],
 		structure: ["Uint8"],
 		data: { V: [] },
 		writeBusy: false,
 		writeValue: null
 	},
-	// Write-only: user message text.
+	// Read/write: user message text.
 	text: {
 		uuid: TEXT_UUID,
-		properties: ["BLEWrite"],
+		properties: ["BLERead", "BLEWrite"],
 		structure: ["Uint8"],
 		data: { V: [] },
 		writeBusy: false,
@@ -315,6 +315,14 @@ async function connect() {
 					await setting.characteristic.readValue().then((data) => {
 						handleIncoming(setting, data);
 					});
+				}
+
+				// Subscribe to notifications so changes from any client update this page.
+				if (setting.characteristic.properties.notify) {
+					setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
+						handleIncoming(setting, event.target.value);
+					});
+					await setting.characteristic.startNotifications();
 				}
 
 				setting.rendered = false;
