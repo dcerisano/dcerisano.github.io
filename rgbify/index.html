@@ -29,6 +29,14 @@ label {
 canvas {
 	width: 120px;
 }
+
+/* Message box placeholder: red while disconnected, black when connected. */
+#message::placeholder {
+	color: #000;
+}
+#message:disabled::placeholder {
+	color: #dc3545;
+}
 </style>
 
 </head>
