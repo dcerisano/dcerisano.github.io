@@ -157,11 +157,11 @@ function getSettingKey(uuid) {
 
 let color = {
 	rgb: {
-		r: 128,
-		g: 128,
-		b: 128,
+		r: 0,
+		g: 0,
+		b: 0,
 	},
-	hexString: "#808080",
+	hexString: "#000000",
 };
 
 const connectButton = document.getElementById("connectButton");
@@ -354,7 +354,7 @@ async function connect() {
 		ponButton.disabled = false;
 		brightnessRange.disabled = false;
 		volumeRange.disabled = false;
-		settings.solidColor.colorPicker.disabled = false;
+		document.getElementById("color-picker-container").classList.remove("disabled");
 	} catch (error) {
 		console.error(error.message);
 		location.reload();
@@ -422,10 +422,12 @@ function initColorPicker() {
 		"#color-picker-container",
 		{
 			width: 150,
-			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`,
-			disabled: true
+			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`
 		}
 	);
+
+	// Standard disabled look until connected: fade out + block interaction.
+	document.getElementById("color-picker-container").classList.add("disabled");
 
 	solidColorInput.value = color.hexString;
 
