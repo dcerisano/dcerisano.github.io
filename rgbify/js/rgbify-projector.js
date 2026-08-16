@@ -15,6 +15,8 @@ const FPS = 30;
 let server = null;
 let service = null;
 
+// BLE characteristic registry: maps each setting to its GATT uuid, properties,
+// byte structure and last-read data. connect() and BLEwriteTo() iterate it.
 const settings = {
 	video: {
 		uuid: VIDEO_UUID,
@@ -89,6 +91,7 @@ const settings = {
 			volumeRange.value = self.data.V[0];
 		},
 	},
+	// Write-only: 256-byte 8x8 RGBA ambience frame.
 	projector: {
 		uuid: PROJECTOR_UUID,
 		properties: ["BLEWrite"],
@@ -97,6 +100,7 @@ const settings = {
 		writeBusy: false,
 		writeValue: null
 	},
+	// Write-only: user message text.
 	text: {
 		uuid: TEXT_UUID,
 		properties: ["BLEWrite"],
@@ -130,10 +134,12 @@ const settings = {
 const settingKeys = Object.keys(settings);
 
 
+// Promise-based delay.
 function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Look up a settings entry by characteristic UUID.
 function findSetting(uuid) {
 	for (const key of settingKeys) {
 		var setting = settings[key];
@@ -141,6 +147,7 @@ function findSetting(uuid) {
 	}
 }
 
+// Look up a settings key by characteristic UUID.
 function getSettingKey(uuid) {
 	for (const key of settingKeys) {
 		var setting = settings[key];
@@ -161,8 +168,10 @@ const connectButton = document.getElementById("connectButton");
 const ambienceButton = document.getElementById("ambienceButton");
 const offButton = document.getElementById("offButton");
 const onButton = document.getElementById("onButton");
+const message = document.getElementById("message");
 
 
+// Video on/off buttons.
 offButton.onclick = () => {
 	offButton.className = "btn btn-primary";
 	onButton.className = "btn btn-secondary";
@@ -177,6 +186,7 @@ onButton.onclick = () => {
 const soffButton = document.getElementById("soffButton");
 const sonButton = document.getElementById("sonButton");
 
+// Audio on/off buttons.
 soffButton.onclick = () => {
 	soffButton.className = "btn btn-primary";
 	sonButton.className = "btn btn-secondary";
@@ -191,6 +201,7 @@ sonButton.onclick = () => {
 const poffButton = document.getElementById("poffButton");
 const ponButton = document.getElementById("ponButton");
 
+// Screensaver on/off buttons.
 poffButton.onclick = () => {
 	poffButton.className = "btn btn-primary";
 	ponButton.className = "btn btn-secondary";
@@ -204,17 +215,20 @@ ponButton.onclick = () => {
 
 const volumeRange = document.getElementById("volumeRange");
 
+// Volume slider.
 volumeRange.oninput = () => {
 	updateVolume(volumeRange.value);
 };
 
 const brightnessRange = document.getElementById("brightnessRange");
 
+// Brightness slider.
 brightnessRange.oninput = () => {
 	updateBrightness(brightnessRange.value);
 };
 
 
+// Hue picker: hidden input mirrors the iro picker's color.
 const solidColorInput = document.getElementById("solidColorInput");
 solidColorInput.oninput = () => {
 	const colorPicker = settings.solidColor.colorPicker;
@@ -224,6 +238,7 @@ solidColorInput.oninput = () => {
 
 initColorPicker();
 
+// Web Bluetooth support check + Connect button.
 if ("bluetooth" in navigator) {
 	connectButton.addEventListener("click", function(event) {
 		event.preventDefault();
@@ -240,6 +255,7 @@ if ("bluetooth" in navigator) {
 	alert("Error: " + reason + "\n\nTry using Chrome.");
 }
 
+// Screen capture support check + Ambience button.
 if ("mediaDevices" in navigator) {
 	ambienceButton.addEventListener("click", function(event) {
 		event.preventDefault();
@@ -252,6 +268,7 @@ if ("mediaDevices" in navigator) {
 	);
 }
 
+// Send the message on form submit.
 form.addEventListener("submit", function(event) {
 	event.preventDefault();
 	updateText(message.value);
@@ -259,6 +276,7 @@ form.addEventListener("submit", function(event) {
 
 let device = null;
 
+// Reuse a previously granted device if one exists.
 async function findDevice() {
 	try {
 		await navigator.bluetooth.getDevices()
@@ -278,6 +296,7 @@ async function findDevice() {
 
 
 
+// Connect: reuse device or prompt, GATT connect, fetch characteristics, read readable ones.
 async function connect() {
 	
 	connectButton.className = "btn btn-primary";
@@ -325,6 +344,7 @@ async function connect() {
 		connectButton.className = "btn btn-success";
 		connectButton.disabled = true;
 		connectButton.innerText = "Connected";
+		message.disabled = false;
 	} catch (error) {
 		console.error(error.message);
 		location.reload();
@@ -332,12 +352,14 @@ async function connect() {
 }
 
 
+// Device dropped: reload the page.
 async function onDisconnected() {
 	location.reload();
 }
 
 
 
+// Write a setting's pending value, skipping if a write is already in flight.
 async function BLEwriteTo(key) {
 
 	const setting = settings[key];
@@ -354,6 +376,7 @@ async function BLEwriteTo(key) {
 }
 
 
+// Unpack raw GATT bytes into setting.data using its structure map, then call dataUpdated.
 function handleIncoming(setting, dataReceived) {
 
 	const columns = Object.keys(setting.data);
@@ -383,6 +406,7 @@ function handleIncoming(setting, dataReceived) {
 	if (setting.dataUpdated) setting.dataUpdated(setting);
 }
 
+// Create the iro color picker wired to the solidColor characteristic.
 function initColorPicker() {
 	settings.solidColor.colorPicker = new iro.ColorPicker(
 		"#color-picker-container",
@@ -406,6 +430,7 @@ function initColorPicker() {
 	}
 }
 
+// Update helpers: set a Uint8 value and write it to the device.
 function updateVideo(state) {
 
 	const value = state ? 1 : 0;
@@ -460,6 +485,7 @@ function updateText(value) {
 
 
 
+// Hidden 8x8 preview canvas for the ambience stream (overlay adds the dot grid).
 const canvas = document.getElementById('screencanvas');
 canvas.width = 8;
 canvas.height = 8;
@@ -487,6 +513,7 @@ octx.filter = "blur(5px) contrast(120%)";
 let track = null;
 let capture = null;
 
+// Capture the screen, then stream downsampled 8x8 frames to the projector.
 async function connectAmbience() {
 	if (ambience) return;
 
@@ -516,6 +543,7 @@ async function connectAmbience() {
 }
 
 
+// Reset ambience UI state when the shared screen track ends.
 function onAmbienceDisconnected() {
 	ambience = false;
 	ambienceButton.className = "btn btn-primary";
@@ -528,6 +556,7 @@ function onAmbienceDisconnected() {
 }
 
 
+// Each tick: crop square, blur+contrast via offscreen canvas, downsample to 8x8, send.
 async function streamer() {
 	if (ambience && document.hidden)
 		onAmbienceDisconnected();
@@ -551,6 +580,7 @@ async function streamer() {
 			}).catch(err => { console.log(err); /*sometimes capture is undefined, ignore as frame skip*/ })
 }
 
+// String to ArrayBuffer (ASCII bytes).
 function str2ab(str) {
 	var buf = new ArrayBuffer(str.length);
 	var bufView = new Uint8Array(buf);
@@ -560,6 +590,7 @@ function str2ab(str) {
 	return buf;
 }
 
+  // Disconnect GATT when the page unloads.
   window.onbeforeunload = function(event)
     {
         if (device != null)
