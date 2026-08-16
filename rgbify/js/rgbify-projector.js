@@ -157,11 +157,11 @@ function getSettingKey(uuid) {
 
 let color = {
 	rgb: {
-		r: 0,
-		g: 0,
-		b: 0,
+		r: 128,
+		g: 128,
+		b: 128,
 	},
-	hexString: "#000000",
+	hexString: "#808080",
 };
 
 const connectButton = document.getElementById("connectButton");
