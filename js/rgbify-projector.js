@@ -27,8 +27,8 @@ const settings = {
 		writeValue: null,
 		dataUpdated: (self) => {
 			if (self.data.V[0]) {
-				onButton.className = "btn btn-primary";
-				offButton.className = "btn btn-secondary";
+				onButton.className = "btn btn-success";
+				offButton.className = "btn btn-primary";
 			} else {
 				offButton.className = "btn btn-primary";
 				onButton.className = "btn btn-secondary";
@@ -44,8 +44,8 @@ const settings = {
 		writeValue: null,
 		dataUpdated: (self) => {
 			if (self.data.V[0]) {
-				sonButton.className = "btn btn-primary";
-				soffButton.className = "btn btn-secondary";
+				sonButton.className = "btn btn-success";
+				soffButton.className = "btn btn-primary";
 			} else {
 				soffButton.className = "btn btn-primary";
 				sonButton.className = "btn btn-secondary";
@@ -61,8 +61,8 @@ const settings = {
 		writeValue: null,
 		dataUpdated: (self) => {
 			if (self.data.V[0]) {
-				ponButton.className = "btn btn-primary";
-				poffButton.className = "btn btn-secondary";
+				ponButton.className = "btn btn-success";
+				poffButton.className = "btn btn-primary";
 			} else {
 				poffButton.className = "btn btn-primary";
 				ponButton.className = "btn btn-secondary";
@@ -178,8 +178,8 @@ offButton.onclick = () => {
 	updateVideo(false);
 };
 onButton.onclick = () => {
-	onButton.className = "btn btn-primary";
-	offButton.className = "btn btn-secondary";
+	onButton.className = "btn btn-success";
+	offButton.className = "btn btn-primary";
 	updateVideo(true);
 };
 
@@ -193,8 +193,8 @@ soffButton.onclick = () => {
 	updateAudio(false);
 };
 sonButton.onclick = () => {
-	sonButton.className = "btn btn-primary";
-	soffButton.className = "btn btn-secondary";
+	sonButton.className = "btn btn-success";
+	soffButton.className = "btn btn-primary";
 	updateAudio(true);
 };
 
@@ -208,8 +208,8 @@ poffButton.onclick = () => {
 	updateScreensaver(false);
 };
 ponButton.onclick = () => {
-	ponButton.className = "btn btn-primary";
-	poffButton.className = "btn btn-secondary";
+	ponButton.className = "btn btn-success";
+	poffButton.className = "btn btn-primary";
 	updateScreensaver(true);
 };
 
