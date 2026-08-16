@@ -28,7 +28,7 @@ const settings = {
 		dataUpdated: (self) => {
 			if (self.data.V[0]) {
 				onButton.className = "btn btn-success";
-				offButton.className = "btn btn-primary";
+				offButton.className = "btn btn-secondary";
 			} else {
 				offButton.className = "btn btn-primary";
 				onButton.className = "btn btn-secondary";
@@ -45,7 +45,7 @@ const settings = {
 		dataUpdated: (self) => {
 			if (self.data.V[0]) {
 				sonButton.className = "btn btn-success";
-				soffButton.className = "btn btn-primary";
+				soffButton.className = "btn btn-secondary";
 			} else {
 				soffButton.className = "btn btn-primary";
 				sonButton.className = "btn btn-secondary";
@@ -62,7 +62,7 @@ const settings = {
 		dataUpdated: (self) => {
 			if (self.data.V[0]) {
 				ponButton.className = "btn btn-success";
-				poffButton.className = "btn btn-primary";
+				poffButton.className = "btn btn-secondary";
 			} else {
 				poffButton.className = "btn btn-primary";
 				ponButton.className = "btn btn-secondary";
@@ -179,7 +179,7 @@ offButton.onclick = () => {
 };
 onButton.onclick = () => {
 	onButton.className = "btn btn-success";
-	offButton.className = "btn btn-primary";
+	offButton.className = "btn btn-secondary";
 	updateVideo(true);
 };
 
@@ -194,7 +194,7 @@ soffButton.onclick = () => {
 };
 sonButton.onclick = () => {
 	sonButton.className = "btn btn-success";
-	soffButton.className = "btn btn-primary";
+	soffButton.className = "btn btn-secondary";
 	updateAudio(true);
 };
 
@@ -209,7 +209,7 @@ poffButton.onclick = () => {
 };
 ponButton.onclick = () => {
 	ponButton.className = "btn btn-success";
-	poffButton.className = "btn btn-primary";
+	poffButton.className = "btn btn-secondary";
 	updateScreensaver(true);
 };
 
