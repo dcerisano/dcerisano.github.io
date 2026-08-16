@@ -346,6 +346,15 @@ async function connect() {
 		connectButton.innerText = "Connected";
 		message.disabled = false;
 		message.placeholder = "Enter text";
+		offButton.disabled = false;
+		onButton.disabled = false;
+		soffButton.disabled = false;
+		sonButton.disabled = false;
+		poffButton.disabled = false;
+		ponButton.disabled = false;
+		brightnessRange.disabled = false;
+		volumeRange.disabled = false;
+		settings.solidColor.colorPicker.disabled = false;
 	} catch (error) {
 		console.error(error.message);
 		location.reload();
@@ -413,7 +422,8 @@ function initColorPicker() {
 		"#color-picker-container",
 		{
 			width: 150,
-			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`
+			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`,
+			disabled: true
 		}
 	);
 
