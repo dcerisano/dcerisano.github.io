@@ -310,19 +310,36 @@ async function connect() {
 				const setting = settings[key];
 				setting.characteristic = await service.getCharacteristic(setting.uuid);
                 
-				if (setting.properties.includes("BLERead")) {
-					await setting.characteristic.readValue().then((data) => {
+			if (setting.properties.includes("BLERead")) {
+				for (let attempt = 0; ; attempt++) {
+					try {
+						const data = await setting.characteristic.readValue();
 						handleIncoming(setting, data);
-					});
+						break;
+					} catch (error) {
+						if (attempt >= 3) throw error;
+						await sleep(200);
+					}
 				}
+			}
 
-				// Subscribe to notifications so changes from any client update this page.
-				if (setting.characteristic.properties.notify) {
-					setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
-						handleIncoming(setting, event.target.value);
-					});
-					await setting.characteristic.startNotifications();
+			// Subscribe to notifications so changes from any client update this page.
+			// Retry: back-to-back GATT operations during connect can transiently
+			// fail with "GATT operation failed" on Android.
+			if (setting.characteristic.properties.notify) {
+				setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
+					handleIncoming(setting, event.target.value);
+				});
+				for (let attempt = 0; ; attempt++) {
+					try {
+						await setting.characteristic.startNotifications();
+						break;
+					} catch (error) {
+						if (attempt >= 3) throw error;
+						await sleep(200);
+					}
 				}
+			}
 
 				setting.rendered = false;
 			} catch (error) {
