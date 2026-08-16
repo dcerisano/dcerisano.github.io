@@ -19,6 +19,19 @@ body {
 	background-color: #3f3f3f;
 }
 
+/* Center the form in the middle of the screen regardless of aspect ratio or orientation. */
+main {
+	display: flex;
+	justify-content: center;
+	min-height: 100vh;
+}
+
+#form {
+	margin: auto;
+	width: fit-content;
+	max-width: 100%;
+}
+
 label {
 	width: 120px;
 	display: inline-block;
