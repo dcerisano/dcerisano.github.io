@@ -276,23 +276,6 @@ form.addEventListener("submit", function(event) {
 
 let device = null;
 
-// Reuse a previously granted device if one exists.
-async function findDevice() {
-	try {
-		await navigator.bluetooth.getDevices()
-			.then(devices => {
-				for (const d of devices) {
-					device = d;
-					console.log(device.name + ' (' + device.id + ')');
-				}
-			})
-			.catch(error => {
-				console.log('Argh! ' + error);
-			});
-
-	} catch (e) { console.log(e); }
-}
-
 
 
 
@@ -304,7 +287,6 @@ async function connect() {
 	connectButton.innerText = "Connecting";
 
 	try {
-		await findDevice();
 		if (device == null) {
 			device = await navigator.bluetooth.requestDevice({
 				filters: [
