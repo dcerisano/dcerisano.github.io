@@ -30,7 +30,7 @@ const settings = {
 				onButton.className = "btn btn-success";
 				offButton.className = "btn btn-secondary";
 			} else {
-				offButton.className = "btn btn-primary";
+				offButton.className = "btn btn-danger";
 				onButton.className = "btn btn-secondary";
 			}
 		},
@@ -47,7 +47,7 @@ const settings = {
 				sonButton.className = "btn btn-success";
 				soffButton.className = "btn btn-secondary";
 			} else {
-				soffButton.className = "btn btn-primary";
+				soffButton.className = "btn btn-danger";
 				sonButton.className = "btn btn-secondary";
 			}
 		},
@@ -64,7 +64,7 @@ const settings = {
 				ponButton.className = "btn btn-success";
 				poffButton.className = "btn btn-secondary";
 			} else {
-				poffButton.className = "btn btn-primary";
+				poffButton.className = "btn btn-danger";
 				ponButton.className = "btn btn-secondary";
 			}
 		},
@@ -173,7 +173,7 @@ const message = document.getElementById("message");
 
 // Video on/off buttons.
 offButton.onclick = () => {
-	offButton.className = "btn btn-primary";
+	offButton.className = "btn btn-danger";
 	onButton.className = "btn btn-secondary";
 	updateVideo(false);
 };
@@ -188,7 +188,7 @@ const sonButton = document.getElementById("sonButton");
 
 // Audio on/off buttons.
 soffButton.onclick = () => {
-	soffButton.className = "btn btn-primary";
+	soffButton.className = "btn btn-danger";
 	sonButton.className = "btn btn-secondary";
 	updateAudio(false);
 };
@@ -203,7 +203,7 @@ const ponButton = document.getElementById("ponButton");
 
 // Screensaver on/off buttons.
 poffButton.onclick = () => {
-	poffButton.className = "btn btn-primary";
+	poffButton.className = "btn btn-danger";
 	ponButton.className = "btn btn-secondary";
 	updateScreensaver(false);
 };
