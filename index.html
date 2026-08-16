@@ -57,13 +57,13 @@ canvas {
 			</div>
 
 			<!-- Ambience (screen capture) + hidden preview canvas/dot overlay -->
-			<div class="form-group row">
+			<div id="ambienceRow" class="form-group row">
 				<label class="col-form-label">Ambience</label>
 				<div>
 					<button id="ambienceButton" class="btn btn-danger" type="button">Start Capture</button>
 				</div>
 			</div>
-			<div class="form-group row" style="position: relative;">
+			<div id="ambiencePreviewRow" class="form-group row" style="position: relative;">
 				<label class="col-form-label"></label>
 				<canvas id="screencanvas"
 					style="position: absolute; left: 240px; top: -112px; z-index: 0;"></canvas>

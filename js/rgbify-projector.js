@@ -169,6 +169,14 @@ const offButton = document.getElementById("offButton");
 const onButton = document.getElementById("onButton");
 const message = document.getElementById("message");
 
+// Hide the ambience (screen capture) section on clients without getDisplayMedia.
+if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+	const ambienceRow = document.getElementById("ambienceRow");
+	const ambiencePreviewRow = document.getElementById("ambiencePreviewRow");
+	if (ambienceRow) ambienceRow.style.display = "none";
+	if (ambiencePreviewRow) ambiencePreviewRow.style.display = "none";
+}
+
 
 // Video on/off buttons.
 offButton.onclick = () => {
