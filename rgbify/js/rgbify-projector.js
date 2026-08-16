@@ -345,6 +345,7 @@ async function connect() {
 		connectButton.disabled = true;
 		connectButton.innerText = "Connected";
 		message.disabled = false;
+		message.placeholder = "Enter text";
 	} catch (error) {
 		console.error(error.message);
 		location.reload();
