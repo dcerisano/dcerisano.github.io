@@ -115,6 +115,7 @@ const settings = {
 		data: { R: [], G: [], B: [] },
 		writeBusy: false,
 		writeValue: null,
+		suppressWrite: false,
 		dataUpdated: (self) => {
 			if (
 				self.data.R &&
@@ -124,7 +125,10 @@ const settings = {
 				self.data.B &&
 				self.data.B.length
 			) {
+				// A remote (other-client) update: apply it without echoing a write back.
+				self.suppressWrite = true;
 				self.colorPicker.color.rgbString = `rgb(${self.data.R[0]}, ${self.data.G[0]}, ${self.data.B[0]})`;
+				setTimeout(() => { self.suppressWrite = false; }, 0);
 			}
 		},
 	},
@@ -383,20 +387,28 @@ async function onDisconnected() {
 
 
 
-// Write a setting's pending value, skipping if a write is already in flight.
+// Write a setting's pending value, coalescing to the latest value if a write
+// is already in flight. Dropping the write instead (old behaviour) means a fast
+// slider/picker drag can leave the device on a stale value and cause jitter on
+// every other connected client as they chase the last colour that made it out.
 async function BLEwriteTo(key) {
 
 	const setting = settings[key];
-	if (setting.writeBusy) return;
+	if (setting.writeBusy) {
+		setting.writePending = true;
+		return;
+	}
 	setting.writeBusy = true;
-	await setting.characteristic
-		.writeValueWithResponse(setting.writeValue)
-		.then((_) => {
-			setting.writeBusy = false;
-		})
-		.catch((error) => {
-			console.log(error);
-		});
+	do {
+		setting.writePending = false;
+		await setting.characteristic
+			.writeValueWithResponse(setting.writeValue)
+			.catch((error) => {
+				console.log(error);
+			});
+		// If new values arrived while writing, loop again with the latest one.
+	} while (setting.writePending);
+	setting.writeBusy = false;
 }
 
 
@@ -445,6 +457,12 @@ function initColorPicker() {
 	// RGB Color Picker
 	settings.solidColor.colorPicker.on("color:change", updateColor);
 	function updateColor(color) {
+
+		// Never echo a color that arrived via a notification back to the device:
+		// that would make the firmware broadcast it to every other client,
+		// which re-triggers their color:change and re-writes it — an infinite
+		// ping-pong that makes every picker jitter.
+		if (settings.solidColor.suppressWrite) return;
 
 		var rgb_values = Uint8Array.of(color.rgb.r, color.rgb.g, color.rgb.b);
 		settings.solidColor.writeValue = rgb_values;
