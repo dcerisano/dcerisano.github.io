@@ -521,6 +521,7 @@ function updateProjector(value) {
 }
 
 function updateText(value) {
+	value = value.slice(0, 256);
 	settings.text.writeValue = new Uint8Array(str2ab(value));
 	BLEwriteTo("text");
 }
