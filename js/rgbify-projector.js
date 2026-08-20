@@ -286,11 +286,11 @@ form.addEventListener("submit", function(event) {
 });
 
 let device = null;
+let reconnecting = false;   // prevent parallel reconnect loops
 
 
 
-
-// Connect: reuse device or prompt, GATT connect, fetch characteristics, read readable ones.
+// Connect: reuse device or prompt, then run shared GATT setup.
 async function connect() {
 	
 	connectButton.className = "btn btn-primary";
@@ -308,81 +308,139 @@ async function connect() {
 			});
              
 		}
-		
-		device.addEventListener("gattserverdisconnected", onDisconnected);
-		server = await device.gatt.connect();
-		await sleep(500);
-		service = await server.getPrimaryService(SERVICE_UUID);
-        
-        
-		for (const key of settingKeys) {
-			
-			try {
-				console.log(key);
-				const setting = settings[key];
-				setting.characteristic = await service.getCharacteristic(setting.uuid);
-                
-			if (setting.properties.includes("BLERead")) {
-				for (let attempt = 0; ; attempt++) {
-					try {
-						const data = await setting.characteristic.readValue();
-						handleIncoming(setting, data);
-						break;
-					} catch (error) {
-						if (attempt >= 3) throw error;
-						await sleep(200);
-					}
-				}
-			}
 
-			// Subscribe to notifications so changes from any client update this page.
-			// Retry: back-to-back GATT operations during connect can transiently
-			// fail with "GATT operation failed" on Android.
-			if (setting.characteristic.properties.notify) {
-				setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
-					handleIncoming(setting, event.target.value);
-				});
-				for (let attempt = 0; ; attempt++) {
-					try {
-						await setting.characteristic.startNotifications();
-						break;
-					} catch (error) {
-						if (attempt >= 3) throw error;
-						await sleep(200);
-					}
-				}
-			}
-
-				setting.rendered = false;
-			} catch (error) {
-				console.log(`error loading characteristic ${key}`);
-				console.log(error.message);
-			}
+		// Register once so reconnect never stacks duplicate listeners.
+		if (!device._hasDisconnectListener) {
+			device.addEventListener("gattserverdisconnected", onDisconnected);
+			device._hasDisconnectListener = true;
 		}
-		connectButton.className = "btn btn-success";
-		connectButton.disabled = true;
-		connectButton.innerText = "Connected";
-		message.disabled = false;
-		message.placeholder = "Enter text";
-		offButton.disabled = false;
-		onButton.disabled = false;
-		soffButton.disabled = false;
-		sonButton.disabled = false;
-		poffButton.disabled = false;
-		ponButton.disabled = false;
-		brightnessRange.disabled = false;
-		volumeRange.disabled = false;
-		document.getElementById("color-picker-container").classList.remove("disabled");
+
+		await setupGatt(device);
+		setConnectedUI();
 	} catch (error) {
 		console.error(error.message);
 		location.reload();
 	}
 }
 
+// GATT setup, shared by the initial connect and every reconnect. The old
+// server/service/characteristic objects are stale after a drop, so this
+// re-fetches everything and re-subscribes on each call.
+async function setupGatt(device) {
+	server = await device.gatt.connect();
+	await sleep(500);
+	service = await server.getPrimaryService(SERVICE_UUID);
+        
+	for (const key of settingKeys) {
+		
+		try {
+			console.log(key);
+			const setting = settings[key];
+			setting.characteristic = await service.getCharacteristic(setting.uuid);
+            
+		if (setting.properties.includes("BLERead")) {
+			for (let attempt = 0; ; attempt++) {
+				try {
+					const data = await setting.characteristic.readValue();
+					handleIncoming(setting, data);
+					break;
+				} catch (error) {
+					if (attempt >= 3) throw error;
+					await sleep(200);
+				}
+			}
+		}
 
-// Device dropped: reload the page.
+		// Subscribe to notifications so changes from any client update this page.
+		// Retry: back-to-back GATT operations during connect can transiently
+		// fail with "GATT operation failed" on Android.
+		if (setting.characteristic.properties.notify) {
+			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
+				handleIncoming(setting, event.target.value);
+			});
+			for (let attempt = 0; ; attempt++) {
+				try {
+					await setting.characteristic.startNotifications();
+					break;
+				} catch (error) {
+					if (attempt >= 3) throw error;
+					await sleep(200);
+				}
+			}
+		}
+
+			setting.rendered = false;
+		} catch (error) {
+			console.log(`error loading characteristic ${key}`);
+			console.log(error.message);
+		}
+	}
+}
+
+function setConnectedUI() {
+	connectButton.className = "btn btn-success";
+	connectButton.disabled = true;
+	connectButton.innerText = "Connected";
+	message.disabled = false;
+	message.placeholder = "Enter text";
+	offButton.disabled = false;
+	onButton.disabled = false;
+	soffButton.disabled = false;
+	sonButton.disabled = false;
+	poffButton.disabled = false;
+	ponButton.disabled = false;
+	brightnessRange.disabled = false;
+	volumeRange.disabled = false;
+	document.getElementById("color-picker-container").classList.remove("disabled");
+}
+
+function setDisconnectedUI() {
+	connectButton.className = "btn btn-danger";
+	connectButton.disabled = false;
+	connectButton.innerText = "Connect";
+	message.disabled = true;
+	message.placeholder = "Disconnected";
+	offButton.disabled = true;
+	onButton.disabled = true;
+	soffButton.disabled = true;
+	sonButton.disabled = true;
+	poffButton.disabled = true;
+	ponButton.disabled = true;
+	brightnessRange.disabled = true;
+	volumeRange.disabled = true;
+	document.getElementById("color-picker-container").classList.add("disabled");
+}
+
+
+// Device dropped: reconnect forever. The plugin's bridge disconnecting tears
+// down the single shared BlueZ link, which drops this page too. The projector
+// re-advertises on disconnect and the bridges reconnect forever, so the link
+// always comes back. Because we no longer reload, a running ambience /
+// screen-capture track survives reconnects.
 async function onDisconnected() {
-	location.reload();
+	if (reconnecting) return;
+	reconnecting = true;
+
+	connectButton.className = "btn btn-primary";
+	connectButton.disabled = true;
+	connectButton.innerText = "Reconnecting…";
+
+	try {
+		let delay = 500;
+		for (;;) {
+			try {
+				await setupGatt(device);
+				setConnectedUI();
+				return;
+			} catch (error) {
+				console.log("reconnect failed:", error.message);
+				await sleep(delay);
+				delay = Math.min(delay * 2, 5000); // 500ms → 5s, capped
+			}
+		}
+	} finally {
+		reconnecting = false;
+	}
 }
 
 
