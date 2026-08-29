@@ -4,9 +4,6 @@ Firmware: `rgbify-projector-esp32` in sibling repo (`mem:projector_firmware`). F
 
 - Service UUID: `8bc01404-0000-4bf4-95d1-ce27a0477183`
 - Characteristics (all `8bc01404-000X-4bf4-95d1-ce27a0477183`):
-  - `0001` Video — Uint8 on/off
-  - `0002` Audio — Uint8 on/off
-  - `0003` Brightness — Uint8 0–255 (UI slider range 16–255)
   - `0004` Volume — Uint8 0–10 (UI slider 0–10)
   - `0005` Color — 3×Uint8 R,G,B
   - `0006` Projector — 256×Uint8 (8x8 RGB frame, ambience)

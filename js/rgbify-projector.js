@@ -1,7 +1,4 @@
 const SERVICE_UUID     = "8bc01404-0000-4bf4-95d1-ce27a0477183";
-const VIDEO_UUID       = "8bc01404-0001-4bf4-95d1-ce27a0477183";
-const AUDIO_UUID       = "8bc01404-0002-4bf4-95d1-ce27a0477183";
-const BRIGHTNESS_UUID  = "8bc01404-0003-4bf4-95d1-ce27a0477183";
 const VOLUME_UUID      = "8bc01404-0004-4bf4-95d1-ce27a0477183";
 const COLOR_UUID       = "8bc01404-0005-4bf4-95d1-ce27a0477183";
 const PROJECTOR_UUID   = "8bc01404-0006-4bf4-95d1-ce27a0477183";
@@ -17,40 +14,6 @@ let service = null;
 // BLE characteristic registry: maps each setting to its GATT uuid, properties,
 // byte structure and last-read data. connect() and BLEwriteTo() iterate it.
 const settings = {
-	video: {
-		uuid: VIDEO_UUID,
-		properties: ["BLERead", "BLEWrite"],
-		structure: ["Uint8"],
-		data: { V: [] },
-		writeBusy: false,
-		writeValue: null,
-		dataUpdated: (self) => {
-			if (self.data.V[0]) {
-				onButton.className = "btn btn-success";
-				offButton.className = "btn btn-secondary";
-			} else {
-				offButton.className = "btn btn-danger";
-				onButton.className = "btn btn-secondary";
-			}
-		},
-	},
-	audio: {
-		uuid: AUDIO_UUID,
-		properties: ["BLERead", "BLEWrite"],
-		structure: ["Uint8"],
-		data: { V: [] },
-		writeBusy: false,
-		writeValue: null,
-		dataUpdated: (self) => {
-			if (self.data.V[0]) {
-				sonButton.className = "btn btn-success";
-				soffButton.className = "btn btn-secondary";
-			} else {
-				soffButton.className = "btn btn-danger";
-				sonButton.className = "btn btn-secondary";
-			}
-		},
-	},
 	screensaver: {
 		uuid: SCREENSAVER_UUID,
 		properties: ["BLERead", "BLEWrite"],
@@ -66,17 +29,6 @@ const settings = {
 				poffButton.className = "btn btn-danger";
 				ponButton.className = "btn btn-secondary";
 			}
-		},
-	},
-	brightness: {
-		uuid: BRIGHTNESS_UUID,
-		properties: ["BLERead", "BLEWrite"],
-		structure: ["Uint8"],
-		data: { V: [] },
-		writeBusy: false,
-		writeValue: null,
-		dataUpdated: (self) => {
-			brightnessRange.value = self.data.V[0];
 		},
 	},
 	volume: {
@@ -169,8 +121,6 @@ let color = {
 
 const connectButton = document.getElementById("connectButton");
 const ambienceButton = document.getElementById("ambienceButton");
-const offButton = document.getElementById("offButton");
-const onButton = document.getElementById("onButton");
 const message = document.getElementById("message");
 
 // Hide the ambience (screen capture) section on clients without getDisplayMedia.
@@ -181,33 +131,6 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
 	if (ambiencePreviewRow) ambiencePreviewRow.style.display = "none";
 }
 
-
-// Video on/off buttons.
-offButton.onclick = () => {
-	offButton.className = "btn btn-danger";
-	onButton.className = "btn btn-secondary";
-	updateVideo(false);
-};
-onButton.onclick = () => {
-	onButton.className = "btn btn-success";
-	offButton.className = "btn btn-secondary";
-	updateVideo(true);
-};
-
-const soffButton = document.getElementById("soffButton");
-const sonButton = document.getElementById("sonButton");
-
-// Audio on/off buttons.
-soffButton.onclick = () => {
-	soffButton.className = "btn btn-danger";
-	sonButton.className = "btn btn-secondary";
-	updateAudio(false);
-};
-sonButton.onclick = () => {
-	sonButton.className = "btn btn-success";
-	soffButton.className = "btn btn-secondary";
-	updateAudio(true);
-};
 
 const poffButton = document.getElementById("poffButton");
 const ponButton = document.getElementById("ponButton");
@@ -229,13 +152,6 @@ const volumeRange = document.getElementById("volumeRange");
 // Volume slider.
 volumeRange.oninput = () => {
 	updateVolume(volumeRange.value);
-};
-
-const brightnessRange = document.getElementById("brightnessRange");
-
-// Brightness slider.
-brightnessRange.oninput = () => {
-	updateBrightness(brightnessRange.value);
 };
 
 
@@ -383,13 +299,8 @@ function setConnectedUI() {
 	connectButton.innerText = "Connected";
 	message.disabled = false;
 	message.placeholder = "Enter text";
-	offButton.disabled = false;
-	onButton.disabled = false;
-	soffButton.disabled = false;
-	sonButton.disabled = false;
 	poffButton.disabled = false;
 	ponButton.disabled = false;
-	brightnessRange.disabled = false;
 	volumeRange.disabled = false;
 	document.getElementById("color-picker-container").classList.remove("disabled");
 }
@@ -400,13 +311,8 @@ function setDisconnectedUI() {
 	connectButton.innerText = "Connect";
 	message.disabled = true;
 	message.placeholder = "Disconnected";
-	offButton.disabled = true;
-	onButton.disabled = true;
-	soffButton.disabled = true;
-	sonButton.disabled = true;
 	poffButton.disabled = true;
 	ponButton.disabled = true;
-	brightnessRange.disabled = true;
 	volumeRange.disabled = true;
 	document.getElementById("color-picker-container").classList.add("disabled");
 }
@@ -531,22 +437,6 @@ function initColorPicker() {
 }
 
 // Update helpers: set a Uint8 value and write it to the device.
-function updateVideo(state) {
-
-	const value = state ? 1 : 0;
-	settings.video.writeValue = Uint8Array.of(value);
-	BLEwriteTo("video");
-
-}
-
-function updateAudio(state) {
-
-	const value = state ? 1 : 0;
-	settings.audio.writeValue = Uint8Array.of(value);
-	BLEwriteTo("audio");
-
-}
-
 function updateScreensaver(state) {
 
 	const value = state ? 1 : 0;
@@ -559,15 +449,6 @@ function updateVolume(value) {
 
 	settings.volume.writeValue = Uint8Array.of(value);
 	BLEwriteTo("volume");
-
-}
-
-
-
-function updateBrightness(value) {
-
-	settings.brightness.writeValue = Uint8Array.of(value);
-	BLEwriteTo("brightness");
 
 }
 

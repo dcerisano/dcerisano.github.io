@@ -5,7 +5,7 @@
   "compaction": {
     "auto": false
   },
-  "plugin": ["@tarquinen/opencode-dcp@latest", "@dcerisano/opencode-rgbify-plugin@latest"],
+  "plugin": ["@tarquinen/opencode-dcp@latest", "opencode-rgbify-plugin@latest"],
   "command": {
     "dcp": {
       "template": "",

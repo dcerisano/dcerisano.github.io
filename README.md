@@ -1,6 +1,6 @@
 # RGBify Website
 
-Web Bluetooth control UI for the **RGBify Projector** — an 8x8 WS2812B LED matrix driven by ESP32 firmware. Control it from any browser: scroll text messages, pick a solid color, toggle video/audio/screensaver, adjust brightness/volume, or turn your screen into live ambient lighting.
+Web Bluetooth control UI for the **RGBify Projector** — an 8x8 WS2812B LED matrix driven by ESP32 firmware. Control it from any browser: scroll text messages, pick a solid color, toggle screensaver, adjust volume, or turn your screen into live ambient lighting.
 
 Companion firmware: [rgbify-projector](https://bitbucket.org/standard3d/rgbify-projector) (ESP32 Arduino sketch, Web Bluetooth GATT server).
 
@@ -14,8 +14,8 @@ https://dcerisano.github.io/rgbify/
 - **Message** — scrolling text (capped at 256 chars, Atari font on-device)
 - **Ambience** — captures your screen, downsamples it to 8x8, and streams frames over BLE at 30 FPS for ambient lighting
 - **Solid color** — full iro color picker
-- **Video / Audio / Screensaver** — on/off toggles
-- **Brightness** and **Volume** sliders
+- **Screensaver** — on/off toggle
+- **Volume** slider
 - Automatic reconnect — survives BLE drops (with exponential backoff) without reloading the page, so a running ambience stream persists
 - Multi-client sync — changes made on one page update every connected page via GATT notifications
 
@@ -37,9 +37,6 @@ Service UUID: `8bc01404-0000-4bf4-95d1-ce27a0477183`
 
 | Name        | UUID                                   | Properties | Data                          |
 | ----------- | -------------------------------------- | ---------- | ----------------------------- |
-| Video       | `…0001-4bf4-95d1-ce27a0477183`         | Read/Write | `Uint8` on/off                |
-| Audio       | `…0002-4bf4-95d1-ce27a0477183`         | Read/Write | `Uint8` on/off                |
-| Brightness  | `…0003-4bf4-95d1-ce27a0477183`         | Read/Write | `Uint8` 0–255                 |
 | Volume      | `…0004-4bf4-95d1-ce27a0477183`         | Read/Write | `Uint8` 0–10                  |
 | Color       | `…0005-4bf4-95d1-ce27a0477183`         | Read/Write | 3 × `Uint8` (R, G, B)         |
 | Projector   | `…0006-4bf4-95d1-ce27a0477183`         | Read/Write | 256 × `Uint8` (8x8 RGB frame) |

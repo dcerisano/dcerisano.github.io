@@ -5,6 +5,7 @@ All logic in `js/rgbify-projector.js` (~700 lines, vanilla JS). No framework. We
 ## settings registry
 - Central `settings` object maps key → { uuid, properties, structure, data, writeBusy, writePending, dataUpdated }.
 - `structure` is a list of types ("Uint8", "Uint8"/"Uint8"/"Uint8" for solidColor) consumed by `handleIncoming()` to unpack GATT bytes via DataView into `setting.data` columns, then calls `dataUpdated(setting)`.
+- Settings: `screensaver`, `volume`, `solidColor`, `projector`, `text` (video/audio/brightness characteristics were removed from firmware and website).
 - `setupGatt()` loops `settingKeys`, fetches each characteristic, `readValue()` (3 retries @ 200ms) and `startNotifications()` (same retry) — back-to-back GATT ops transiently fail on Android.
 - `handleIncoming()` is the notification handler → keeps every connected client page in sync.
 
