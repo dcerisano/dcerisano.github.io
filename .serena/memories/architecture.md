@@ -5,7 +5,7 @@ All logic in `js/rgbify-projector.js` (~615 lines, vanilla JS). No framework. We
 ## settings registry
 - Central `settings` object maps key → { uuid, properties, structure, data, writeBusy, writePending, dataUpdated }.
 - `structure` is a list of types ("Uint8", "Uint8"/"Uint8"/"Uint8" for solidColor) consumed by `handleIncoming()` to unpack GATT bytes via DataView into `setting.data` columns, then calls `dataUpdated(setting, dataReceived)` — the raw DataView is passed through (the `projector` handler needs all 256 bytes).
-- `projector`'s `dataUpdated` renders the live mirror via `renderProjectorFrame(dataReceived)` (256-byte guard, vertical flip so buffer row 0 = physical bottom, `putImageData` into the 8x8 mirror canvas).
+- `projector`'s `dataUpdated` renders the live mirror via `renderProjectorFrame(dataReceived)` (256-byte guard, rendered upright — buffer row y → canvas row y — `putImageData` into the 8x8 mirror canvas).
 - Settings: `screensaver`, `volume`, `solidColor`, `projector`, `text` (video/audio/brightness characteristics were removed from firmware and website).
 - `setupGatt()` loops `settingKeys`, fetches each characteristic, `readValue()` (3 retries @ 200ms) and `startNotifications()` (same retry) — back-to-back GATT ops transiently fail on Android.
 - `handleIncoming()` is the notification handler → keeps every connected client page in sync.
@@ -20,7 +20,7 @@ All logic in `js/rgbify-projector.js` (~615 lines, vanilla JS). No framework. We
 - `onDisconnected()`: reconnect forever, backoff 500ms→5s (capped); never reloads so a running ambience track survives drops. Firmware mismatch stops the reconnect loop.
 
 ## mirror canvas (permanent)
-- The 8x8 `#screencanvas` + `img/dots.png` overlay is ALWAYS visible, centered as the first element above the form (not controlled by the Ambience button). It renders the projector's actual display from firmware notifications (see `mem:ble_protocol`) via `renderProjectorFrame()`; black until a device connects (initial `readValue()` also renders). On disconnect the page reloads so the canvas resets to black.
+- The 8x8 `#screencanvas` + `img/dots.png` overlay is ALWAYS visible, scaled to the full control-form width (canvas `width:100%; height:auto`, square) and centered above the form as the first element (not controlled by the Ambience button). It renders the projector's actual display from firmware notifications (see `mem:ble_protocol`) via `renderProjectorFrame()`; black until a device connects (initial `readValue()` also renders). On disconnect the page reloads so the canvas resets to black.
 - The visible canvas is written ONLY by notifications (`renderProjectorFrame`) — ambience downsample uses an offscreen 8x8 `frameCanvas` (`frameCtx`, `willReadFrequently`) so the mirror is a single source of truth (no flicker between local draw and echo).
 
 ## ambience (screen capture, decoupled from the canvas)
