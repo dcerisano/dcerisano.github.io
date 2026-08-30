@@ -25,19 +25,15 @@ gh-pages branch.
    ./deploy.sh
    ```
    It rebuilds `rgbify/` from the current `main`, force-pushes to
-   `github` `gh-pages`, and cleans up its temp branch automatically.
+   `github` `gh-pages`, cleans up its temp branch automatically, then **polls
+   the live site until the update propagates** and prints a
+   `>> LIVE: site is up to date` message. It exits non-zero (with a timeout
+   warning) if the change hasn't gone live after ~5 minutes — in that case tell
+   the user the push succeeded but to check the site shortly. Do not re-push.
 
-3. **Poll the live site** — GitHub Pages has a short propagation delay.
-   ```bash
-   for i in $(seq 1 12); do
-     R=$(curl -s https://dcerisano.github.io/rgbify/js/rgbify-projector.js | grep -c "device.gatt.disconnect")
-     echo "poll $i: count=$R"
-     [ "$R" = "2" ] && { echo "DEPLOYED"; break; }
-     sleep 10
-   done
-   ```
-   The `grep` marker is just an example — poll for whatever change was just
-   deployed. If the old content still shows, keep polling; do not re-push.
+3. **Wait for the script's "LIVE" confirmation** and pass it to the user. Only
+   if the script times out should you manually spot-check with curl
+   (e.g. `curl -s https://dcerisano.github.io/rgbify/js/rgbify-projector.js`).
 
 ## Do NOT
 
