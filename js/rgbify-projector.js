@@ -6,7 +6,7 @@ const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
 const SCREENSAVER_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
-const EXPECTED_FW_VERSION   = "0.1.4";
+const EXPECTED_FW_VERSION   = "0.1.5";
 
 let ambience = false;
 const FPS = 30;
@@ -52,7 +52,12 @@ const settings = {
 		structure: ["Uint8"],
 		data: { V: [] },
 		writeBusy: false,
-		writeValue: null
+		writeValue: null,
+		// Render the live projector display into the mirror canvas. The
+		// firmware broadcasts its actual matrix after every frame change.
+		dataUpdated: (self, dataReceived) => {
+			renderProjectorFrame(dataReceived);
+		}
 	},
 	// Read/write: user message text.
 	text: {
@@ -127,12 +132,11 @@ const ambienceButton = document.getElementById("ambienceButton");
 const message = document.getElementById("message");
 const firmwareVersion = document.getElementById("firmwareVersion");
 
-// Hide the ambience (screen capture) section on clients without getDisplayMedia.
+// Hide the ambience (screen capture) control on clients without getDisplayMedia.
+// The mirror canvas stays visible regardless — it displays the projector state.
 if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
 	const ambienceRow = document.getElementById("ambienceRow");
-	const ambiencePreviewRow = document.getElementById("ambiencePreviewRow");
 	if (ambienceRow) ambienceRow.style.display = "none";
-	if (ambiencePreviewRow) ambiencePreviewRow.style.display = "none";
 }
 
 
@@ -428,7 +432,7 @@ function handleIncoming(setting, dataReceived) {
 		i++;
 	});
 	setting.rendered = false;
-	if (setting.dataUpdated) setting.dataUpdated(setting);
+	if (setting.dataUpdated) setting.dataUpdated(setting, dataReceived);
 }
 
 // Create the iro color picker wired to the solidColor characteristic.
@@ -487,6 +491,32 @@ function updateProjector(value) {
 
 }
 
+// Render a 256-byte 8x8 RGBA frame from the firmware into the mirror canvas,
+// vertically flipped so the canvas matches the physical matrix orientation
+// (the firmware stores buffer row 0 as the physical bottom row).
+function renderProjectorFrame(dataReceived) {
+	if (!dataReceived || dataReceived.byteLength < 256) return;
+
+	const bytes = new Uint8Array(
+		dataReceived.buffer,
+		dataReceived.byteOffset,
+		256
+	);
+	const img = context.createImageData(8, 8);
+	for (let y = 0; y < 8; y++) {
+		const srcRow = (7 - y) * 32;
+		for (let x = 0; x < 8; x++) {
+			const src = srcRow + x * 4;
+			const dst = (y * 8 + x) * 4;
+			img.data[dst]     = bytes[src];
+			img.data[dst + 1] = bytes[src + 1];
+			img.data[dst + 2] = bytes[src + 2];
+			img.data[dst + 3] = bytes[src + 3];
+		}
+	}
+	context.putImageData(img, 0, 0);
+}
+
 function updateText(value) {
 	value = value.slice(0, 256);
 	settings.text.writeValue = new Uint8Array(str2ab(value));
@@ -495,7 +525,7 @@ function updateText(value) {
 
 
 
-// Hidden 8x8 preview canvas for the ambience stream (overlay adds the dot grid).
+// 8x8 mirror canvas showing the projector's live display (overlay adds the dot grid).
 const canvas = document.getElementById('screencanvas');
 canvas.width = 8;
 canvas.height = 8;
@@ -503,22 +533,27 @@ canvas.style.width = '100px';
 canvas.style.height = '100px';
 canvas.style.backgroundColor = '#000';
 canvas.style.imageRendering = 'pixelated';
-canvas.style.display = "none";
 
 const overlay = document.getElementById('overlay');
 overlay.width = 100;
 overlay.height = 100;
 overlay.style.width = '100px';
 overlay.style.height = '100px';
-overlay.style.display = "none";
 
-const context = canvas.getContext('2d', { willReadFrequently: true });
+const context = canvas.getContext('2d');
 const oc = document.createElement("canvas");
 oc.width = 100;
 oc.height = 100;
 
 const octx = oc.getContext('2d');
 octx.filter = "blur(5px) contrast(120%)";
+
+// Offscreen 8x8 scratch canvas: the ambience downsample source. Kept off the
+// visible mirror canvas so firmware notifications are the single source of truth.
+const frameCanvas = document.createElement("canvas");
+frameCanvas.width = 8;
+frameCanvas.height = 8;
+const frameCtx = frameCanvas.getContext('2d', { willReadFrequently: true });
 
 let track = null;
 let capture = null;
@@ -542,8 +577,6 @@ async function connectAmbience() {
 		ambienceButton.innerText = "Connected";
 		ambience = true;
 		ambienceButton.disabled = true;
-		canvas.style.display = "block";
-		overlay.style.display = "block";
 	}).catch(err => {
 		console.log('requestMedia error:');
 		console.log(err);
@@ -551,7 +584,6 @@ async function connectAmbience() {
 		ambienceButton.className = "btn btn-danger";
 		ambienceButton.disabled = true;
 		ambienceButton.innerText = "Connect";
-		canvas.style.display = "none";
 	})
 }
 
@@ -564,8 +596,6 @@ function onAmbienceDisconnected() {
 	ambienceButton.innerText = "Connect";
 	clearInterval(interval);
 	track.stop();
-	canvas.style.display = "none";
-	overlay.style.display = "none";
 }
 
 
@@ -586,9 +616,9 @@ async function streamer() {
 					h = w;
 				}
 
-				octx.drawImage(bitmap, x, y, w, h, 0, 0, 100, 100); //step
-				context.drawImage(oc, 0, 0, 8, 8);
-				updateProjector(context.getImageData(0, 0, 8, 8).data);
+			octx.drawImage(bitmap, x, y, w, h, 0, 0, 100, 100); //step
+			frameCtx.drawImage(oc, 0, 0, 8, 8);
+			updateProjector(frameCtx.getImageData(0, 0, 8, 8).data);
 
 			}).catch(err => { console.log(err); /*sometimes capture is undefined, ignore as frame skip*/ })
 }
