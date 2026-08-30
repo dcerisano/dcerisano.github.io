@@ -249,11 +249,17 @@ async function connect() {
 }
 
 // Read firmware version from Device Information Service (DIS).
+// Returns null if DIS is unavailable so the connection can still proceed.
 async function readFirmwareVersion(server) {
-	const disService = await server.getPrimaryService(DIS_UUID);
-	const fwChar = await disService.getCharacteristic(FIRMWARE_REV_UUID);
-	const data = await fwChar.readValue();
-	return new TextDecoder().decode(data);
+	try {
+		const disService = await server.getPrimaryService(DIS_UUID);
+		const fwChar = await disService.getCharacteristic(FIRMWARE_REV_UUID);
+		const data = await fwChar.readValue();
+		return new TextDecoder().decode(data).trim();
+	} catch (error) {
+		console.warn("Could not read firmware version from DIS:", error);
+		return null;
+	}
 }
 
 // GATT setup, shared by the initial connect and every reconnect. The old
@@ -265,7 +271,7 @@ async function setupGatt(device) {
 	service = await server.getPrimaryService(SERVICE_UUID);
 
 	const fwVersion = await readFirmwareVersion(server);
-	if (fwVersion !== EXPECTED_FW_VERSION) {
+	if (fwVersion !== null && fwVersion !== EXPECTED_FW_VERSION) {
 		alert(
 			`Firmware version mismatch: device reports "${fwVersion}", expected "${EXPECTED_FW_VERSION}".\n\n` +
 			"Please forget this device in your browser's Bluetooth settings and re-pair it."
