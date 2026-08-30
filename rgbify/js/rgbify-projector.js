@@ -4,6 +4,9 @@ const COLOR_UUID       = "8bc01404-0005-4bf4-95d1-ce27a0477183";
 const PROJECTOR_UUID   = "8bc01404-0006-4bf4-95d1-ce27a0477183";
 const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
 const SCREENSAVER_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
+const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
+const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
+const EXPECTED_FW_VERSION   = "0.1.4";
 
 let ambience = false;
 const FPS = 30;
@@ -235,8 +238,22 @@ async function connect() {
 		setConnectedUI();
 	} catch (error) {
 		console.error(error.message);
-		location.reload();
+		if (!error.message.startsWith("Firmware version mismatch")) {
+			location.reload();
+		} else {
+			connectButton.className = "btn btn-danger";
+			connectButton.disabled = false;
+			connectButton.innerText = "Connect";
+		}
 	}
+}
+
+// Read firmware version from Device Information Service (DIS).
+async function readFirmwareVersion(server) {
+	const disService = await server.getPrimaryService(DIS_UUID);
+	const fwChar = await disService.getCharacteristic(FIRMWARE_REV_UUID);
+	const data = await fwChar.readValue();
+	return new TextDecoder().decode(data);
 }
 
 // GATT setup, shared by the initial connect and every reconnect. The old
@@ -246,7 +263,16 @@ async function setupGatt(device) {
 	server = await device.gatt.connect();
 	await sleep(500);
 	service = await server.getPrimaryService(SERVICE_UUID);
-        
+
+	const fwVersion = await readFirmwareVersion(server);
+	if (fwVersion !== EXPECTED_FW_VERSION) {
+		alert(
+			`Firmware version mismatch: device reports "${fwVersion}", expected "${EXPECTED_FW_VERSION}".\n\n` +
+			"Please forget this device in your browser's Bluetooth settings and re-pair it."
+		);
+		throw new Error(`Firmware version mismatch: ${fwVersion}`);
+	}
+
 	for (const key of settingKeys) {
 		
 		try {
@@ -339,6 +365,13 @@ async function onDisconnected() {
 				setConnectedUI();
 				return;
 			} catch (error) {
+				if (error.message.startsWith("Firmware version mismatch")) {
+					connectButton.className = "btn btn-danger";
+					connectButton.disabled = false;
+					connectButton.innerText = "Connect";
+					reconnecting = false;
+					return;
+				}
 				console.log("reconnect failed:", error.message);
 				await sleep(delay);
 				delay = Math.min(delay * 2, 5000); // 500ms → 5s, capped
