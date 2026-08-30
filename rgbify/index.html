@@ -41,6 +41,11 @@ label {
 	color: #d0d0d0;
 }
 
+/* Vertically center the label and content columns in every row. */
+.form-group.row {
+	align-items: center;
+}
+
 canvas {
 	width: 120px;
 }
@@ -132,7 +137,7 @@ canvas {
 			<!-- Firmware version (read from DIS) -->
 			<div class="form-group row" style="margin-top: 1rem">
 				<label class="col-form-label">Firmware</label>
-				<div id="firmwareVersion" style="color: #d0d0d0; padding-top: calc(.375rem + 1px); line-height: 1.5">version —</div>
+				<div id="firmwareVersion" style="color: #d0d0d0">version —</div>
 			</div>
 
 			<!-- Hidden input synced with the iro picker -->
