@@ -491,9 +491,8 @@ function updateProjector(value) {
 
 }
 
-// Render a 256-byte 8x8 RGBA frame from the firmware into the mirror canvas,
-// vertically flipped so the canvas matches the physical matrix orientation
-// (the firmware stores buffer row 0 as the physical bottom row).
+// Render a 256-byte 8x8 RGBA frame from the firmware into the mirror canvas.
+// Rendered upright (buffer row y -> canvas row y) so text reads correctly.
 function renderProjectorFrame(dataReceived) {
 	if (!dataReceived || dataReceived.byteLength < 256) return;
 
@@ -504,7 +503,7 @@ function renderProjectorFrame(dataReceived) {
 	);
 	const img = context.createImageData(8, 8);
 	for (let y = 0; y < 8; y++) {
-		const srcRow = (7 - y) * 32;
+		const srcRow = y * 32;
 		for (let x = 0; x < 8; x++) {
 			const src = srcRow + x * 4;
 			const dst = (y * 8 + x) * 4;
@@ -529,16 +528,14 @@ function updateText(value) {
 const canvas = document.getElementById('screencanvas');
 canvas.width = 8;
 canvas.height = 8;
-canvas.style.width = '100px';
-canvas.style.height = '100px';
+canvas.style.width = '100%';
+canvas.style.height = 'auto';
 canvas.style.backgroundColor = '#000';
 canvas.style.imageRendering = 'pixelated';
 
 const overlay = document.getElementById('overlay');
-overlay.width = 100;
-overlay.height = 100;
-overlay.style.width = '100px';
-overlay.style.height = '100px';
+overlay.style.width = '100%';
+overlay.style.height = '100%';
 
 const context = canvas.getContext('2d');
 const oc = document.createElement("canvas");
