@@ -31,7 +31,8 @@ git archive main | tar -C "$BUILD_DIR" -x
 
 # Trim non-site files, add .nojekyll.
 rm -rf "$BUILD_DIR/.git" "$BUILD_DIR/index-org.html" "$BUILD_DIR/opencode.json" \
-	"$BUILD_DIR/README.md" "$BUILD_DIR/.opencode" "$BUILD_DIR/.serena" "$BUILD_DIR/.github"
+	"$BUILD_DIR/README.md" "$BUILD_DIR/.opencode" "$BUILD_DIR/.serena" "$BUILD_DIR/.github" \
+	"$BUILD_DIR/deploy.sh"
 touch "$BUILD_DIR/.nojekyll"
 
 echo ">> Switching to gh-pages worktree..."
