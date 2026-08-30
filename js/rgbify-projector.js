@@ -350,11 +350,10 @@ function setDisconnectedUI() {
 }
 
 
-// Device dropped: reconnect forever. The plugin's bridge disconnecting tears
-// down the single shared BlueZ link, which drops this page too. The projector
-// re-advertises on disconnect and the bridges reconnect forever, so the link
-// always comes back. Because we no longer reload, a running ambience /
-// screen-capture track survives reconnects.
+// Device dropped: tear down and reload. The page reload properly
+// disconnects the GATT link (via window.onbeforeunload), which triggers
+// the projector firmware's disconnect/connect messages. On reload,
+// connect() runs automatically to re-establish the BLE link.
 async function onDisconnected() {
 	if (reconnecting) return;
 	reconnecting = true;
@@ -364,25 +363,9 @@ async function onDisconnected() {
 	connectButton.innerText = "Reconnecting…";
 
 	try {
-		let delay = 500;
-		for (;;) {
-			try {
-				await setupGatt(device);
-				setConnectedUI();
-				return;
-			} catch (error) {
-				if (error.message.startsWith("Firmware version mismatch")) {
-					connectButton.className = "btn btn-danger";
-					connectButton.disabled = false;
-					connectButton.innerText = "Connect";
-					reconnecting = false;
-					return;
-				}
-				console.log("reconnect failed:", error.message);
-				await sleep(delay);
-				delay = Math.min(delay * 2, 5000); // 500ms → 5s, capped
-			}
-		}
+		sessionStorage.setItem('bleReloaded', '1');
+		await sleep(500);
+		location.reload();
 	} finally {
 		reconnecting = false;
 	}
@@ -620,3 +603,9 @@ function str2ab(str) {
         if (device != null)
            device.gatt.disconnect();
     };
+
+  // Auto-reconnect after page reload triggered by disconnect.
+  if (sessionStorage.getItem('bleReloaded') === '1') {
+      sessionStorage.removeItem('bleReloaded');
+      connect();
+  }
