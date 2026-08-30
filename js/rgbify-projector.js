@@ -125,6 +125,7 @@ let color = {
 const connectButton = document.getElementById("connectButton");
 const ambienceButton = document.getElementById("ambienceButton");
 const message = document.getElementById("message");
+const firmwareVersion = document.getElementById("firmwareVersion");
 
 // Hide the ambience (screen capture) section on clients without getDisplayMedia.
 if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
@@ -271,6 +272,9 @@ async function setupGatt(device) {
 	service = await server.getPrimaryService(SERVICE_UUID);
 
 	const fwVersion = await readFirmwareVersion(server);
+	if (fwVersion !== null) {
+		firmwareVersion.textContent = `version ${fwVersion}`;
+	}
 	if (fwVersion !== null && fwVersion !== EXPECTED_FW_VERSION) {
 		alert(
 			`Firmware version mismatch: device reports "${fwVersion}", expected "${EXPECTED_FW_VERSION}".\n\n` +
