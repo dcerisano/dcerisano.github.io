@@ -1,6 +1,6 @@
 # RGBify Website — architecture (BLE client)
 
-All logic in `js/rgbify-projector.js` (~700 lines, vanilla JS). No framework. Web Bluetooth + getDisplayMedia.
+All logic in `js/rgbify-projector.js` (~615 lines, vanilla JS). No framework. Web Bluetooth + getDisplayMedia.
 
 ## settings registry
 - Central `settings` object maps key → { uuid, properties, structure, data, writeBusy, writePending, dataUpdated }.
@@ -15,8 +15,8 @@ All logic in `js/rgbify-projector.js` (~700 lines, vanilla JS). No framework. We
 
 ## connect / reconnect
 - `connect()`: `requestDevice({ filters: [{ services: [SERVICE_UUID] }] })`; registers `gattserverdisconnected` → `onDisconnected` exactly once (`device._hasDisconnectListener`). On error `location.reload()`.
-- `setupGatt()` is shared by connect and reconnect and re-fetches server/service/characteristics each call (stale after drop).
-- `onDisconnected()`: reconnect forever, backoff 500ms→5s (capped); never reloads so a running ambience track survives drops.
+- `setupGatt()` is shared by connect and reconnect and re-fetches server/service/characteristics each call (stale after drop). Before setting up GATT, it reads the firmware version from the Device Information Service (DIS, `0x180A` / `0x2A26`) and verifies it matches `"0.1.4"`. On mismatch, an alert tells the user to forget/re-pair the device and the connection is cancelled (no reload, no reconnect retry).
+- `onDisconnected()`: reconnect forever, backoff 500ms→5s (capped); never reloads so a running ambience track survives drops. Firmware mismatch stops the reconnect loop.
 
 ## ambience
 - `connectAmbience()`: `getDisplayMedia` (desktop `{displaySurface:"monitor"}`, Android `{video:true}`), ImageCapture, `setInterval(streamer, FPS=30)`.

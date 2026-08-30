@@ -3,7 +3,7 @@
 Firmware: `rgbify-projector-esp32` in sibling repo (`mem:projector_firmware`). Full protocol table in that repo's README.
 
 - Service UUID: `8bc01404-0000-4bf4-95d1-ce27a0477183`
-- Firmware version: Device Information Service (`0x180A`) Firmware Revision String (`0x2A26`) = "0.1.4"
+- Firmware version: Device Information Service (`0x180A`) Firmware Revision String (`0x2A26`) = "0.1.4". Web app reads this on connect and rejects mismatches.
 - Characteristics (all `8bc01404-000X-4bf4-95d1-ce27a0477183`):
   - `0004` Volume — Uint8 0–10 (UI slider 0–10)
   - `0005` Color — 3×Uint8 R,G,B
@@ -12,4 +12,4 @@ Firmware: `rgbify-projector-esp32` in sibling repo (`mem:projector_firmware`). F
   - `0008` Screensaver — Uint8 on/off
   - `0009` Text Bridge — write-no-response, raw chars (not used by this web app)
 - Pairing: passkey `123456`.
-- JS constants: `SERVICE_UUID` + `*_UUID` at top of `js/rgbify-projector.js`.
+- JS constants: `SERVICE_UUID` + `*_UUID` + `DIS_UUID` + `FIRMWARE_REV_UUID` + `EXPECTED_FW_VERSION` at top of `js/rgbify-projector.js`.
