@@ -225,6 +225,7 @@ async function connect() {
 						services: [SERVICE_UUID],
 					},
 				],
+				optionalServices: [DIS_UUID],
 			});
              
 		}
