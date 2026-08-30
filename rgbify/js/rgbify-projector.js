@@ -350,10 +350,11 @@ function setDisconnectedUI() {
 }
 
 
-// Device dropped: tear down and reload. Explicitly disconnects the GATT
-// link before reloading, triggering the projector firmware's disconnect/
-// connect messages. On reload, connect() runs automatically to re-establish
-// the BLE link.
+// Device dropped: reload. The app never calls device.gatt.disconnect() on any
+// platform — the browser/OS own connection caching and teardown. This handler
+// only runs after gattserverdisconnected, i.e. the platform already dropped
+// the link. We just reload; on reload connect() runs automatically to
+// re-establish the BLE link (reusing the cached device).
 async function onDisconnected() {
 	if (reconnecting) return;
 	reconnecting = true;
@@ -364,9 +365,6 @@ async function onDisconnected() {
 
 	try {
 		sessionStorage.setItem('bleReloaded', '1');
-		if (device != null) {
-			try { device.gatt.disconnect(); } catch(e) { /* already disconnected */ }
-		}
 		await sleep(500);
 		location.reload();
 	} finally {
@@ -599,13 +597,6 @@ function str2ab(str) {
 	}
 	return buf;
 }
-
-  // Disconnect GATT when the page unloads.
-  window.onbeforeunload = function(event)
-    {
-        if (device != null)
-           device.gatt.disconnect();
-    };
 
   // Auto-reconnect after page reload triggered by disconnect.
   if (sessionStorage.getItem('bleReloaded') === '1') {
