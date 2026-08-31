@@ -45,6 +45,17 @@ Service UUID: `8bc01404-0000-4bf4-95d1-ce27a0477183`
 
 (The full UUID is `8bc01404-000X-4bf4-95d1-ce27a0477183`, where `000X` is the characteristic suffix above.)
 
+## Opencode Plugin
+
+The `opencode-rgbify-plugin` streams LLM chat deltas to the projector over BLE and provides a `/rgbify` slash command:
+
+- `/rgbify volume <0-10>` — set host auralizer volume
+- `/rgbify wallpaper` — open the mirror webapp (8x8 Atari-font display, ACK-gated)
+- `/rgbify wallpaper close` — close the mirror
+- `/rgbify wallpaper url` — print the mirror URL
+
+The plugin is loaded from `file:///home/kronos/git/opencode-rgbify-plugin/dist/index.js`. The mirror webapp is fully independent of the BLE projector — it renders the same coalesced text as a local 8x8 matrix.
+
 ## Development
 
 Static site — no build step. Serve the folder over localhost:
@@ -59,6 +70,8 @@ python3 -m http.server
 - `manifest.json` — PWA manifest (standalone, landscape)
 
 `index-org.html`, `js/data.js`, `js/grid/`, `js/util/`, `yui/`, `css/` and most of `img/` are legacy assets from the original 2018 "RGBify studio" app and are unused by the current page.
+
+The companion `opencode-rgbify-plugin` repo (`~/git/opencode-rgbify-plugin`) provides the `/rgbify` slash command and mirror wallpaper. Build with `npm run build` (TypeScript → `dist/`).
 
 ## Repository
 

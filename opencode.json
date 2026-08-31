@@ -10,6 +10,10 @@
     "dcp": {
       "template": "",
       "description": "DCP panel: context, stats, sweep, manual mode"
+    },
+    "rgbify": {
+      "template": "$ARGUMENTS",
+      "description": "RGBify controls: rgbify volume <0-10>, wallpaper, wallpaper close, wallpaper url"
     }
   },
   "agent": {
