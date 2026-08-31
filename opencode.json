@@ -5,7 +5,7 @@
   "compaction": {
     "auto": false
   },
-  "plugin": ["@tarquinen/opencode-dcp@latest", "file:///home/kronos/git/opencode-rgbify-plugin/dist/index.js"],
+  "plugin": ["@tarquinen/opencode-dcp@latest", "../opencode-rgbify-plugin/dist/index.js"],
   "command": {
     "dcp": {
       "template": "",
