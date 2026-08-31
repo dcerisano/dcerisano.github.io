@@ -29,7 +29,7 @@ https://dcerisano.github.io/rgbify/
 
 1. Open the page, click **Connect**, and pick the projector from the chooser.
 2. Use the sliders, toggles, color picker, or type a message and press Enter.
-3. **Start Capture** under *Ambience* to stream your screen to the matrix (screen-pick the window/tab you want mirrored).
+3. **Screenshare** under *Ambience* to stream your screen to the matrix (screen-pick the window/tab you want mirrored).
 
 ## BLE Protocol
 
