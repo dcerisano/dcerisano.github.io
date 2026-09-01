@@ -214,11 +214,17 @@ if ("mediaDevices" in navigator) {
 	);
 }
 
-// Send the message on form submit.
+// Send the message on form submit. Only the field that triggered the submit
+// (the focused input) is sent, so Enter in Message writes only text and Enter
+// in Bridge writes only the bridge channel.
 form.addEventListener("submit", function(event) {
 	event.preventDefault();
-	updateText(message.value);
-	updateBridgeText(bridgeMessage.value);
+	const active = document.activeElement;
+	if (active === message) {
+		updateText(message.value);
+	} else if (active === bridgeMessage) {
+		updateBridgeText(bridgeMessage.value);
+	}
 });
 
 let device = null;
