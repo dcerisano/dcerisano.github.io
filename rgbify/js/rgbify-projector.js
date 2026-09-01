@@ -259,6 +259,7 @@ async function connect() {
 		}
 
 		await setupGatt(device);
+		updateText("WEBBLE");
 		setConnectedUI();
 	} catch (error) {
 		console.error(error.message);
