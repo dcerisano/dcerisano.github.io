@@ -59,13 +59,15 @@ canvas {
 	width: 120px;
 }
 
-/* Message box placeholder: red while disconnected; light gray when connected (default). */
-#message:disabled::placeholder {
+/* Text box placeholder: red while disconnected; light gray when connected (default). */
+#message:disabled::placeholder,
+#bridgeMessage:disabled::placeholder {
 	color: #dc3545;
 }
 
-/* Grey out the message box background while disconnected. */
-#message:disabled {
+/* Grey out the text box background while disconnected. */
+#message:disabled,
+#bridgeMessage:disabled {
 	background-color: #9e9e9e;
 	color: #d0d0d0;
 }
@@ -84,7 +86,6 @@ canvas {
 		<form  id="form">
 			<!-- Hidden submit button: with more than one text input, the form needs an
 			     explicit submit button or Enter stops submitting (implicit submission). -->
-			<!-- deploy-bump-1 -->
 			<input type="submit" style="display: none" />
 
 			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output -->
@@ -114,17 +115,17 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Message text -->
+			<!-- Scroller text -->
 			<div class="form-group row">
-				<label class="col-form-label">Message</label>
+				<label class="col-form-label">Scroller</label>
 				<div>
 					<input id="message" class="form-control" style="width: 200px" type="text" maxlength="256" placeholder="Disconnected" disabled>
 				</div>
 			</div>
 
-			<!-- Bridge text -->
+			<!-- Blitter text -->
 			<div class="form-group row">
-				<label class="col-form-label">Bridge</label>
+				<label class="col-form-label">Blitter</label>
 				<div>
 					<input id="bridgeMessage" class="form-control" style="width: 200px" type="text" maxlength="256" placeholder="Disconnected" disabled>
 				</div>
