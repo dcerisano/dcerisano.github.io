@@ -3,6 +3,7 @@ const VOLUME_UUID      = "8bc01404-0004-4bf4-95d1-ce27a0477183";
 const COLOR_UUID       = "8bc01404-0005-4bf4-95d1-ce27a0477183";
 const PROJECTOR_UUID   = "8bc01404-0006-4bf4-95d1-ce27a0477183";
 const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
+const BRIDGE_UUID      = "8bc01404-0009-4bf4-95d1-ce27a0477183";
 const SCREENSAVER_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
@@ -62,6 +63,15 @@ const settings = {
 	// Read/write: user message text.
 	text: {
 		uuid: TEXT_UUID,
+		properties: ["BLERead", "BLEWrite"],
+		structure: ["Uint8"],
+		data: { V: [] },
+		writeBusy: false,
+		writeValue: null
+	},
+	// Read/write: bridge text channel (raw chars, auralized one note per frame).
+	bridge: {
+		uuid: BRIDGE_UUID,
 		properties: ["BLERead", "BLEWrite"],
 		structure: ["Uint8"],
 		data: { V: [] },
@@ -130,6 +140,7 @@ let color = {
 const connectButton = document.getElementById("connectButton");
 const ambienceButton = document.getElementById("ambienceButton");
 const message = document.getElementById("message");
+const bridgeMessage = document.getElementById("bridgeMessage");
 const firmwareVersion = document.getElementById("firmwareVersion");
 
 // Hide the ambience (screen capture) control on clients without getDisplayMedia.
@@ -207,6 +218,7 @@ if ("mediaDevices" in navigator) {
 form.addEventListener("submit", function(event) {
 	event.preventDefault();
 	updateText(message.value);
+	updateBridgeText(bridgeMessage.value);
 });
 
 let device = null;
@@ -340,6 +352,8 @@ function setConnectedUI() {
 	connectButton.innerText = "Connected";
 	message.disabled = false;
 	message.placeholder = "Enter text";
+	bridgeMessage.disabled = false;
+	bridgeMessage.placeholder = "Enter text";
 	poffButton.disabled = false;
 	ponButton.disabled = false;
 	volumeRange.disabled = false;
@@ -352,6 +366,8 @@ function setDisconnectedUI() {
 	connectButton.innerText = "Connect";
 	message.disabled = true;
 	message.placeholder = "Disconnected";
+	bridgeMessage.disabled = true;
+	bridgeMessage.placeholder = "Disconnected";
 	poffButton.disabled = true;
 	ponButton.disabled = true;
 	volumeRange.disabled = true;
@@ -520,6 +536,12 @@ function updateText(value) {
 	value = value.slice(0, 256);
 	settings.text.writeValue = new Uint8Array(str2ab(value));
 	BLEwriteTo("text");
+}
+
+function updateBridgeText(value) {
+	value = value.slice(0, 256);
+	settings.bridge.writeValue = new Uint8Array(str2ab(value));
+	BLEwriteTo("bridge");
 }
 
 
