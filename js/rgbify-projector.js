@@ -11,6 +11,8 @@ const EXPECTED_FW_VERSION   = "0.1.5";
 
 let ambience = false;
 const FPS = 30;
+const RECONNECT_DELAY = 500;
+const RECONNECT_MAX_DELAY = 5000;
 
 let server = null;
 let service = null;
@@ -259,18 +261,19 @@ async function connect() {
 		}
 
 		await setupGatt(device);
-		updateText(" WEB   ");
-		setConnectedUI();
+		onConnected();
 	} catch (error) {
 		console.error(error.message);
-		if (!error.message.startsWith("Firmware version mismatch")) {
-			location.reload();
-		} else {
-			connectButton.className = "btn btn-danger";
-			connectButton.disabled = false;
-			connectButton.innerText = "Connect";
-		}
+		connectButton.className = "btn btn-danger";
+		connectButton.disabled = false;
+		connectButton.innerText = "Connect";
 	}
+}
+
+// Called whenever GATT setup succeeds (initial connect or reconnect).
+function onConnected() {
+	updateText(" WEB   ");
+	setConnectedUI();
 }
 
 // Read firmware version from Device Information Service (DIS).
@@ -382,11 +385,8 @@ function setDisconnectedUI() {
 }
 
 
-// Device dropped: reload. The app never calls device.gatt.disconnect() on any
-// platform — the browser/OS own connection caching and teardown. This handler
-// only runs after gattserverdisconnected, i.e. the platform already dropped
-// the link. We just reload; on reload connect() runs automatically to
-// re-establish the BLE link (reusing the cached device).
+// Device dropped: reconnect in place with exponential backoff so the page
+// (and a running ambience stream) survives transient drops. Never reloads.
 async function onDisconnected() {
 	if (reconnecting) return;
 	reconnecting = true;
@@ -395,14 +395,36 @@ async function onDisconnected() {
 	connectButton.disabled = true;
 	connectButton.innerText = "Reconnecting…";
 
+	let backoff = RECONNECT_DELAY;
 	try {
-		sessionStorage.setItem('bleReloaded', '1');
-		await sleep(500);
-		location.reload();
+		for (;;) {
+			await sleep(backoff);
+			try {
+				await setupGatt(device);
+				onConnected();
+				return;
+			} catch (error) {
+				console.error("Reconnect failed:", error.message);
+				if (error.message.startsWith("Firmware version mismatch")) {
+					connectButton.className = "btn btn-danger";
+					connectButton.disabled = false;
+					connectButton.innerText = "Connect";
+					return;
+				}
+				backoff = Math.min(backoff * 2, RECONNECT_MAX_DELAY);
+			}
+		}
 	} finally {
 		reconnecting = false;
 	}
 }
+
+// Remember the live connection so the next page load auto-reconnects.
+window.addEventListener("pagehide", function() {
+	if (device && device.gatt && device.gatt.connected) {
+		sessionStorage.setItem("bleReloaded", "1");
+	}
+});
 
 
 
