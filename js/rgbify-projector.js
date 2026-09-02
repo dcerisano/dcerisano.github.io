@@ -13,6 +13,10 @@ let ambience = false;
 const FPS = 30;
 const RECONNECT_DELAY = 500;
 const RECONNECT_MAX_DELAY = 5000;
+// Whole-setup watchdog: on Chrome/Linux, a GATT op past connect() (e.g.
+// getPrimaryService, Chromium #40212297) can hang forever after a drop, which
+// would stall the reconnect loop and freeze the mirror. Cap the entire setup.
+const RECONNECT_SETUP_TIMEOUT = 15000;
 
 let server = null;
 let service = null;
@@ -431,7 +435,7 @@ async function onDisconnected() {
 		for (;;) {
 			await sleep(backoff);
 			try {
-				await setupGatt(device);
+				await withTimeout(setupGatt(device), RECONNECT_SETUP_TIMEOUT);
 				onConnected();
 				return;
 			} catch (error) {
