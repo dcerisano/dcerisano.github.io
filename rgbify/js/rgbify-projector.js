@@ -43,7 +43,7 @@ const settings = {
 		dataUpdated: (self) => {
 			const v = self.data.V[0];
 			const m = BACKGROUND_MODES.find((m) => m.value === v);
-			if (m) backgroundSelect.value = m.value;
+			if (m && backgroundSelect) backgroundSelect.value = m.value;
 		},
 	},
 	volume: {
@@ -196,15 +196,17 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
 
 // Background mode <select> (options built from BACKGROUND_MODES).
 const backgroundSelect = document.getElementById("backgroundSelect");
-for (const m of BACKGROUND_MODES) {
-	const opt = document.createElement("option");
-	opt.value = m.value;
-	opt.textContent = m.label;
-	backgroundSelect.appendChild(opt);
+if (backgroundSelect) {
+	for (const m of BACKGROUND_MODES) {
+		const opt = document.createElement("option");
+		opt.value = m.value;
+		opt.textContent = m.label;
+		backgroundSelect.appendChild(opt);
+	}
+	backgroundSelect.onchange = () => {
+		updateBackground(Number(backgroundSelect.value));
+	};
 }
-backgroundSelect.onchange = () => {
-	updateBackground(Number(backgroundSelect.value));
-};
 
 const volumeRange = document.getElementById("volumeRange");
 
@@ -233,12 +235,12 @@ solidColorInput.oninput = () => {
 initColorPicker();
 
 // Web Bluetooth support check + Connect button.
-if ("bluetooth" in navigator) {
+if (connectButton && "bluetooth" in navigator) {
 	connectButton.addEventListener("click", function(event) {
 		event.preventDefault();
 		connect();
 	});
-} else {
+} else if (connectButton) {
 	connectButton.className = "btn btn-danger";
 	let reason = "This browser doesn't support Web Bluetooth.";
 	if (!window.isSecureContext) {
@@ -448,7 +450,7 @@ function setConnectedUI() {
 	message.placeholder = "Enter text";
 	bridgeMessage.disabled = false;
 	bridgeMessage.placeholder = "Enter text";
-	backgroundSelect.disabled = false;
+	if (backgroundSelect) backgroundSelect.disabled = false;
 	volumeRange.disabled = false;
 	toneRange.disabled = false;
 	document.getElementById("color-picker-container").classList.remove("disabled");
@@ -462,7 +464,7 @@ function setDisconnectedUI() {
 	message.placeholder = "Disconnected";
 	bridgeMessage.disabled = true;
 	bridgeMessage.placeholder = "Disconnected";
-	backgroundSelect.disabled = true;
+	if (backgroundSelect) backgroundSelect.disabled = true;
 	volumeRange.disabled = true;
 	toneRange.disabled = true;
 	document.getElementById("color-picker-container").classList.add("disabled");
@@ -567,6 +569,8 @@ function handleIncoming(setting, dataReceived) {
 
 // Create the iro color picker wired to the solidColor characteristic.
 function initColorPicker() {
+	const container = document.getElementById("color-picker-container");
+	if (!container) return; // element missing (e.g. stale cached HTML) — don't crash init
 	settings.solidColor.colorPicker = new iro.ColorPicker(
 		"#color-picker-container",
 		{
@@ -682,7 +686,7 @@ const canvas = document.getElementById('screencanvas');
 canvas.width = 8;
 canvas.height = 8;
 canvas.style.width = '100%';
-canvas.style.height = 'auto';
+canvas.style.height = '100%';
 canvas.style.backgroundColor = '#000';
 canvas.style.imageRendering = 'pixelated';
 

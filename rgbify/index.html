@@ -84,12 +84,12 @@ canvas {
 	width: 173px;
 }
 
-/* The live mirror must stay square: block canvas, width from its container,
-   height auto keeps the 8x8 aspect ratio regardless of flex layout. */
+/* The live mirror must stay square. Its container carries aspect-ratio:1/1;
+   the canvas simply fills it (block, no flex-stretch, no auto-height quirk). */
 #screencanvas {
 	display: block;
 	width: 100%;
-	height: auto;
+	height: 100%;
 }
 
 /* Text boxes: keep compact so a row fits portrait widths. */
@@ -168,9 +168,9 @@ canvas {
 			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output -->
 			<div class="form-group row" style="margin-top: 0.4rem">
 				<label class="col-form-label">Mirror</label>
-				<div style="position: relative; width: 173px; border-radius: 12px; overflow: hidden;">
+				<div style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto;">
 					<canvas id="screencanvas"
-						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: auto;"></canvas>
+						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: 100%;"></canvas>
 					<div id="overlay"
 						style="background-size: contain; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></div>
 				</div>
@@ -272,7 +272,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/rgbify-projector.js"></script>
+<script src="js/rgbify-projector.js?v=0.1.7"></script>
 </html>
 
 
