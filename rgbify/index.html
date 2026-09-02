@@ -165,8 +165,16 @@ canvas {
 			     explicit submit button or Enter stops submitting (implicit submission). -->
 			<input type="submit" style="display: none" />
 
+			<!-- Hue color picker -->
+			<div class="form-group row">
+				<label class="col-form-label">Hue</label>
+				<div>
+					<div id="color-picker-container"></div>
+				</div>
+			</div>
+
 			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output -->
-			<div class="form-group row" style="margin-top: 0.4rem">
+			<div class="form-group row">
 				<label class="col-form-label">Mirror</label>
 				<div style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto;">
 					<canvas id="screencanvas"
@@ -176,11 +184,12 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Bluetooth connection -->
-			<div class="form-group row" style="margin-top: 0.5rem">
-				<label class="col-form-label">Bluetooth</label>
+			<!-- Background mode (options injected from JS BACKGROUND_MODES) -->
+			<div class="form-group row">
+				<label class="col-form-label">Background</label>
 				<div>
-					<button id="connectButton" class="btn btn-danger" type="button">Connect</button>
+					<select id="backgroundSelect" class="form-control"
+						style="width: 173px" disabled></select>
 				</div>
 			</div>
 
@@ -189,31 +198,6 @@ canvas {
 				<label class="col-form-label">Ambience</label>
 				<div>
 					<button id="ambienceButton" class="btn btn-danger" type="button">Screenshare</button>
-				</div>
-			</div>
-
-			<!-- Scroller text -->
-			<div class="form-group row">
-				<label class="col-form-label">Scroller</label>
-				<div>
-					<input id="message" class="form-control" style="width: 173px" type="text" maxlength="256" placeholder="Disconnected" disabled>
-				</div>
-			</div>
-
-			<!-- Blitter text -->
-			<div class="form-group row">
-				<label class="col-form-label">Blitter</label>
-				<div>
-					<input id="bridgeMessage" class="form-control" style="width: 173px" type="text" maxlength="256" placeholder="Disconnected" disabled>
-				</div>
-			</div>
-
-			<!-- Background mode (options injected from JS BACKGROUND_MODES) -->
-			<div class="form-group row">
-				<label class="col-form-label">Background</label>
-				<div>
-					<select id="backgroundSelect" class="form-control"
-						style="width: 173px" disabled></select>
 				</div>
 			</div>
 
@@ -235,16 +219,32 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Hue color picker -->
+			<!-- Scroller text -->
 			<div class="form-group row">
-				<label class="col-form-label">Hue</label>
+				<label class="col-form-label">Scroller</label>
 				<div>
-					<div id="color-picker-container"></div>
+					<input id="message" class="form-control" style="width: 173px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+				</div>
+			</div>
+
+			<!-- Blitter text -->
+			<div class="form-group row">
+				<label class="col-form-label">Blitter</label>
+				<div>
+					<input id="bridgeMessage" class="form-control" style="width: 173px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+				</div>
+			</div>
+
+			<!-- Bluetooth connection -->
+			<div class="form-group row">
+				<label class="col-form-label">Bluetooth</label>
+				<div>
+					<button id="connectButton" class="btn btn-danger" type="button">Connect</button>
 				</div>
 			</div>
 
 			<!-- Firmware version (read from DIS) -->
-			<div class="form-group row" style="margin-top: 1rem">
+			<div class="form-group row">
 				<label class="col-form-label">Firmware</label>
 				<div id="firmwareVersion" style="color: #d0d0d0">x.y.z</div>
 			</div>
