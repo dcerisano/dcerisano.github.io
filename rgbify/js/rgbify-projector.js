@@ -15,7 +15,8 @@ const TONE_OFFSET_MAX = 1061;
 // patterns.h BackgroundMode enum). Drives the Background <select> options.
 const BACKGROUND_MODES = [
 	{ value: 0, label: "Solid Color" },
-	{ value: 1, label: "Plasma" }
+	{ value: 1, label: "Plasma" },
+	{ value: 2, label: "Static" }
 ];
 
 let ambience = false;
