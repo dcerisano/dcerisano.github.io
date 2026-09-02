@@ -573,7 +573,7 @@ function initColorPicker() {
 	settings.solidColor.colorPicker = new iro.ColorPicker(
 		"#color-picker-container",
 		{
-			width: 150,
+			width: 120,
 			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`
 		}
 	);

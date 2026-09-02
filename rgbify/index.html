@@ -19,13 +19,14 @@ body {
 	background-color: #3f3f3f;
 }
 
-/* Center the form in the middle of the screen regardless of aspect ratio or orientation. */
+/* Center the form vertically/horizontally regardless of aspect ratio or orientation. */
 main {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	min-height: 100vh;
 	min-height: 100dvh;
+	padding: 4px 0;
 }
 
 #form {
@@ -33,23 +34,31 @@ main {
 	max-width: 100%;
 }
 
+/* Every control row: label left of the control, never wrapping so a fixed-size
+   child (mirror, color wheel) can't get squeezed off to the side or clipped. */
+.form-group.row {
+	flex-wrap: nowrap;
+	align-items: center;
+	margin-bottom: 0.4rem;
+}
+
 label {
-	width: 120px;
+	width: 96px;
+	flex: 0 0 96px;
 	display: inline-block;
 	text-align: right;
-	padding-right: 15px;
+	padding-right: 10px;
+	margin-bottom: 0;
 	color: #d0d0d0;
+	font-size: 0.85rem;
 }
 
-/* Vertically center the label and content columns in every row. */
-.form-group.row {
-	align-items: center;
-}
-
-/* Center the second column (control cells) horizontally and vertically. */
+/* Control cell: center horizontally, but never flex-stretch children vertically
+   (that squishes the mirror), never shrink them below their natural size. */
 .form-group.row > div {
 	display: flex !important;
-	flex: 1;
+	flex: 1 1 auto;
+	min-width: 0;
 	justify-content: center !important;
 	align-items: center !important;
 	text-align: center;
@@ -57,6 +66,20 @@ label {
 
 canvas {
 	width: 120px;
+}
+
+/* The live mirror must stay square: block canvas, width from its container,
+   height auto keeps the 8x8 aspect ratio regardless of flex layout. */
+#screencanvas {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+/* Text boxes: keep compact so a row fits portrait widths. */
+#message,
+#bridgeMessage {
+	max-width: 100%;
 }
 
 /* Text box placeholder: red while disconnected; light gray when connected (default). */
@@ -77,6 +100,37 @@ canvas {
 	opacity: 0.3;
 	pointer-events: none;
 }
+
+/* Portrait / short screens: compress row spacing and controls so the whole
+   control panel fits on one screen without vertical scrolling. */
+@media (max-width: 480px), (max-height: 720px) {
+	label {
+		width: 80px;
+		flex-basis: 80px;
+		font-size: 0.78rem;
+		padding-right: 8px;
+	}
+	.form-group.row {
+		margin-bottom: 0.28rem;
+	}
+	main {
+		align-items: flex-start;
+		padding: 6px 0;
+	}
+}
+
+/* Hard guarantee: on short screens scale the whole panel down so it always fits
+   without scrolling (Chrome/Android + Safari support CSS zoom). */
+@media (max-height: 760px) {
+	#form {
+		zoom: 0.8;
+	}
+}
+@media (max-height: 600px) {
+	#form {
+		zoom: 0.65;
+	}
+}
 </style>
 
 </head>
@@ -89,9 +143,9 @@ canvas {
 			<input type="submit" style="display: none" />
 
 			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output -->
-			<div class="form-group row" style="margin-top: 1rem">
+			<div class="form-group row" style="margin-top: 0.4rem">
 				<label class="col-form-label">Mirror</label>
-				<div style="position: relative; width: 200px; border-radius: 12px; overflow: hidden;">
+				<div style="position: relative; width: 132px; border-radius: 12px; overflow: hidden;">
 					<canvas id="screencanvas"
 						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: auto;"></canvas>
 					<div id="overlay"
@@ -100,7 +154,7 @@ canvas {
 			</div>
 
 			<!-- Bluetooth connection -->
-			<div class="form-group row" style="margin-top: 2rem">
+			<div class="form-group row" style="margin-top: 0.5rem">
 				<label class="col-form-label">Bluetooth</label>
 				<div>
 					<button id="connectButton" class="btn btn-danger" type="button">Connect</button>
@@ -119,7 +173,7 @@ canvas {
 			<div class="form-group row">
 				<label class="col-form-label">Scroller</label>
 				<div>
-					<input id="message" class="form-control" style="width: 200px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+					<input id="message" class="form-control" style="width: 140px" type="text" maxlength="256" placeholder="Disconnected" disabled>
 				</div>
 			</div>
 
@@ -127,7 +181,7 @@ canvas {
 			<div class="form-group row">
 				<label class="col-form-label">Blitter</label>
 				<div>
-					<input id="bridgeMessage" class="form-control" style="width: 200px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+					<input id="bridgeMessage" class="form-control" style="width: 140px" type="text" maxlength="256" placeholder="Disconnected" disabled>
 				</div>
 			</div>
 
