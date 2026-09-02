@@ -5,9 +5,12 @@ const PROJECTOR_UUID   = "8bc01404-0006-4bf4-95d1-ce27a0477183";
 const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
 const BRIDGE_UUID      = "8bc01404-0009-4bf4-95d1-ce27a0477183";
 const SCREENSAVER_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
+const TONE_UUID        = "8bc01404-000a-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
-const EXPECTED_FW_VERSION   = "0.1.5";
+const EXPECTED_FW_VERSION   = "0.1.6";
+const TONE_OFFSET_MIN = -424;
+const TONE_OFFSET_MAX = 1061;
 
 let ambience = false;
 const FPS = 30;
@@ -97,6 +100,19 @@ const settings = {
 		data: { V: [] },
 		writeBusy: false,
 		writeValue: null
+	},
+	// Read/write: auralizer pitch offset (int16 Hz). Shifts the 3-octave scale.
+	tone: {
+		uuid: TONE_UUID,
+		properties: ["BLERead", "BLEWrite"],
+		structure: ["Int16"],
+		data: { V: [] },
+		writeBusy: false,
+		writeValue: null,
+		dataUpdated: (self) => {
+			toneRange.value = self.data.V[0];
+			updateToneLabel(self.data.V[0]);
+		},
 	},
 	solidColor: {
 		uuid: COLOR_UUID,
@@ -198,6 +214,24 @@ const volumeRange = document.getElementById("volumeRange");
 volumeRange.oninput = () => {
 	updateVolume(volumeRange.value);
 };
+
+const toneRange = document.getElementById("toneRange");
+const toneValue = document.getElementById("toneValue");
+
+// Tone slider: auralizer pitch offset (Hz).
+toneRange.oninput = () => {
+	const v = clamp(Number(toneRange.value), TONE_OFFSET_MIN, TONE_OFFSET_MAX);
+	updateToneLabel(v);
+	updateTone(v);
+};
+
+function updateToneLabel(value) {
+	const center = 707 + value;
+	toneValue.textContent = `${value > 0 ? "+" : ""}${value} Hz (center ${Math.round(center)} Hz)`;
+}
+
+// Show the resting offset (0) before a connection populates the real value.
+updateToneLabel(Number(toneRange.value) || 0);
 
 
 // Hue picker: hidden input mirrors the iro picker's color.
@@ -368,7 +402,10 @@ async function setupGatt(device) {
 		// Subscribe to notifications so changes from any client update this page.
 		// Retry: back-to-back GATT operations during connect can transiently
 		// fail with "GATT operation failed" on Android.
-		if (setting.characteristic.properties.notify) {
+		// The projector (live-mirror) stream is deferred to AFTER this loop: once
+		// subscribed the firmware floods this connection with frames, so only
+		// enable it once every other characteristic is fully set up.
+		if (key !== "projector" && setting.characteristic.properties.notify) {
 			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
 				handleIncoming(setting, event.target.value);
 			});
@@ -389,6 +426,30 @@ async function setupGatt(device) {
 			console.log(error.message);
 		}
 	}
+
+	// Live-mirror projector stream subscribes LAST, after the connection is fully
+	// open (every characteristic above is set up). This is the trigger that makes
+	// the firmware start broadcasting display frames to this page.
+	try {
+		const setting = settings.projector;
+		if (setting.characteristic && setting.characteristic.properties.notify) {
+			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
+				handleIncoming(setting, event.target.value);
+			});
+			for (let attempt = 0; ; attempt++) {
+				try {
+					await setting.characteristic.startNotifications();
+					break;
+				} catch (error) {
+					if (attempt >= 3) throw error;
+					await sleep(200);
+				}
+			}
+		}
+	} catch (error) {
+		console.log("error subscribing to projector mirror");
+		console.log(error.message);
+	}
 }
 
 function setConnectedUI() {
@@ -402,6 +463,7 @@ function setConnectedUI() {
 	poffButton.disabled = false;
 	ponButton.disabled = false;
 	volumeRange.disabled = false;
+	toneRange.disabled = false;
 	document.getElementById("color-picker-container").classList.remove("disabled");
 }
 
@@ -416,6 +478,7 @@ function setDisconnectedUI() {
 	poffButton.disabled = true;
 	ponButton.disabled = true;
 	volumeRange.disabled = true;
+	toneRange.disabled = true;
 	document.getElementById("color-picker-container").classList.add("disabled");
 }
 
@@ -495,6 +558,7 @@ function handleIncoming(setting, dataReceived) {
 	const typeMap = {
 		Uint8: { fn: DataView.prototype.getUint8, bytes: 1 },
 		Uint16: { fn: DataView.prototype.getUint16, bytes: 2 },
+		Int16: { fn: DataView.prototype.getInt16, bytes: 2 },
 		Float32: { fn: DataView.prototype.getFloat32, bytes: 4 },
 	};
 	let packetPointer = 0;
@@ -562,6 +626,21 @@ function updateVolume(value) {
 	settings.volume.writeValue = Uint8Array.of(value);
 	BLEwriteTo("volume");
 
+}
+
+function updateTone(value) {
+
+	// Signed int16, little-endian (matches firmware Tone characteristic).
+	const buf = new ArrayBuffer(2);
+	const dv = new DataView(buf);
+	dv.setInt16(0, value, true);
+	settings.tone.writeValue = new Uint8Array(buf);
+	BLEwriteTo("tone");
+
+}
+
+function clamp(value, min, max) {
+	return Math.max(min, Math.min(max, value));
 }
 
 function updateProjector(value) {
