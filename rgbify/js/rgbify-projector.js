@@ -111,7 +111,6 @@ const settings = {
 		writeValue: null,
 		dataUpdated: (self) => {
 			toneRange.value = self.data.V[0];
-			updateToneLabel(self.data.V[0]);
 		},
 	},
 	solidColor: {
@@ -216,22 +215,12 @@ volumeRange.oninput = () => {
 };
 
 const toneRange = document.getElementById("toneRange");
-const toneValue = document.getElementById("toneValue");
 
 // Tone slider: auralizer pitch offset (Hz).
 toneRange.oninput = () => {
 	const v = clamp(Number(toneRange.value), TONE_OFFSET_MIN, TONE_OFFSET_MAX);
-	updateToneLabel(v);
 	updateTone(v);
 };
-
-function updateToneLabel(value) {
-	const center = 707 + value;
-	toneValue.textContent = `${value > 0 ? "+" : ""}${value} Hz (center ${Math.round(center)} Hz)`;
-}
-
-// Show the resting offset (0) before a connection populates the real value.
-updateToneLabel(Number(toneRange.value) || 0);
 
 
 // Hue picker: hidden input mirrors the iro picker's color.
