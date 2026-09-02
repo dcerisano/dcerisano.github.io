@@ -128,6 +128,12 @@ function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Race a promise against a timeout so a hanging gatt.connect()
+// (Chromium Linux issue #40212297) can't stall the reconnect loop.
+function withTimeout(promise, ms) {
+	return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms))]);
+}
+
 // Look up a settings entry by characteristic UUID.
 function findSetting(uuid) {
 	for (const key of settingKeys) {
@@ -274,6 +280,17 @@ async function connect() {
 			device._hasDisconnectListener = true;
 		}
 
+		// Linux Chrome does not reliably fire gattserverdisconnected, so
+		// poll device.gatt.connected to detect a dropped link and
+		// trigger reconnect.
+		if (!device._bleWd) {
+			device._bleWd = setInterval(() => {
+				if (device && device.gatt && !device.gatt.connected && !reconnecting) {
+					onDisconnected();
+				}
+			}, 2000);
+		}
+
 		await setupGatt(device);
 		onConnected();
 	} catch (error) {
@@ -308,7 +325,7 @@ async function readFirmwareVersion(server) {
 // server/service/characteristic objects are stale after a drop, so this
 // re-fetches everything and re-subscribes on each call.
 async function setupGatt(device) {
-	server = await device.gatt.connect();
+	server = await withTimeout(device.gatt.connect(), 5000);
 	await sleep(500);
 	service = await server.getPrimaryService(SERVICE_UUID);
 
