@@ -43,6 +43,15 @@ main {
 	margin-bottom: 0.7rem;
 }
 
+/* Rows holding a button or a text field get extra vertical breathing room.
+   All other rows (mirror, sliders, color wheel, firmware) keep their normal
+   spacing. */
+.form-group.row:has(.btn),
+.form-group.row:has(.form-control) {
+	margin-top: 0.9rem;
+	margin-bottom: 0.9rem;
+}
+
 label {
 	width: 115px;
 	flex: 0 0 115px;
