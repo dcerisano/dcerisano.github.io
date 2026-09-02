@@ -98,10 +98,11 @@ canvas {
 	max-width: 100%;
 }
 
-/* Connect and Screenshare buttons share an equal fixed width. */
+/* Connect and Screenshare buttons share an equal fixed width, matching the
+   color wheel / mirror / text-field width (144px). */
 #connectButton,
 #ambienceButton {
-	width: 132px;
+	width: 144px;
 }
 
 /* Text box placeholder: red while disconnected; light gray when connected (default). */
@@ -167,7 +168,7 @@ canvas {
 			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output -->
 			<div class="form-group row" style="margin-top: 0.4rem">
 				<label class="col-form-label">Mirror</label>
-				<div style="position: relative; width: 158px; border-radius: 12px; overflow: hidden;">
+				<div style="position: relative; width: 144px; border-radius: 12px; overflow: hidden;">
 					<canvas id="screencanvas"
 						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: auto;"></canvas>
 					<div id="overlay"
@@ -195,7 +196,7 @@ canvas {
 			<div class="form-group row">
 				<label class="col-form-label">Scroller</label>
 				<div>
-					<input id="message" class="form-control" style="width: 168px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+					<input id="message" class="form-control" style="width: 144px" type="text" maxlength="256" placeholder="Disconnected" disabled>
 				</div>
 			</div>
 
@@ -203,7 +204,7 @@ canvas {
 			<div class="form-group row">
 				<label class="col-form-label">Blitter</label>
 				<div>
-					<input id="bridgeMessage" class="form-control" style="width: 168px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+					<input id="bridgeMessage" class="form-control" style="width: 144px" type="text" maxlength="256" placeholder="Disconnected" disabled>
 				</div>
 			</div>
 
