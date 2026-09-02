@@ -35,27 +35,46 @@ main {
 }
 
 /* Every control row: label left of the control, never wrapping so a fixed-size
-   child (mirror, color wheel) can't get squeezed off to the side or clipped. */
+   child (mirror, color wheel) can't get squeezed off to the side or clipped.
+   Spacing is applied per-row as margin-bottom (margin-top stays 0), so the gap
+   below each row is exactly that row's margin — easy to reason about. */
 .form-group.row {
 	flex-wrap: nowrap;
 	align-items: center;
 	column-gap: 22px;
-	margin-bottom: 0.7rem;
+	margin: 0 0 0.6rem;
 }
 
-/* Rows holding a button or a text field get extra vertical breathing room.
-   All other rows (mirror, sliders, color wheel, firmware) keep their normal
-   spacing. */
-.form-group.row:has(.btn),
-.form-group.row:has(.form-control) {
-	margin-top: 0.9rem;
-	margin-bottom: 0.9rem;
-}
-
-/* Slider rows (Volume, Tone) and the color wheel row are packed closer. */
-.form-group.row:has(input[type="range"]),
+/* Hue (color wheel): leave a clear gap before the mirror. */
 .form-group.row:has(#color-picker-container) {
-	margin-bottom: 0.15rem;
+	margin-bottom: 1.5rem;
+}
+
+/* Mirror */
+.form-group.row:has(#screencanvas) {
+	margin-bottom: 0.5rem;
+}
+
+/* Background / Ambience / Volume / Tone: pack this cluster tightly. */
+.form-group.row:has(#backgroundSelect) {
+	margin-bottom: 0.3rem;
+}
+#ambienceRow {
+	margin-bottom: 0.3rem;
+}
+.form-group.row:has(#volumeRange) {
+	margin-bottom: 0.3rem;
+}
+.form-group.row:has(#toneRange) {
+	margin-bottom: 0.3rem;
+}
+
+/* Scroller / Blitter / Bluetooth: roomier so text fields and the connect
+   action stand out from the packed cluster above them. */
+.form-group.row:has(#message),
+.form-group.row:has(#bridgeMessage),
+.form-group.row:has(#connectButton) {
+	margin-bottom: 0.7rem;
 }
 
 label {
