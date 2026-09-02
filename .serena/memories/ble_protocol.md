@@ -11,6 +11,6 @@ Firmware: `rgbify-projector-esp32` in sibling repo (`mem:projector_firmware`). F
   - `0006` Projector — 256×Uint8 (8x8 RGB frame, ambience)
   - `0007` Text — Uint8[] LEDText format (capped 256 chars)
   - `0008` Screensaver — Uint8 on/off
-  - `0009` Text Bridge — write-no-response, raw chars (not used by this web app)
+  - `0009` Text Bridge — raw chars, write-with-response (RWN_PROP, no `PROPERTY_WRITE_NR`), blitted one char per auralizer note. Used by this web app's bridge-text input (`settings.bridge` → `updateBridgeText`).
 - Pairing: passkey `123456`.
 - JS constants: `SERVICE_UUID` + `*_UUID` + `DIS_UUID` + `FIRMWARE_REV_UUID` + `EXPECTED_FW_VERSION` at top of `js/rgbify-projector.js`.

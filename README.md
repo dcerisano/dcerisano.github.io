@@ -16,7 +16,7 @@ https://dcerisano.github.io/rgbify/
 - **Solid color** — full iro color picker
 - **Screensaver** — on/off toggle
 - **Volume** slider
-- Automatic reconnect — survives BLE drops (with exponential backoff) without reloading the page, so a running ambience stream persists
+- Automatic reconnect — survives BLE drops (with exponential backoff) without reloading the page, so a running ambience stream persists. On Chrome/Linux, `gattserverdisconnected` is unreliable, so a 2s watchdog polls `device.gatt.connected` and every GATT setup call is time-bounded (5s on `connect()`, 15s on the whole setup) to avoid the Chromium #40212297 hang
 - Multi-client sync — changes made on one page update every connected page via GATT notifications
 
 ## Requirements
@@ -50,11 +50,11 @@ Service UUID: `8bc01404-0000-4bf4-95d1-ce27a0477183`
 The `opencode-rgbify-plugin` streams LLM chat deltas to the projector over BLE and provides a `/rgbify` slash command:
 
 - `/rgbify volume <0-10>` — set host auralizer volume
+- `/rgbify solidcolor <hex>` (alias `color`) — set the mirror plasma hue
 - `/rgbify wallpaper` — open the mirror webapp (8x8 Atari-font display, ACK-gated)
-- `/rgbify wallpaper close` — close the mirror
 - `/rgbify wallpaper url` — print the mirror URL
 
-The plugin is loaded from `file:///home/kronos/git/opencode-rgbify-plugin/dist/index.js`. The mirror webapp is fully independent of the BLE projector — it renders the same coalesced text as a local 8x8 matrix.
+The plugin is loaded from the repo's `opencode.json` as a relative `./dist/index.js` (dev) or as the npm package `opencode-rgbify-plugin@latest` (deployed). The mirror webapp is fully independent of the BLE projector — it renders the same coalesced text as a local 8x8 matrix, and closing the browser tab is the only way to close the always-on server.
 
 ## Development
 
