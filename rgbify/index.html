@@ -52,6 +52,12 @@ main {
 	margin-bottom: 0.9rem;
 }
 
+/* Slider rows (Volume, Tone) and the color wheel row are packed closer. */
+.form-group.row:has(input[type="range"]),
+.form-group.row:has(#color-picker-container) {
+	margin-bottom: 0.3rem;
+}
+
 label {
 	width: 115px;
 	flex: 0 0 115px;
