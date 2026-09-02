@@ -43,14 +43,14 @@ main {
 }
 
 label {
-	width: 96px;
-	flex: 0 0 96px;
+	width: 115px;
+	flex: 0 0 115px;
 	display: inline-block;
 	text-align: right;
 	padding-right: 10px;
 	margin-bottom: 0;
 	color: #d0d0d0;
-	font-size: 0.85rem;
+	font-size: 1.02rem;
 }
 
 /* Control cell: center horizontally, but never flex-stretch children vertically
@@ -65,7 +65,7 @@ label {
 }
 
 canvas {
-	width: 120px;
+	width: 144px;
 }
 
 /* The live mirror must stay square: block canvas, width from its container,
@@ -105,9 +105,9 @@ canvas {
    control panel fits on one screen without vertical scrolling. */
 @media (max-width: 480px), (max-height: 720px) {
 	label {
-		width: 80px;
-		flex-basis: 80px;
-		font-size: 0.78rem;
+		width: 96px;
+		flex-basis: 96px;
+		font-size: 0.94rem;
 		padding-right: 8px;
 	}
 	.form-group.row {
@@ -123,12 +123,12 @@ canvas {
    without scrolling (Chrome/Android + Safari support CSS zoom). */
 @media (max-height: 760px) {
 	#form {
-		zoom: 0.8;
+		zoom: 0.96;
 	}
 }
 @media (max-height: 600px) {
 	#form {
-		zoom: 0.65;
+		zoom: 0.78;
 	}
 }
 </style>
@@ -145,7 +145,7 @@ canvas {
 			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output -->
 			<div class="form-group row" style="margin-top: 0.4rem">
 				<label class="col-form-label">Mirror</label>
-				<div style="position: relative; width: 132px; border-radius: 12px; overflow: hidden;">
+				<div style="position: relative; width: 158px; border-radius: 12px; overflow: hidden;">
 					<canvas id="screencanvas"
 						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: auto;"></canvas>
 					<div id="overlay"
@@ -173,7 +173,7 @@ canvas {
 			<div class="form-group row">
 				<label class="col-form-label">Scroller</label>
 				<div>
-					<input id="message" class="form-control" style="width: 140px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+					<input id="message" class="form-control" style="width: 168px" type="text" maxlength="256" placeholder="Disconnected" disabled>
 				</div>
 			</div>
 
@@ -181,7 +181,7 @@ canvas {
 			<div class="form-group row">
 				<label class="col-form-label">Blitter</label>
 				<div>
-					<input id="bridgeMessage" class="form-control" style="width: 140px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+					<input id="bridgeMessage" class="form-control" style="width: 168px" type="text" maxlength="256" placeholder="Disconnected" disabled>
 				</div>
 			</div>
 
