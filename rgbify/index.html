@@ -45,14 +45,15 @@ main {
 	margin: 0 0 0.6rem;
 }
 
-/* Hue (color wheel): leave a clear gap before the mirror. */
+/* Hue (color wheel): gap to mirror, balanced by the mirror's own bottom gap so
+   the mirror sits centered between the wheel and the Background menu. */
 .form-group.row:has(#color-picker-container) {
-	margin-bottom: 1.5rem;
+	margin-bottom: 1rem;
 }
 
-/* Mirror */
+/* Mirror: equal gap below so it floats halfway between wheel and Background. */
 .form-group.row:has(#screencanvas) {
-	margin-bottom: 0.5rem;
+	margin-bottom: 1rem;
 }
 
 /* Background / Ambience / Volume / Tone: pack this cluster tightly. */
