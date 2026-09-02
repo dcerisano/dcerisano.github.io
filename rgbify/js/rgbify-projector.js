@@ -4,13 +4,19 @@ const COLOR_UUID       = "8bc01404-0005-4bf4-95d1-ce27a0477183";
 const PROJECTOR_UUID   = "8bc01404-0006-4bf4-95d1-ce27a0477183";
 const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
 const BRIDGE_UUID      = "8bc01404-0009-4bf4-95d1-ce27a0477183";
-const SCREENSAVER_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
+const BACKGROUND_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
 const TONE_UUID        = "8bc01404-000a-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
-const EXPECTED_FW_VERSION   = "0.1.6";
+const EXPECTED_FW_VERSION   = "0.1.7";
 const TONE_OFFSET_MIN = -424;
 const TONE_OFFSET_MAX = 1061;
+// Background modes, keyed to the -0008 characteristic value (mirror firmware
+// patterns.h BackgroundMode enum). Drives the Background <select> options.
+const BACKGROUND_MODES = [
+	{ value: 0, label: "Solid Color" },
+	{ value: 1, label: "Plasma" }
+];
 
 let ambience = false;
 const FPS = 30;
@@ -27,21 +33,17 @@ let service = null;
 // BLE characteristic registry: maps each setting to its GATT uuid, properties,
 // byte structure and last-read data. connect() and BLEwriteTo() iterate it.
 const settings = {
-	screensaver: {
-		uuid: SCREENSAVER_UUID,
+	background: {
+		uuid: BACKGROUND_UUID,
 		properties: ["BLERead", "BLEWrite"],
 		structure: ["Uint8"],
 		data: { V: [] },
 		writeBusy: false,
 		writeValue: null,
 		dataUpdated: (self) => {
-			if (self.data.V[0]) {
-				ponButton.className = "btn btn-success";
-				poffButton.className = "btn btn-secondary";
-			} else {
-				poffButton.className = "btn btn-danger";
-				ponButton.className = "btn btn-secondary";
-			}
+			const v = self.data.V[0];
+			const m = BACKGROUND_MODES.find((m) => m.value === v);
+			if (m) backgroundSelect.value = m.value;
 		},
 	},
 	volume: {
@@ -192,19 +194,16 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
 }
 
 
-const poffButton = document.getElementById("poffButton");
-const ponButton = document.getElementById("ponButton");
-
-// Screensaver on/off buttons.
-poffButton.onclick = () => {
-	poffButton.className = "btn btn-danger";
-	ponButton.className = "btn btn-secondary";
-	updateScreensaver(false);
-};
-ponButton.onclick = () => {
-	ponButton.className = "btn btn-success";
-	poffButton.className = "btn btn-secondary";
-	updateScreensaver(true);
+// Background mode <select> (options built from BACKGROUND_MODES).
+const backgroundSelect = document.getElementById("backgroundSelect");
+for (const m of BACKGROUND_MODES) {
+	const opt = document.createElement("option");
+	opt.value = m.value;
+	opt.textContent = m.label;
+	backgroundSelect.appendChild(opt);
+}
+backgroundSelect.onchange = () => {
+	updateBackground(Number(backgroundSelect.value));
 };
 
 const volumeRange = document.getElementById("volumeRange");
@@ -449,8 +448,7 @@ function setConnectedUI() {
 	message.placeholder = "Enter text";
 	bridgeMessage.disabled = false;
 	bridgeMessage.placeholder = "Enter text";
-	poffButton.disabled = false;
-	ponButton.disabled = false;
+	backgroundSelect.disabled = false;
 	volumeRange.disabled = false;
 	toneRange.disabled = false;
 	document.getElementById("color-picker-container").classList.remove("disabled");
@@ -464,8 +462,7 @@ function setDisconnectedUI() {
 	message.placeholder = "Disconnected";
 	bridgeMessage.disabled = true;
 	bridgeMessage.placeholder = "Disconnected";
-	poffButton.disabled = true;
-	ponButton.disabled = true;
+	backgroundSelect.disabled = true;
 	volumeRange.disabled = true;
 	toneRange.disabled = true;
 	document.getElementById("color-picker-container").classList.add("disabled");
@@ -602,12 +599,9 @@ function initColorPicker() {
 }
 
 // Update helpers: set a Uint8 value and write it to the device.
-function updateScreensaver(state) {
-
-	const value = state ? 1 : 0;
-	settings.screensaver.writeValue = Uint8Array.of(value);
-	BLEwriteTo("screensaver");
-
+function updateBackground(mode) {
+	settings.background.writeValue = Uint8Array.of(mode | 0);
+	BLEwriteTo("background");
 }
 
 function updateVolume(value) {

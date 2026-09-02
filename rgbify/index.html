@@ -208,16 +208,12 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Screensaver on/off -->
+			<!-- Background mode (options injected from JS BACKGROUND_MODES) -->
 			<div class="form-group row">
-				<label class="col-form-label">Screensaver</label>
+				<label class="col-form-label">Background</label>
 				<div>
-					<div class="btn-group" role="group" aria-label="Screensaver">
-						<button id="poffButton" type="button" class="btn btn-danger" disabled>
-							Off</button>
-						<button id="ponButton" type="button" class="btn btn-secondary" disabled>
-							On</button>
-					</div>
+					<select id="backgroundSelect" class="form-control"
+						style="width: 173px" disabled></select>
 				</div>
 			</div>
 
