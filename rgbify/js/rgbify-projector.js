@@ -453,6 +453,7 @@ function setConnectedUI() {
 	if (backgroundSelect) backgroundSelect.disabled = false;
 	volumeRange.disabled = false;
 	toneRange.disabled = false;
+	if (ambienceButton) ambienceButton.disabled = false;
 	document.getElementById("color-picker-container").classList.remove("disabled");
 }
 
@@ -467,6 +468,7 @@ function setDisconnectedUI() {
 	if (backgroundSelect) backgroundSelect.disabled = true;
 	volumeRange.disabled = true;
 	toneRange.disabled = true;
+	if (ambienceButton) ambienceButton.disabled = true;
 	document.getElementById("color-picker-container").classList.add("disabled");
 }
 
