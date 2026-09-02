@@ -368,7 +368,10 @@ async function setupGatt(device) {
 		// Subscribe to notifications so changes from any client update this page.
 		// Retry: back-to-back GATT operations during connect can transiently
 		// fail with "GATT operation failed" on Android.
-		if (setting.characteristic.properties.notify) {
+		// The projector (live-mirror) stream is deferred to AFTER this loop: once
+		// subscribed the firmware floods this connection with frames, so only
+		// enable it once every other characteristic is fully set up.
+		if (key !== "projector" && setting.characteristic.properties.notify) {
 			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
 				handleIncoming(setting, event.target.value);
 			});
@@ -388,6 +391,30 @@ async function setupGatt(device) {
 			console.log(`error loading characteristic ${key}`);
 			console.log(error.message);
 		}
+	}
+
+	// Live-mirror projector stream subscribes LAST, after the connection is fully
+	// open (every characteristic above is set up). This is the trigger that makes
+	// the firmware start broadcasting display frames to this page.
+	try {
+		const setting = settings.projector;
+		if (setting.characteristic && setting.characteristic.properties.notify) {
+			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
+				handleIncoming(setting, event.target.value);
+			});
+			for (let attempt = 0; ; attempt++) {
+				try {
+					await setting.characteristic.startNotifications();
+					break;
+				} catch (error) {
+					if (attempt >= 3) throw error;
+					await sleep(200);
+				}
+			}
+		}
+	} catch (error) {
+		console.log("error subscribing to projector mirror");
+		console.log(error.message);
 	}
 }
 
