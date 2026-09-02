@@ -358,7 +358,7 @@ async function setupGatt(device) {
 
 	const fwVersion = await readFirmwareVersion(server);
 	if (fwVersion !== null) {
-		firmwareVersion.textContent = `Version ${fwVersion}`;
+		firmwareVersion.textContent = fwVersion;
 	}
 	if (fwVersion !== null && fwVersion !== EXPECTED_FW_VERSION) {
 		alert(
