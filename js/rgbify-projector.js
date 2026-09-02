@@ -58,8 +58,22 @@ const settings = {
 		writeValue: null,
 		// Render the live projector display into the mirror canvas. The
 		// firmware broadcasts its actual matrix after every frame change.
+		// Notifications coalesce to the newest frame per animation frame, so
+		// a burst of buffered notifications (e.g. after the screen wakes) is
+		// never replayed through the mirror — it jumps straight to the latest.
+		_pendingFrame: null,
+		_renderScheduled: false,
 		dataUpdated: (self, dataReceived) => {
-			renderProjectorFrame(dataReceived);
+			if (!dataReceived || dataReceived.byteLength < 256) return;
+			if (!self._pendingFrame) self._pendingFrame = new Uint8Array(256);
+			self._pendingFrame.set(new Uint8Array(dataReceived.buffer, dataReceived.byteOffset, 256));
+			if (!self._renderScheduled) {
+				self._renderScheduled = true;
+				requestAnimationFrame(() => {
+					renderProjectorFrame(new DataView(self._pendingFrame.buffer));
+					self._renderScheduled = false;
+				});
+			}
 		}
 	},
 	// Read/write: user message text.
