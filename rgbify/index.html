@@ -98,6 +98,12 @@ canvas {
 	max-width: 100%;
 }
 
+/* Connect and Screenshare buttons share an equal fixed width. */
+#connectButton,
+#ambienceButton {
+	width: 132px;
+}
+
 /* Text box placeholder: red while disconnected; light gray when connected (default). */
 #message:disabled::placeholder,
 #bridgeMessage:disabled::placeholder {
