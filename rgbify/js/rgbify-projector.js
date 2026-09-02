@@ -461,16 +461,6 @@ window.addEventListener("pagehide", function() {
 	}
 });
 
-// Graceful exit: close the GATT link when the user exits the web app (window
-// close / navigate away), so nothing lingers on the shared BlueZ ACL.
-window.onbeforeunload = function() {
-	if (device != null) {
-		try {
-			device.gatt.disconnect();
-		} catch (e) { /* already disconnected */ }
-	}
-};
-
 
 
 // Write a setting's pending value, coalescing to the latest value if a write
