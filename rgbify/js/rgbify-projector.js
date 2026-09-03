@@ -13,12 +13,15 @@ const TONE_OFFSET_MIN = -424;
 const TONE_OFFSET_MAX = 1061;
 // Background modes, keyed to the -0008 characteristic value (mirror firmware
 // patterns.h BackgroundMode enum). Drives the Background <select> options.
+// `rgb` is the mode's default tint (mirror firmware modeDefaultTint): Lava is
+// reddish-yellow, Matrix is green, the rest are white. Selecting a mode resets
+// the color wheel to this color.
 const BACKGROUND_MODES = [
-	{ value: 0, label: "Solid Color" },
-	{ value: 1, label: "Plasma" },
-	{ value: 2, label: "Noise" },
-	{ value: 3, label: "Lava" },
-	{ value: 4, label: "Matrix" }
+	{ value: 0, label: "Solid Color", rgb: { r: 255, g: 255, b: 255 } },
+	{ value: 1, label: "Plasma", rgb: { r: 255, g: 255, b: 255 } },
+	{ value: 2, label: "Noise", rgb: { r: 255, g: 255, b: 255 } },
+	{ value: 3, label: "Lava", rgb: { r: 255, g: 60, b: 0 } },
+	{ value: 4, label: "Matrix", rgb: { r: 0, g: 255, b: 0 } }
 ];
 
 let ambience = false;
@@ -207,7 +210,12 @@ if (backgroundSelect) {
 		backgroundSelect.appendChild(opt);
 	}
 	backgroundSelect.onchange = () => {
-		updateBackground(Number(backgroundSelect.value));
+		const mode = Number(backgroundSelect.value);
+		updateBackground(mode);
+		// Reset the saturated color wheel to the chosen background's default tint.
+		const m = BACKGROUND_MODES.find((x) => x.value === mode);
+		const picker = settings.solidColor && settings.solidColor.colorPicker;
+		if (m && picker) picker.color.rgb = m.rgb;
 	};
 }
 
