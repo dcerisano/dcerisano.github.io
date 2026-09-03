@@ -45,15 +45,14 @@ main {
 	margin: 0 0 0.6rem;
 }
 
-/* Hue (color wheel): gap to mirror, balanced by the mirror's own bottom gap so
-   the mirror sits centered between the wheel and the Background menu. */
-.form-group.row:has(#color-picker-container) {
-	margin-bottom: 1rem;
+/* Mirror (top row): modest gap down to the color picker. */
+.form-group.row:has(#screencanvas) {
+	margin-bottom: 0.5rem;
 }
 
-/* Mirror: equal gap below so it floats halfway between wheel and Background. */
-.form-group.row:has(#screencanvas) {
-	margin-bottom: 1rem;
+/* Tint (color picker): a little separation before the Background menu. */
+.form-group.row:has(#color-picker-container) {
+	margin-bottom: 0.6rem;
 }
 
 /* Background / Ambience / Volume / Tone: pack this cluster tightly. */
@@ -185,14 +184,6 @@ canvas {
 			     explicit submit button or Enter stops submitting (implicit submission). -->
 			<input type="submit" style="display: none" />
 
-			<!-- Hue color picker -->
-			<div class="form-group row">
-				<label class="col-form-label">Hue</label>
-				<div>
-					<div id="color-picker-container"></div>
-				</div>
-			</div>
-
 			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output -->
 			<div class="form-group row">
 				<label class="col-form-label">Mirror</label>
@@ -201,6 +192,14 @@ canvas {
 						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: 100%;"></canvas>
 					<div id="overlay"
 						style="background-size: contain; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></div>
+				</div>
+			</div>
+
+			<!-- Hue color picker (tint) -->
+			<div class="form-group row">
+				<label class="col-form-label">Tint</label>
+				<div>
+					<div id="color-picker-container"></div>
 				</div>
 			</div>
 
