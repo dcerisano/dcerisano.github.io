@@ -17,7 +17,8 @@ const BACKGROUND_MODES = [
 	{ value: 0, label: "Solid Color" },
 	{ value: 1, label: "Plasma" },
 	{ value: 2, label: "Noise" },
-	{ value: 3, label: "Lava" }
+	{ value: 3, label: "Lava" },
+	{ value: 4, label: "Matrix" }
 ];
 
 let ambience = false;
