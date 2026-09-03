@@ -580,7 +580,13 @@ function initColorPicker() {
 		"#color-picker-container",
 		{
 			width: 173,
-			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`
+			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`,
+			// Stack the lightness/value slider ABOVE the wheel (iro's default puts
+			// it underneath the wheel). Vertical stacking order = array order.
+			layout: [
+				{ component: iro.ui.Slider, options: { sliderType: "value" } },
+				{ component: iro.ui.Wheel }
+			]
 		}
 	);
 
