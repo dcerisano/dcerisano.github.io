@@ -118,6 +118,41 @@ canvas {
 	height: 100%;
 }
 
+/* Clickable mirror: fullscreen uses the plugin wallpaper sizing
+   (min(viewport) * 0.7 square, centered on black). */
+#mirrorWrap {
+	cursor: pointer;
+}
+#mirrorWrap:fullscreen,
+#mirrorWrap:-webkit-full-screen {
+	width: 100vw;
+	height: 100vh;
+	aspect-ratio: auto;
+	border-radius: 0;
+	background: #000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+#mirrorWrap:fullscreen::backdrop {
+	background: #000;
+}
+#mirrorWrap:fullscreen #screencanvas,
+#mirrorWrap:-webkit-full-screen #screencanvas {
+	width: 70vmin !important;
+	height: 70vmin !important;
+	flex: 0 0 auto;
+	image-rendering: pixelated;
+}
+#mirrorWrap:fullscreen #overlay,
+#mirrorWrap:-webkit-full-screen #overlay {
+	width: 70vmin !important;
+	height: 70vmin !important;
+	top: 50% !important;
+	left: 50% !important;
+	transform: translate(-50%, -50%);
+}
+
 /* Text boxes: keep compact so a row fits portrait widths. */
 #message,
 #bridgeMessage {
@@ -191,10 +226,11 @@ canvas {
 			     explicit submit button or Enter stops submitting (implicit submission). -->
 			<input type="submit" style="display: none" />
 
-			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output -->
+			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output.
+			     Click toggles fullscreen (plugin wallpaper sizing: 70% of viewport min). -->
 			<div class="form-group row">
 				<label class="col-form-label">Mirror</label>
-				<div style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto;">
+				<div id="mirrorWrap" title="Click for fullscreen" style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto; cursor: pointer;">
 					<canvas id="screencanvas"
 						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: 100%;"></canvas>
 					<div id="overlay"

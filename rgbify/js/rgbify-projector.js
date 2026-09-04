@@ -707,6 +707,29 @@ overlay.style.height = '100%';
 overlay.style.backgroundImage = "url('" + DOTS_PNG + "')";
 
 const context = canvas.getContext('2d');
+
+// Mirror fullscreen: click toggles fullscreen, click again exits.
+// Sizing (70vmin square on black) is handled by #mirrorWrap:fullscreen CSS
+// to match the opencode-rgbify-plugin wallpaper page.
+const mirrorWrap = document.getElementById('mirrorWrap');
+function toggleMirrorFullscreen() {
+	if (document.fullscreenElement) {
+		document.exitFullscreen().catch(() => {});
+	} else if (mirrorWrap) {
+		try {
+			if (mirrorWrap.requestFullscreen) {
+				mirrorWrap.requestFullscreen().catch(() => {});
+			} else if (mirrorWrap.webkitRequestFullscreen) {
+				mirrorWrap.webkitRequestFullscreen();
+			}
+		} catch (error) {
+			console.log(error);
+		}
+	}
+}
+if (mirrorWrap) {
+	mirrorWrap.addEventListener('click', toggleMirrorFullscreen);
+}
 const oc = document.createElement("canvas");
 oc.width = 100;
 oc.height = 100;
