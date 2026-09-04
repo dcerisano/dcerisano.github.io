@@ -121,6 +121,9 @@ canvas {
 /* Clickable mirror: fullscreen uses the plugin wallpaper sizing
    (min(viewport) * 0.7 square, centered on black). */
 #mirrorWrap {
+	cursor: default;
+}
+#mirrorWrap:not(.disabled) {
 	cursor: pointer;
 }
 #mirrorWrap:fullscreen,
@@ -230,7 +233,7 @@ canvas {
 			     Click toggles fullscreen (plugin wallpaper sizing: 70% of viewport min). -->
 			<div class="form-group row">
 				<label class="col-form-label">Mirror</label>
-				<div id="mirrorWrap" title="Click for fullscreen" style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto; cursor: pointer;">
+				<div id="mirrorWrap" class="disabled" style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto;">
 					<canvas id="screencanvas"
 						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: 100%;"></canvas>
 					<div id="overlay"

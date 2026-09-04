@@ -188,6 +188,7 @@ const ambienceButton = document.getElementById("ambienceButton");
 const message = document.getElementById("message");
 const bridgeMessage = document.getElementById("bridgeMessage");
 const firmwareVersion = document.getElementById("firmwareVersion");
+const mirrorWrap = document.getElementById('mirrorWrap');
 
 // Hide the ambience (screen capture) control on clients without getDisplayMedia.
 // The mirror canvas stays visible regardless — it displays the projector state.
@@ -458,6 +459,7 @@ function setConnectedUI() {
 	toneRange.disabled = false;
 	if (ambienceButton) ambienceButton.disabled = false;
 	document.getElementById("color-picker-container").classList.remove("disabled");
+	if (mirrorWrap) mirrorWrap.classList.remove("disabled");
 }
 
 function setDisconnectedUI() {
@@ -473,6 +475,7 @@ function setDisconnectedUI() {
 	toneRange.disabled = true;
 	if (ambienceButton) ambienceButton.disabled = true;
 	document.getElementById("color-picker-container").classList.add("disabled");
+	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 }
 
 
@@ -481,6 +484,13 @@ function setDisconnectedUI() {
 async function onDisconnected() {
 	if (reconnecting) return;
 	reconnecting = true;
+
+	// Drop fullscreen on link loss so the user is never stranded on a black
+	// fullscreen mirror; the mirror also goes inert until reconnect.
+	if (document.fullscreenElement) {
+		document.exitFullscreen().catch(() => {});
+	}
+	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 
 	connectButton.className = "btn btn-primary";
 	connectButton.disabled = true;
@@ -711,8 +721,9 @@ const context = canvas.getContext('2d');
 // Mirror fullscreen: click toggles fullscreen, click again exits.
 // Sizing (70vmin square on black) is handled by #mirrorWrap:fullscreen CSS
 // to match the opencode-rgbify-plugin wallpaper page.
-const mirrorWrap = document.getElementById('mirrorWrap');
 function toggleMirrorFullscreen() {
+	// Inert unless the BLE link is up: a disconnected (black) mirror must not open.
+	if (!device || !device.gatt || !device.gatt.connected) return;
 	if (document.fullscreenElement) {
 		document.exitFullscreen().catch(() => {});
 	} else if (mirrorWrap) {
