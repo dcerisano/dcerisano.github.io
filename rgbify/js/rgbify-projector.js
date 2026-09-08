@@ -335,7 +335,7 @@ async function connect() {
 
 // Called whenever GATT setup succeeds (initial connect or reconnect).
 function onConnected() {
-	updateText(" WEB   ");
+	updateText("  web\xe0\x44\x44\xffble");
 	setConnectedUI();
 }
 
