@@ -810,27 +810,35 @@ function onAmbienceDisconnected() {
 
 
 // Each tick: crop square, blur+contrast via offscreen canvas, downsample to 8x8, send.
+// CRITICAL: re-check ambience after the async grabFrame before writing. A frame
+// grabbed just before the user switched backgrounds would otherwise be written
+// to the projector characteristic, and the firmware auto-selects Ambience
+// (sticky) on EVERY projector write — flipping the device straight back to
+// Ambience and freezing it on the stale last frame.
 async function streamer() {
-	if (ambience && document.hidden)
+	if (!ambience) return;
+	if (document.hidden) {
 		onAmbienceDisconnected();
-	else
-		if (ambience)
-			await capture.grabFrame().then(bitmap => {
-				w = bitmap.width; h = bitmap.height;
-				x = 0; y = 0;
-				if (w > h) {
-					x = (w - h) / 2;
-					w = h;
-				} else {
-					y = (h - w) / 2;
-					h = w;
-				}
-
-			octx.drawImage(bitmap, x, y, w, h, 0, 0, 100, 100); //step
-			frameCtx.drawImage(oc, 0, 0, 8, 8);
-			updateProjector(frameCtx.getImageData(0, 0, 8, 8).data);
-
-			}).catch(err => { console.log(err); /*sometimes capture is undefined, ignore as frame skip*/ })
+		return;
+	}
+	const source = capture;
+	try {
+		const bitmap = await source.grabFrame();
+		if (!ambience || capture !== source) return;
+		let w = bitmap.width, h = bitmap.height, x = 0, y = 0;
+		if (w > h) {
+			x = (w - h) / 2;
+			w = h;
+		} else {
+			y = (h - w) / 2;
+			h = w;
+		}
+		octx.drawImage(bitmap, x, y, w, h, 0, 0, 100, 100); //step
+		frameCtx.drawImage(oc, 0, 0, 8, 8);
+		updateProjector(frameCtx.getImageData(0, 0, 8, 8).data);
+	} catch (err) {
+		console.log(err); /*sometimes capture is undefined, ignore as frame skip*/
+	}
 }
 
 // String to ArrayBuffer (ASCII bytes).
