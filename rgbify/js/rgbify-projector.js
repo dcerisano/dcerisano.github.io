@@ -50,7 +50,7 @@ const settings = {
 		dataUpdated: (self) => {
 			const v = self.data.V[0];
 			const m = BACKGROUND_MODES.find((m) => m.value === v);
-			if (m && backgroundSelect) backgroundSelect.value = m.value;
+			if (m && backgroundSelect && v !== 0) backgroundSelect.value = m.value;
 			if (v !== 0 && ambience) stopAmbience();
 		},
 	},
@@ -214,15 +214,14 @@ if (backgroundSelect) {
 		backgroundSelect.appendChild(opt);
 	}
 	backgroundSelect.onchange = () => {
-		const v = Number(backgroundSelect.value);
-		if (v === 0) {
-			if (!ambience) connectAmbience();
-			else updateBackground(0);
-		} else {
-			if (ambience) stopAmbience();
-			updateBackground(v);
-		}
-	};
+	const v = Number(backgroundSelect.value);
+	if (v === 0) {
+		if (!ambience) connectAmbience();
+	} else {
+		if (ambience) stopAmbience();
+		updateBackground(v);
+	}
+};
 }
 
 const volumeRange = document.getElementById("volumeRange");
@@ -782,7 +781,6 @@ async function connectAmbience() {
 		track.addEventListener('ended', () => onAmbienceDisconnected());
 		interval = setInterval(streamer, FPS);
 		ambience = true;
-		updateBackground(0);
 	} catch (err) {
 		console.log('requestMedia error:');
 		console.log(err);
@@ -810,7 +808,15 @@ function stopAmbience() {
 // Reset ambience state when the shared screen track ends. Background stays on
 // effect 0 so the last frame remains sticky on the device.
 function onAmbienceDisconnected() {
-	stopAmbience();
+	if (ambience) {
+		stopAmbience();
+		const current = (settings.background.data.V && settings.background.data.V.length)
+			? settings.background.data.V[0]
+			: 1;
+		if (backgroundSelect) backgroundSelect.value = current;
+	} else {
+		stopAmbience();
+	}
 }
 
 
