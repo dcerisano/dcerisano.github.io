@@ -630,9 +630,9 @@ function updateBackground(mode) {
 }
 
 // On page load (before any connection) the Background mode defaults to Solid
-// Color (BACKGROUND_MODES[0]). This only seeds the <select> so it isn't blank
+// Color (BACKGROUND_MODES[1]). This only seeds the <select> so it isn't blank
 // while disconnected; a live device read (dataUpdated) overrides it on connect.
-if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
+if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[1].value;
 
 function updateVolume(value) {
 
