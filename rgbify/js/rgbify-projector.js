@@ -5,9 +5,22 @@ const PROJECTOR_UUID   = "8bc01404-0006-4bf4-95d1-ce27a0477183";
 const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
 const BRIDGE_UUID      = "8bc01404-0009-4bf4-95d1-ce27a0477183";
 const BACKGROUND_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
+const TONE_UUID        = "8bc01404-000a-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
 const EXPECTED_FW_VERSION   = "0.2.0";
+const TONE_OFFSET_MIN = -424;
+const TONE_OFFSET_MAX = 1061;
+// Background modes, keyed to the -0008 characteristic value (mirror firmware
+// patterns.h BackgroundMode enum). Drives the Background <select> options.
+const BACKGROUND_MODES = [
+	{ value: 0, label: "Ambience" },
+	{ value: 1, label: "Solid Color" },
+	{ value: 2, label: "Plasma" },
+	{ value: 3, label: "Noise" },
+	{ value: 4, label: "Lava" },
+	{ value: 5, label: "Matrix" }
+];
 
 let ambience = false;
 const FPS = 30;
@@ -23,15 +36,6 @@ let service = null;
 
 // BLE characteristic registry: maps each setting to its GATT uuid, properties,
 // byte structure and last-read data. connect() and BLEwriteTo() iterate it.
-// Background effects, Ambience first (firmware 0.2.0 wire map 0..5).
-const BACKGROUND_MODES = [
-	{ v: 0, label: "Ambience" },
-	{ v: 1, label: "Solid" },
-	{ v: 2, label: "Plasma" },
-	{ v: 3, label: "Noise" },
-	{ v: 4, label: "Lava" },
-	{ v: 5, label: "Matrix" },
-];
 const settings = {
 	background: {
 		uuid: BACKGROUND_UUID,
@@ -41,8 +45,9 @@ const settings = {
 		writeBusy: false,
 		writeValue: null,
 		dataUpdated: (self) => {
-			const sel = document.getElementById("backgroundSelect");
-			if (sel && self.data.V.length) sel.value = String(self.data.V[0]);
+			const v = self.data.V[0];
+			const m = BACKGROUND_MODES.find((m) => m.value === v);
+			if (m && backgroundSelect) backgroundSelect.value = m.value;
 		},
 	},
 	volume: {
@@ -101,6 +106,18 @@ const settings = {
 		data: { V: [] },
 		writeBusy: false,
 		writeValue: null
+	},
+	// Read/write: auralizer pitch offset (int16 Hz). Shifts the 3-octave scale.
+	tone: {
+		uuid: TONE_UUID,
+		properties: ["BLERead", "BLEWrite"],
+		structure: ["Int16"],
+		data: { V: [] },
+		writeBusy: false,
+		writeValue: null,
+		dataUpdated: (self) => {
+			toneRange.value = self.data.V[0];
+		},
 	},
 	solidColor: {
 		uuid: COLOR_UUID,
@@ -172,6 +189,7 @@ const ambienceButton = document.getElementById("ambienceButton");
 const message = document.getElementById("message");
 const bridgeMessage = document.getElementById("bridgeMessage");
 const firmwareVersion = document.getElementById("firmwareVersion");
+const mirrorWrap = document.getElementById('mirrorWrap');
 
 // Hide the ambience (screen capture) control on clients without getDisplayMedia.
 // The mirror canvas stays visible regardless — it displays the projector state.
@@ -181,18 +199,33 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
 }
 
 
+// Background mode <select> (options built from BACKGROUND_MODES).
 const backgroundSelect = document.getElementById("backgroundSelect");
-
-// Background effect selector (Ambience on top).
-backgroundSelect.onchange = () => {
-	updateBackground(parseInt(backgroundSelect.value, 10));
-};
+if (backgroundSelect) {
+	for (const m of BACKGROUND_MODES) {
+		const opt = document.createElement("option");
+		opt.value = m.value;
+		opt.textContent = m.label;
+		backgroundSelect.appendChild(opt);
+	}
+	backgroundSelect.onchange = () => {
+		updateBackground(Number(backgroundSelect.value));
+	};
+}
 
 const volumeRange = document.getElementById("volumeRange");
 
 // Volume slider.
 volumeRange.oninput = () => {
 	updateVolume(volumeRange.value);
+};
+
+const toneRange = document.getElementById("toneRange");
+
+// Tone slider: auralizer pitch offset (Hz).
+toneRange.oninput = () => {
+	const v = clamp(Number(toneRange.value), TONE_OFFSET_MIN, TONE_OFFSET_MAX);
+	updateTone(v);
 };
 
 
@@ -207,12 +240,12 @@ solidColorInput.oninput = () => {
 initColorPicker();
 
 // Web Bluetooth support check + Connect button.
-if ("bluetooth" in navigator) {
+if (connectButton && "bluetooth" in navigator) {
 	connectButton.addEventListener("click", function(event) {
 		event.preventDefault();
 		connect();
 	});
-} else {
+} else if (connectButton) {
 	connectButton.className = "btn btn-danger";
 	let reason = "This browser doesn't support Web Bluetooth.";
 	if (!window.isSecureContext) {
@@ -303,6 +336,7 @@ async function connect() {
 
 // Called whenever GATT setup succeeds (initial connect or reconnect).
 function onConnected() {
+	updateText("  web\xe0\x44\x44\xffble");
 	setConnectedUI();
 }
 
@@ -330,7 +364,7 @@ async function setupGatt(device) {
 
 	const fwVersion = await readFirmwareVersion(server);
 	if (fwVersion !== null) {
-		firmwareVersion.textContent = `Version ${fwVersion}`;
+		firmwareVersion.textContent = fwVersion;
 	}
 	if (fwVersion !== null && fwVersion !== EXPECTED_FW_VERSION) {
 		alert(
@@ -363,7 +397,10 @@ async function setupGatt(device) {
 		// Subscribe to notifications so changes from any client update this page.
 		// Retry: back-to-back GATT operations during connect can transiently
 		// fail with "GATT operation failed" on Android.
-		if (setting.characteristic.properties.notify) {
+		// The projector (live-mirror) stream is deferred to AFTER this loop: once
+		// subscribed the firmware floods this connection with frames, so only
+		// enable it once every other characteristic is fully set up.
+		if (key !== "projector" && setting.characteristic.properties.notify) {
 			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
 				handleIncoming(setting, event.target.value);
 			});
@@ -384,6 +421,30 @@ async function setupGatt(device) {
 			console.log(error.message);
 		}
 	}
+
+	// Live-mirror projector stream subscribes LAST, after the connection is fully
+	// open (every characteristic above is set up). This is the trigger that makes
+	// the firmware start broadcasting display frames to this page.
+	try {
+		const setting = settings.projector;
+		if (setting.characteristic && setting.characteristic.properties.notify) {
+			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
+				handleIncoming(setting, event.target.value);
+			});
+			for (let attempt = 0; ; attempt++) {
+				try {
+					await setting.characteristic.startNotifications();
+					break;
+				} catch (error) {
+					if (attempt >= 3) throw error;
+					await sleep(200);
+				}
+			}
+		}
+	} catch (error) {
+		console.log("error subscribing to projector mirror");
+		console.log(error.message);
+	}
 }
 
 function setConnectedUI() {
@@ -394,9 +455,12 @@ function setConnectedUI() {
 	message.placeholder = "Enter text";
 	bridgeMessage.disabled = false;
 	bridgeMessage.placeholder = "Enter text";
-	backgroundSelect.disabled = false;
+	if (backgroundSelect) backgroundSelect.disabled = false;
 	volumeRange.disabled = false;
+	toneRange.disabled = false;
+	if (ambienceButton) ambienceButton.disabled = false;
 	document.getElementById("color-picker-container").classList.remove("disabled");
+	if (mirrorWrap) mirrorWrap.classList.remove("disabled");
 }
 
 function setDisconnectedUI() {
@@ -407,9 +471,12 @@ function setDisconnectedUI() {
 	message.placeholder = "Disconnected";
 	bridgeMessage.disabled = true;
 	bridgeMessage.placeholder = "Disconnected";
-	backgroundSelect.disabled = true;
+	if (backgroundSelect) backgroundSelect.disabled = true;
 	volumeRange.disabled = true;
+	toneRange.disabled = true;
+	if (ambienceButton) ambienceButton.disabled = true;
 	document.getElementById("color-picker-container").classList.add("disabled");
+	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 }
 
 
@@ -418,6 +485,13 @@ function setDisconnectedUI() {
 async function onDisconnected() {
 	if (reconnecting) return;
 	reconnecting = true;
+
+	// Drop fullscreen on link loss so the user is never stranded on a black
+	// fullscreen mirror; the mirror also goes inert until reconnect.
+	if (document.fullscreenElement) {
+		document.exitFullscreen().catch(() => {});
+	}
+	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 
 	connectButton.className = "btn btn-primary";
 	connectButton.disabled = true;
@@ -488,6 +562,7 @@ function handleIncoming(setting, dataReceived) {
 	const typeMap = {
 		Uint8: { fn: DataView.prototype.getUint8, bytes: 1 },
 		Uint16: { fn: DataView.prototype.getUint16, bytes: 2 },
+		Int16: { fn: DataView.prototype.getInt16, bytes: 2 },
 		Float32: { fn: DataView.prototype.getFloat32, bytes: 4 },
 	};
 	let packetPointer = 0;
@@ -510,11 +585,19 @@ function handleIncoming(setting, dataReceived) {
 
 // Create the iro color picker wired to the solidColor characteristic.
 function initColorPicker() {
+	const container = document.getElementById("color-picker-container");
+	if (!container) return; // element missing (e.g. stale cached HTML) — don't crash init
 	settings.solidColor.colorPicker = new iro.ColorPicker(
 		"#color-picker-container",
 		{
-			width: 150,
-			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`
+			width: 173,
+			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`,
+			// Stack the lightness/value slider ABOVE the wheel (iro's default puts
+			// it underneath the wheel). Vertical stacking order = array order.
+			layout: [
+				{ component: iro.ui.Slider, options: { sliderType: "value" } },
+				{ component: iro.ui.Wheel }
+			]
 		}
 	);
 
@@ -543,10 +626,8 @@ function initColorPicker() {
 
 // Update helpers: set a Uint8 value and write it to the device.
 function updateBackground(mode) {
-
-	settings.background.writeValue = Uint8Array.of(mode);
+	settings.background.writeValue = Uint8Array.of(mode | 0);
 	BLEwriteTo("background");
-
 }
 
 function updateVolume(value) {
@@ -554,6 +635,21 @@ function updateVolume(value) {
 	settings.volume.writeValue = Uint8Array.of(value);
 	BLEwriteTo("volume");
 
+}
+
+function updateTone(value) {
+
+	// Signed int16, little-endian (matches firmware Tone characteristic).
+	const buf = new ArrayBuffer(2);
+	const dv = new DataView(buf);
+	dv.setInt16(0, value, true);
+	settings.tone.writeValue = new Uint8Array(buf);
+	BLEwriteTo("tone");
+
+}
+
+function clamp(value, min, max) {
+	return Math.max(min, Math.min(max, value));
 }
 
 function updateProjector(value) {
@@ -612,7 +708,7 @@ const canvas = document.getElementById('screencanvas');
 canvas.width = 8;
 canvas.height = 8;
 canvas.style.width = '100%';
-canvas.style.height = 'auto';
+canvas.style.height = '100%';
 canvas.style.backgroundColor = '#000';
 canvas.style.imageRendering = 'pixelated';
 
@@ -622,6 +718,30 @@ overlay.style.height = '100%';
 overlay.style.backgroundImage = "url('" + DOTS_PNG + "')";
 
 const context = canvas.getContext('2d');
+
+// Mirror fullscreen: click toggles fullscreen, click again exits.
+// Sizing (70vmin square on black) is handled by #mirrorWrap:fullscreen CSS
+// to match the opencode-rgbify-plugin wallpaper page.
+function toggleMirrorFullscreen() {
+	// Inert unless the BLE link is up: a disconnected (black) mirror must not open.
+	if (!device || !device.gatt || !device.gatt.connected) return;
+	if (document.fullscreenElement) {
+		document.exitFullscreen().catch(() => {});
+	} else if (mirrorWrap) {
+		try {
+			if (mirrorWrap.requestFullscreen) {
+				mirrorWrap.requestFullscreen().catch(() => {});
+			} else if (mirrorWrap.webkitRequestFullscreen) {
+				mirrorWrap.webkitRequestFullscreen();
+			}
+		} catch (error) {
+			console.log(error);
+		}
+	}
+}
+if (mirrorWrap) {
+	mirrorWrap.addEventListener('click', toggleMirrorFullscreen);
+}
 const oc = document.createElement("canvas");
 oc.width = 100;
 oc.height = 100;

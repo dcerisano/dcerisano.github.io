@@ -2,6 +2,8 @@
 <html lang="en">
 <head profile="http://www.w3.org/2005/10/profile">
 <meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Expires" content="0">
 <!-- Required meta tags -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -19,13 +21,14 @@ body {
 	background-color: #3f3f3f;
 }
 
-/* Center the form in the middle of the screen regardless of aspect ratio or orientation. */
+/* Center the form vertically/horizontally regardless of aspect ratio or orientation. */
 main {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	min-height: 100vh;
 	min-height: 100dvh;
+	padding: 4px 0;
 }
 
 #form {
@@ -33,30 +36,139 @@ main {
 	max-width: 100%;
 }
 
+/* Every control row: label left of the control, never wrapping so a fixed-size
+   child (mirror, color wheel) can't get squeezed off to the side or clipped.
+   Spacing is applied per-row as margin-bottom (margin-top stays 0), so the gap
+   below each row is exactly that row's margin — easy to reason about. */
+.form-group.row {
+	flex-wrap: nowrap;
+	align-items: center;
+	column-gap: 22px;
+	margin: 0 0 0.6rem;
+}
+
+/* Mirror (top row): modest gap down to the color picker. */
+.form-group.row:has(#screencanvas) {
+	margin-bottom: 0.5rem;
+}
+
+/* Tint (color picker): a little separation before the Background menu. */
+.form-group.row:has(#color-picker-container) {
+	margin-bottom: 0.6rem;
+}
+
+/* Align the "Tint" label with the TOP of the picker, beside the luma slider. */
+.form-group.row:has(#color-picker-container) > label {
+	align-self: flex-start;
+	margin-top: 0;
+	padding-top: 0;
+}
+
+/* Background / Ambience / Volume / Tone: pack this cluster tightly. */
+.form-group.row:has(#backgroundSelect) {
+	margin-bottom: 0.3rem;
+}
+#ambienceRow {
+	margin-bottom: 0.3rem;
+}
+.form-group.row:has(#volumeRange) {
+	margin-bottom: 0.3rem;
+}
+.form-group.row:has(#toneRange) {
+	margin-bottom: 0.3rem;
+}
+
+/* Scroller / Blitter / Bluetooth: roomier so text fields and the connect
+   action stand out from the packed cluster above them. */
+.form-group.row:has(#message),
+.form-group.row:has(#bridgeMessage),
+.form-group.row:has(#connectButton) {
+	margin-bottom: 0.7rem;
+}
+
 label {
-	width: 120px;
+	width: 115px;
+	flex: 0 0 115px;
 	display: inline-block;
 	text-align: right;
-	padding-right: 15px;
+	padding-right: 10px;
+	margin-bottom: 0;
 	color: #d0d0d0;
+	font-size: 1.02rem;
 }
 
-/* Vertically center the label and content columns in every row. */
-.form-group.row {
-	align-items: center;
-}
-
-/* Center the second column (control cells) horizontally and vertically. */
+/* Control cell: center horizontally, but never flex-stretch children vertically
+   (that squishes the mirror), never shrink them below their natural size. */
 .form-group.row > div {
 	display: flex !important;
-	flex: 1;
+	flex: 1 1 auto;
+	min-width: 0;
 	justify-content: center !important;
 	align-items: center !important;
 	text-align: center;
 }
 
 canvas {
-	width: 120px;
+	width: 173px;
+}
+
+/* The live mirror must stay square. Its container carries aspect-ratio:1/1;
+   the canvas simply fills it (block, no flex-stretch, no auto-height quirk). */
+#screencanvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* Clickable mirror: fullscreen uses the plugin wallpaper sizing
+   (min(viewport) * 0.7 square, centered on black). */
+#mirrorWrap {
+	cursor: default;
+}
+#mirrorWrap:not(.disabled) {
+	cursor: pointer;
+}
+#mirrorWrap:fullscreen,
+#mirrorWrap:-webkit-full-screen {
+	width: 100vw;
+	height: 100vh;
+	aspect-ratio: auto;
+	border-radius: 0;
+	background: #000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+#mirrorWrap:fullscreen::backdrop {
+	background: #000;
+}
+#mirrorWrap:fullscreen #screencanvas,
+#mirrorWrap:-webkit-full-screen #screencanvas {
+	width: 70vmin !important;
+	height: 70vmin !important;
+	flex: 0 0 auto;
+	image-rendering: pixelated;
+}
+#mirrorWrap:fullscreen #overlay,
+#mirrorWrap:-webkit-full-screen #overlay {
+	width: 70vmin !important;
+	height: 70vmin !important;
+	top: 50% !important;
+	left: 50% !important;
+	transform: translate(-50%, -50%);
+}
+
+/* Text boxes: keep compact so a row fits portrait widths. */
+#message,
+#bridgeMessage {
+	max-width: 100%;
+}
+
+/* Connect and Screenshare buttons share an equal fixed width, matching the
+   color wheel / mirror / text-field width (173px). */
+#connectButton,
+#ambienceButton {
+	width: 173px;
 }
 
 /* Text box placeholder: red while disconnected; light gray when connected (default). */
@@ -77,6 +189,37 @@ canvas {
 	opacity: 0.3;
 	pointer-events: none;
 }
+
+/* Portrait / short screens: compress row spacing and controls so the whole
+   control panel fits on one screen without vertical scrolling. */
+@media (max-width: 480px), (max-height: 720px) {
+	label {
+		width: 96px;
+		flex-basis: 96px;
+		font-size: 0.94rem;
+		padding-right: 8px;
+	}
+	.form-group.row {
+		margin-bottom: 0.5rem;
+	}
+	main {
+		align-items: flex-start;
+		padding: 6px 0;
+	}
+}
+
+/* Hard guarantee: on short screens scale the whole panel down so it always fits
+   without scrolling (Chrome/Android + Safari support CSS zoom). */
+@media (max-height: 760px) {
+	#form {
+		zoom: 0.96;
+	}
+}
+@media (max-height: 600px) {
+	#form {
+		zoom: 0.78;
+	}
+}
 </style>
 
 </head>
@@ -88,22 +231,32 @@ canvas {
 			     explicit submit button or Enter stops submitting (implicit submission). -->
 			<input type="submit" style="display: none" />
 
-			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output -->
-			<div class="form-group row" style="margin-top: 1rem">
+			<!-- Live projector matrix display: always visible, mirrors the device's 8x8 output.
+			     Click toggles fullscreen (plugin wallpaper sizing: 70% of viewport min). -->
+			<div class="form-group row">
 				<label class="col-form-label">Mirror</label>
-				<div style="position: relative; width: 200px; border-radius: 12px; overflow: hidden;">
+				<div id="mirrorWrap" class="disabled" style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto;">
 					<canvas id="screencanvas"
-						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: auto;"></canvas>
+						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: 100%;"></canvas>
 					<div id="overlay"
 						style="background-size: contain; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></div>
 				</div>
 			</div>
 
-			<!-- Bluetooth connection -->
-			<div class="form-group row" style="margin-top: 2rem">
-				<label class="col-form-label">Bluetooth</label>
+			<!-- Hue color picker (tint) -->
+			<div class="form-group row">
+				<label class="col-form-label">Tint</label>
 				<div>
-					<button id="connectButton" class="btn btn-danger" type="button">Connect</button>
+					<div id="color-picker-container"></div>
+				</div>
+			</div>
+
+			<!-- Background mode (options injected from JS BACKGROUND_MODES) -->
+			<div class="form-group row">
+				<label class="col-form-label">Background</label>
+				<div>
+					<select id="backgroundSelect" class="form-control"
+						style="width: 173px" disabled></select>
 				</div>
 			</div>
 
@@ -111,38 +264,7 @@ canvas {
 			<div id="ambienceRow" class="form-group row">
 				<label class="col-form-label">Ambience</label>
 				<div>
-					<button id="ambienceButton" class="btn btn-danger" type="button">Screenshare</button>
-				</div>
-			</div>
-
-			<!-- Scroller text -->
-			<div class="form-group row">
-				<label class="col-form-label">Scroller</label>
-				<div>
-					<input id="message" class="form-control" style="width: 200px" type="text" maxlength="256" placeholder="Disconnected" disabled>
-				</div>
-			</div>
-
-			<!-- Blitter text -->
-			<div class="form-group row">
-				<label class="col-form-label">Blitter</label>
-				<div>
-					<input id="bridgeMessage" class="form-control" style="width: 200px" type="text" maxlength="256" placeholder="Disconnected" disabled>
-				</div>
-			</div>
-
-			<!-- Background effect (Ambience on top) -->
-			<div class="form-group row">
-				<label class="col-form-label">Background</label>
-				<div>
-					<select id="backgroundSelect" class="form-control" style="width: 200px" disabled>
-						<option value="0">Ambience</option>
-						<option value="1">Solid</option>
-						<option value="2">Plasma</option>
-						<option value="3">Noise</option>
-						<option value="4">Lava</option>
-						<option value="5">Matrix</option>
-					</select>
+					<button id="ambienceButton" class="btn btn-danger" type="button" disabled>Screenshare</button>
 				</div>
 			</div>
 
@@ -155,18 +277,43 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Hue color picker -->
+			<!-- Tone offset slider -->
 			<div class="form-group row">
-				<label class="col-form-label">Hue</label>
+				<label class="col-form-label">Tone</label>
 				<div>
-					<div id="color-picker-container"></div>
+					<input id="toneRange" class="custom-range" type="range" step="1"
+						min="-424" max="1061" value="0" disabled />
+				</div>
+			</div>
+
+			<!-- Scroller text -->
+			<div class="form-group row">
+				<label class="col-form-label">Scroller</label>
+				<div>
+					<input id="message" class="form-control" style="width: 173px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+				</div>
+			</div>
+
+			<!-- Blitter text -->
+			<div class="form-group row">
+				<label class="col-form-label">Blitter</label>
+				<div>
+					<input id="bridgeMessage" class="form-control" style="width: 173px" type="text" maxlength="256" placeholder="Disconnected" disabled>
+				</div>
+			</div>
+
+			<!-- Bluetooth connection -->
+			<div class="form-group row">
+				<label class="col-form-label">Bluetooth</label>
+				<div>
+					<button id="connectButton" class="btn btn-danger" type="button">Connect</button>
 				</div>
 			</div>
 
 			<!-- Firmware version (read from DIS) -->
-			<div class="form-group row" style="margin-top: 1rem">
+			<div class="form-group row">
 				<label class="col-form-label">Firmware</label>
-				<div id="firmwareVersion" style="color: #d0d0d0">Version —</div>
+				<div id="firmwareVersion" style="color: #d0d0d0">x.y.z</div>
 			</div>
 
 			<!-- Hidden input synced with the iro picker -->
@@ -192,7 +339,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/rgbify-projector.js"></script>
+<script src="js/rgbify-projector.js?v=9d81f2e"></script>
 </html>
 
 
