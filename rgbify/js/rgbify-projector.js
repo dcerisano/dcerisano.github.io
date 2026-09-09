@@ -629,6 +629,11 @@ function updateBackground(mode) {
 	BLEwriteTo("background");
 }
 
+// On page load (before any connection) the Background mode defaults to Solid
+// Color (BACKGROUND_MODES[0]). This only seeds the <select> so it isn't blank
+// while disconnected; a live device read (dataUpdated) overrides it on connect.
+if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
+
 function updateVolume(value) {
 
 	settings.volume.writeValue = Uint8Array.of(value);
