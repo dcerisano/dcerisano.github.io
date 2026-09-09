@@ -44,10 +44,14 @@ const settings = {
 		data: { V: [] },
 		writeBusy: false,
 		writeValue: null,
+		// Last change wins from any client: the device broadcast sets the
+		// menu, and any move away from Ambience ends a local screenshare
+		// session (stops the track, clearing the browser sharing indicator).
 		dataUpdated: (self) => {
 			const v = self.data.V[0];
 			const m = BACKGROUND_MODES.find((m) => m.value === v);
 			if (m && backgroundSelect) backgroundSelect.value = m.value;
+			if (v !== 0 && ambience) stopAmbience();
 		},
 	},
 	volume: {
@@ -185,31 +189,39 @@ let color = {
 };
 
 const connectButton = document.getElementById("connectButton");
-const ambienceButton = document.getElementById("ambienceButton");
 const message = document.getElementById("message");
 const bridgeMessage = document.getElementById("bridgeMessage");
 const firmwareVersion = document.getElementById("firmwareVersion");
 const mirrorWrap = document.getElementById('mirrorWrap');
 
-// Hide the ambience (screen capture) control on clients without getDisplayMedia.
-// The mirror canvas stays visible regardless — it displays the projector state.
-if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-	const ambienceRow = document.getElementById("ambienceRow");
-	if (ambienceRow) ambienceRow.style.display = "none";
-}
+// Screen-capture capability: without getDisplayMedia there is no Ambience
+// background option (the mirror canvas stays visible regardless).
+const hasScreenCapture = !!(
+	navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia
+);
 
 
 // Background mode <select> (options built from BACKGROUND_MODES).
+// Selecting "Ambience" (value 0) pops the screenshare picker via
+// connectAmbience(); any other choice stops a running ambience stream.
 const backgroundSelect = document.getElementById("backgroundSelect");
 if (backgroundSelect) {
 	for (const m of BACKGROUND_MODES) {
+		if (m.value === 0 && !hasScreenCapture) continue;
 		const opt = document.createElement("option");
 		opt.value = m.value;
 		opt.textContent = m.label;
 		backgroundSelect.appendChild(opt);
 	}
 	backgroundSelect.onchange = () => {
-		updateBackground(Number(backgroundSelect.value));
+		const v = Number(backgroundSelect.value);
+		if (v === 0) {
+			if (!ambience) connectAmbience();
+			else updateBackground(0);
+		} else {
+			if (ambience) stopAmbience();
+			updateBackground(v);
+		}
 	};
 }
 
@@ -256,18 +268,7 @@ if (connectButton && "bluetooth" in navigator) {
 	alert("Error: " + reason + "\n\nTry using Chrome.");
 }
 
-// Screen capture support check + Ambience button.
-if ("mediaDevices" in navigator) {
-	ambienceButton.addEventListener("click", function(event) {
-		event.preventDefault();
-		connectAmbience();
-	});
-} else {
-	ambienceButton.className = "btn btn-danger";
-	alert(
-		"Error: This browser doesn't support media devices. Try using Chrome."
-	);
-}
+// Ambience needs no button: it is launched from the Background menu.
 
 // Send the message on form submit. Only the field that triggered the submit
 // (the focused input) is sent, so Enter in Message writes only text and Enter
@@ -458,7 +459,6 @@ function setConnectedUI() {
 	if (backgroundSelect) backgroundSelect.disabled = false;
 	volumeRange.disabled = false;
 	toneRange.disabled = false;
-	if (ambienceButton) ambienceButton.disabled = false;
 	document.getElementById("color-picker-container").classList.remove("disabled");
 	if (mirrorWrap) mirrorWrap.classList.remove("disabled");
 }
@@ -474,7 +474,6 @@ function setDisconnectedUI() {
 	if (backgroundSelect) backgroundSelect.disabled = true;
 	volumeRange.disabled = true;
 	toneRange.disabled = true;
-	if (ambienceButton) ambienceButton.disabled = true;
 	document.getElementById("color-picker-container").classList.add("disabled");
 	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 }
@@ -758,48 +757,55 @@ const frameCtx = frameCanvas.getContext('2d', { willReadFrequently: true });
 
 let track = null;
 let capture = null;
+let interval = null;
 
 // Capture the screen, then stream downsampled 8x8 frames to the projector.
-// Ambience is background effect 0: select it first so the device tints the
-// stream (default white = identity) and stays sticky on the last frame.
+// Triggered by picking "Ambience" (background effect 0) in the Background
+// menu, which pops the screenshare picker. On success the device is switched
+// to effect 0 so it tints the stream (default white = identity) and stays
+// sticky on the last frame. Cancelling the picker leaves the previous mode.
 async function connectAmbience() {
 	if (ambience) return;
-
-	updateBackground(0);
-	ambienceButton.className = "btn btn-secondary";
-	ambienceButton.disabled = true;
 
 	const isAndroid = /Android/i.test(navigator.userAgent);
 	const constraints = isAndroid ? { video: true } : { video: { displaySurface: "monitor" } };
 
-	await navigator.mediaDevices.getDisplayMedia(constraints).then(stream => {
+	try {
+		const stream = await navigator.mediaDevices.getDisplayMedia(constraints);
 		track = stream.getVideoTracks()[0];
 		capture = new ImageCapture(track);
 		track.addEventListener('ended', () => onAmbienceDisconnected());
 		interval = setInterval(streamer, FPS);
-		ambienceButton.className = "btn btn-success";
-		ambienceButton.innerText = "Connected";
 		ambience = true;
-		ambienceButton.disabled = true;
-	}).catch(err => {
+		updateBackground(0);
+	} catch (err) {
 		console.log('requestMedia error:');
 		console.log(err);
 		ambience = false;
-		ambienceButton.className = "btn btn-danger";
-		ambienceButton.disabled = true;
-		ambienceButton.innerText = "Connect";
-	})
+		// Picker was cancelled: revert the menu to the device's current mode.
+		const current = (settings.background.data.V && settings.background.data.V.length)
+			? settings.background.data.V[0]
+			: 1;
+		if (backgroundSelect) backgroundSelect.value = current;
+	}
 }
 
-
-// Reset ambience UI state when the shared screen track ends.
-function onAmbienceDisconnected() {
+// Stop a running ambience stream (e.g. user picked another background).
+function stopAmbience() {
 	ambience = false;
-	ambienceButton.className = "btn btn-danger";
-	ambienceButton.disabled = false;
-	ambienceButton.innerText = "Connect";
-	clearInterval(interval);
-	track.stop();
+	if (interval !== null) clearInterval(interval);
+	interval = null;
+	if (track) {
+		try { track.stop(); } catch (e) { console.log(e); }
+		track = null;
+	}
+	capture = null;
+}
+
+// Reset ambience state when the shared screen track ends. Background stays on
+// effect 0 so the last frame remains sticky on the device.
+function onAmbienceDisconnected() {
+	stopAmbience();
 }
 
 

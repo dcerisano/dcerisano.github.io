@@ -64,11 +64,8 @@ main {
 	padding-top: 0;
 }
 
-/* Background / Ambience / Volume / Tone: pack this cluster tightly. */
+/* Background / Volume / Tone: pack this cluster tightly. */
 .form-group.row:has(#backgroundSelect) {
-	margin-bottom: 0.3rem;
-}
-#ambienceRow {
 	margin-bottom: 0.3rem;
 }
 .form-group.row:has(#volumeRange) {
@@ -164,10 +161,8 @@ canvas {
 	max-width: 100%;
 }
 
-/* Connect and Screenshare buttons share an equal fixed width, matching the
-   color wheel / mirror / text-field width (173px). */
-#connectButton,
-#ambienceButton {
+/* Connect button matches the color wheel / mirror / text-field width (173px). */
+#connectButton {
 	width: 173px;
 }
 
@@ -260,14 +255,6 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Ambience (screen capture) -->
-			<div id="ambienceRow" class="form-group row">
-				<label class="col-form-label">Ambience</label>
-				<div>
-					<button id="ambienceButton" class="btn btn-danger" type="button" disabled>Screenshare</button>
-				</div>
-			</div>
-
 			<!-- Volume slider -->
 			<div class="form-group row">
 				<label class="col-form-label">Volume</label>
@@ -339,7 +326,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/rgbify-projector.js?v=9d81f2e"></script>
+<script src="js/rgbify-projector.js?v=d24de57"></script>
 </html>
 
 
