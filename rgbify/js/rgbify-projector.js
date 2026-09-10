@@ -23,6 +23,7 @@ const BACKGROUND_MODES = [
 ];
 
 let ambience = false;
+let lastNonAmbienceMode = null;
 const FPS = 30;
 const RECONNECT_DELAY = 500;
 const RECONNECT_MAX_DELAY = 5000;
@@ -785,11 +786,13 @@ async function connectAmbience() {
 		console.log('requestMedia error:');
 		console.log(err);
 		ambience = false;
-		// Picker was cancelled: revert the menu to the device's current mode.
+		// Picker was cancelled: revert the menu to the device's current mode
+		// and write it back so the device + all clients stay in sync.
 		const current = (settings.background.data.V && settings.background.data.V.length)
 			? settings.background.data.V[0]
 			: 1;
 		if (backgroundSelect) backgroundSelect.value = current;
+		if (current !== 0) updateBackground(current);
 	}
 }
 
@@ -805,18 +808,21 @@ function stopAmbience() {
 	capture = null;
 }
 
-// Reset ambience state when the shared screen track ends. Background stays on
-// effect 0 so the last frame remains sticky on the device.
+// Reset ambience state when the shared screen track ends (browser sharing UI
+// cleared, or the document was hidden). Revert to the last persisted background
+// AND push that value to the -0008 characteristic so the device leaves its
+// sticky ambience frame and every connected client re-syncs to the same mode.
 function onAmbienceDisconnected() {
 	if (ambience) {
 		stopAmbience();
-		const current = (settings.background.data.V && settings.background.data.V.length)
-			? settings.background.data.V[0]
-			: 1;
-		if (backgroundSelect) backgroundSelect.value = current;
-	} else {
-		stopAmbience();
 	}
+	// Last persisted background (falls back to Solid Color if never read yet).
+	const current = (settings.background.data.V && settings.background.data.V.length)
+		? settings.background.data.V[0]
+		: 1;
+	if (backgroundSelect) backgroundSelect.value = current;
+	// Write it back so the device and all other clients follow the revert.
+	if (current !== 0) updateBackground(current);
 }
 
 
