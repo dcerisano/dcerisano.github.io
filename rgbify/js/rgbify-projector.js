@@ -688,6 +688,9 @@ function clamp(value, min, max) {
 }
 
 function updateProjector(value) {
+	// Defensive: never send a frame once ambience has stopped. A late frame
+	// would make the firmware re-enter ambience and re-show its last image.
+	if (!ambience) return;
 
 	settings.projector.writeValue = new Uint8Array(value.buffer);
 	BLEwriteTo("projector");
@@ -841,6 +844,13 @@ function stopAmbience() {
 		track = null;
 	}
 	capture = null;
+	// Cancel any queued projector frame: BLEwriteTo coalesces writes with a
+	// writePending loop, so a frame queued just before the user switched modes
+	// would otherwise be emitted AFTER the -0008 write — the firmware treats
+	// every 256-byte -0006 write as ambience, so it would flip back and show the
+	// stale last frame for ~1s. Clearing writePending stops that extra write.
+	settings.projector.writePending = false;
+	settings.projector.writeValue = null;
 }
 
 // The last real background mode (0-4). While ambience runs the firmware
