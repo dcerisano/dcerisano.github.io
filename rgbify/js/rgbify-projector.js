@@ -772,6 +772,14 @@ let interval = null;
 async function connectAmbience() {
 	if (ambience) return;
 
+	// Remember the persisted (non-Ambience) background NOW, before the firmware
+	// switches itself to effect 0. Once streaming starts the background char can
+	// read back as 0 (Ambience), so we can't recover the real mode afterward.
+	const persisted = (settings.background.data.V && settings.background.data.V.length)
+		? settings.background.data.V[0]
+		: 1;
+	lastNonAmbienceMode = persisted !== 0 ? persisted : 1;
+
 	const isAndroid = /Android/i.test(navigator.userAgent);
 	const constraints = isAndroid ? { video: true } : { video: { displaySurface: "monitor" } };
 
@@ -816,13 +824,16 @@ function onAmbienceDisconnected() {
 	if (ambience) {
 		stopAmbience();
 	}
-	// Last persisted background (falls back to Solid Color if never read yet).
-	const current = (settings.background.data.V && settings.background.data.V.length)
-		? settings.background.data.V[0]
+	// Restore the persisted (non-Ambience) background captured when ambience
+	// began (lastNonAmbienceMode). Don't read the live value here: while the
+	// stream was running the background char may read back as 0 (Ambience).
+	// Fall back to Solid Color (1) if nothing was ever captured.
+	const restore = lastNonAmbienceMode !== null && lastNonAmbienceMode !== 0
+		? lastNonAmbienceMode
 		: 1;
-	if (backgroundSelect) backgroundSelect.value = current;
+	if (backgroundSelect) backgroundSelect.value = restore;
 	// Write it back so the device and all other clients follow the revert.
-	if (current !== 0) updateBackground(current);
+	updateBackground(restore);
 }
 
 
