@@ -8,7 +8,7 @@ const BACKGROUND_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
 const TONE_UUID        = "8bc01404-000a-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
-const EXPECTED_FW_VERSION   = "0.1.7";
+const EXPECTED_FW_VERSION   = "0.2.0";
 const TONE_OFFSET_MIN = -424;
 const TONE_OFFSET_MAX = 1061;
 // Background modes, keyed to the -0008 characteristic value (mirror firmware
@@ -891,7 +891,7 @@ function onAmbienceDisconnected() {
 // Each tick: crop square, blur+contrast via offscreen canvas, downsample to 8x8, send.
 // CRITICAL: re-check ambience after the async grabFrame before writing. A frame
 // grabbed just before the user switched backgrounds would otherwise be written
-// to the projector characteristic, and firmware 0.1.7 treats EVERY 256-byte
+// to the projector characteristic, and firmware 0.2.0 treats EVERY 256-byte
 // projector write as an ambience frame — flipping the device straight back to
 // ambience/frozen on the stale last frame.
 async function streamer() {
