@@ -22,11 +22,19 @@ const BACKGROUND_MODES = [
 	{ value: 4, label: "Matrix" }
 ];
 
-// Client-only <select> sentinel: "Ambience" is NOT a firmware background enum
-// value. Picking it starts a screen-capture stream (256-byte frames on -0006);
-// the firmware holds ambience ~1s after frames stop, then redraws the persisted
-// background. This value is never written to -0008.
+// Transient -0008 value the firmware broadcasts while ambience frames stream.
+// It is never persisted; when frames stop the firmware restores the real mode.
+const BACKGROUND_AMBIENCE = 5;
+
+// The <select> option for Ambience. Client-only sentinel (the firmware value is
+// numeric BACKGROUND_AMBIENCE); the option is always visible but disabled on
+// browsers without getDisplayMedia, so every client can see when a remote client
+// is sharing.
 const AMBIENCE_SELECT_VALUE = "ambience";
+
+// Last real (0-4) mode read/broadcast. Ambience must not clobber this so we can
+// restore it when a local stream stops.
+let lastRealBackgroundMode = 0;
 
 let ambience = false;
 const FPS = 30;
@@ -55,9 +63,18 @@ const settings = {
 		// session (stops the track, clearing the browser sharing indicator).
 		dataUpdated: (self) => {
 			const v = self.data.V[0];
+			if (v === BACKGROUND_AMBIENCE) {
+				// A remote client is screen-sharing: show the (possibly disabled)
+				// Ambience entry but do NOT tear down our own stream.
+				if (backgroundSelect) backgroundSelect.value = AMBIENCE_SELECT_VALUE;
+				return;
+			}
 			const m = BACKGROUND_MODES.find((m) => m.value === v);
-			if (m && backgroundSelect) backgroundSelect.value = m.value;
-			if (m && ambience) stopAmbience();
+			if (m) {
+				lastRealBackgroundMode = m.value;
+				if (backgroundSelect) backgroundSelect.value = m.value;
+				if (ambience) stopAmbience();
+			}
 		},
 	},
 	volume: {
@@ -208,18 +225,20 @@ const hasScreenCapture = !!(
 
 
 // Background mode <select>. Real modes come from BACKGROUND_MODES (firmware
-// enum 0-4). When the browser can capture the screen, prepend a client-only
-// "Ambience" entry (sentinel value) that starts the screenshare stream without
-// touching -0008; the firmware switches to ambience on its own when frames
-// arrive and redraws the persisted background ~1s after they stop.
+// enum 0-4). The Ambience entry is ALWAYS present (disabled/greyed when the
+// browser cannot capture the screen) so every client can see — via the firmware's
+// transient -0008 broadcast — when a remote client is sharing. Picking it on a
+// capable browser starts the screenshare and selects Ambience on -0008.
 const backgroundSelect = document.getElementById("backgroundSelect");
 if (backgroundSelect) {
-	if (hasScreenCapture) {
-		const opt = document.createElement("option");
-		opt.value = AMBIENCE_SELECT_VALUE;
-		opt.textContent = "Ambience";
-		backgroundSelect.appendChild(opt);
+	const opt = document.createElement("option");
+	opt.value = AMBIENCE_SELECT_VALUE;
+	opt.textContent = "Ambience";
+	if (!hasScreenCapture) {
+		opt.disabled = true;
+		opt.title = "Screen sharing is not supported by this browser.";
 	}
+	backgroundSelect.appendChild(opt);
 	for (const m of BACKGROUND_MODES) {
 		const opt = document.createElement("option");
 		opt.value = m.value;
@@ -228,10 +247,11 @@ if (backgroundSelect) {
 	}
 	backgroundSelect.onchange = () => {
 		if (backgroundSelect.value === AMBIENCE_SELECT_VALUE) {
-			if (!ambience) connectAmbience();
+			if (hasScreenCapture && !ambience) connectAmbience();
 			return;
 		}
 		if (ambience) stopAmbience();
+		lastRealBackgroundMode = Number(backgroundSelect.value);
 		updateBackground(Number(backgroundSelect.value));
 	};
 }
@@ -776,12 +796,19 @@ let capture = null;
 let interval = null;
 
 // Capture the screen, then stream downsampled 8x8 frames to the projector.
-// Ambience is NOT a firmware background mode: streaming 256-byte frames to
-// -0006 puts the firmware into its separate ambience state, and it redraws the
-// persisted -0008 background ~1s after the frames stop (firmware 0.1.7). So we
-// never write -0008 to start or stop ambience — we only keep the menu in sync.
+// Selecting Ambience writes the transient -0008 value (BACKGROUND_AMBIENCE) so
+// every client's selector shows Ambience; the firmware persists nothing and
+// restores the real mode ~1s after frames stop. `lastRealBackgroundMode` is
+// remembered so we can restore it here on stop.
 async function connectAmbience() {
-	if (ambience) return;
+	if (ambience || !hasScreenCapture) return;
+
+	// Capture the real mode BEFORE the firmware announces the transient Ambience
+	// value, so a stop restores the right mode.
+	const known = (settings.background.data.V && settings.background.data.V.length)
+		? settings.background.data.V[0]
+		: lastRealBackgroundMode;
+	if (BACKGROUND_MODES.some((m) => m.value === known)) lastRealBackgroundMode = known;
 
 	const isAndroid = /Android/i.test(navigator.userAgent);
 	const constraints = isAndroid ? { video: true } : { video: { displaySurface: "monitor" } };
@@ -793,6 +820,8 @@ async function connectAmbience() {
 		track.addEventListener('ended', () => onAmbienceDisconnected());
 		interval = setInterval(streamer, FPS);
 		ambience = true;
+		// Set the characteristic (transient — the firmware never persists it).
+		updateBackground(BACKGROUND_AMBIENCE);
 	} catch (err) {
 		console.log('requestMedia error:');
 		console.log(err);
@@ -814,19 +843,23 @@ function stopAmbience() {
 	capture = null;
 }
 
-// The persisted background mode (0-4) as last read/broadcast. The firmware does
-// not change -0008 while ambience runs, so this stays the real mode throughout.
-// Falls back to Solid Color (0) if it was never read.
+// The last real background mode (0-4). While ambience runs the firmware
+// broadcasts the transient value on -0008, so we rely on the mode tracked from
+// the last real-mode notification (or captured before the local share started).
 function persistedBackgroundMode() {
 	const v = (settings.background.data.V && settings.background.data.V.length)
 		? settings.background.data.V[0]
-		: 0;
-	return BACKGROUND_MODES.some((m) => m.value === v) ? v : 0;
+		: lastRealBackgroundMode;
+	if (BACKGROUND_MODES.some((m) => m.value === v)) {
+		lastRealBackgroundMode = v;
+		return v;
+	}
+	return lastRealBackgroundMode;
 }
 
-// Point the menu at the persisted background and nudge -0008 so every client
-// agrees on the mode. A same-value write is a firmware no-op (its onWrite
-// returns early), so this only matters when a client has drifted.
+// Point the menu at the persisted background and write it back so the firmware
+// leaves ambience and every client agrees on the mode. A same-value write is a
+// firmware no-op (its onWrite returns early when already on that mode).
 function restorePersistedBackground() {
 	const mode = persistedBackgroundMode();
 	if (backgroundSelect) backgroundSelect.value = mode;
@@ -834,11 +867,13 @@ function restorePersistedBackground() {
 }
 
 // Reset ambience state when the shared screen track ends (browser sharing UI
-// cleared, or the document was hidden). The firmware redraws the persisted
-// background on its own ~1s after frames stop; we just re-sync the menu and
-// re-assert -0008 so every connected client agrees on the mode.
+// cleared, or the document was hidden). If we were streaming, restore the menu
+// and re-assert the real mode on -0008 so the firmware leaves ambience now.
+// Guarded on `ambience`: a user who already picked another mode has torn the
+// stream down, and we must not clobber their choice when `ended` fires late.
 function onAmbienceDisconnected() {
-	if (ambience) stopAmbience();
+	if (!ambience) return;
+	stopAmbience();
 	restorePersistedBackground();
 }
 
