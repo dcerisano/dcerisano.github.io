@@ -116,7 +116,9 @@ const settings = {
 			if (!self._renderScheduled) {
 				self._renderScheduled = true;
 				requestAnimationFrame(() => {
-					renderProjectorFrame(new DataView(self._pendingFrame.buffer));
+					if (self._pendingFrame) {
+						renderProjectorFrame(new DataView(self._pendingFrame.buffer));
+					}
 					self._renderScheduled = false;
 				});
 			}
@@ -399,6 +401,36 @@ async function connect() {
 function onConnected() {
 	updateText("  web\xe0\x44\x44\xffble");
 	setConnectedUI();
+	// Start the live-mirror stream only now that the client is fully connected,
+	// so the firmware's frame flood can't block/delay the connect state.
+	startProjectorStream();
+}
+
+
+// Subscribe the live-mirror projector stream. Called only AFTER the client is
+// fully connected (onConnected → setConnectedUI) so the firmware's frame flood
+// can't block or delay the connect state from completing.
+async function startProjectorStream() {
+	try {
+		const setting = settings.projector;
+		if (setting.characteristic && setting.characteristic.properties.notify) {
+			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
+				handleIncoming(setting, event.target.value);
+			});
+			for (let attempt = 0; ; attempt++) {
+				try {
+					await setting.characteristic.startNotifications();
+					break;
+				} catch (error) {
+					if (attempt >= 3) throw error;
+					await sleep(200);
+				}
+			}
+		}
+	} catch (error) {
+		console.log("error subscribing to projector mirror");
+		console.log(error.message);
+	}
 }
 
 // Read firmware version from Device Information Service (DIS).
@@ -458,9 +490,8 @@ async function setupGatt(device) {
 		// Subscribe to notifications so changes from any client update this page.
 		// Retry: back-to-back GATT operations during connect can transiently
 		// fail with "GATT operation failed" on Android.
-		// The projector (live-mirror) stream is deferred to AFTER this loop: once
-		// subscribed the firmware floods this connection with frames, so only
-		// enable it once every other characteristic is fully set up.
+		// The projector (live-mirror) stream is NOT started here — it begins only
+		// after onConnected() (fully connected), via startProjectorStream().
 		if (key !== "projector" && setting.characteristic.properties.notify) {
 			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
 				handleIncoming(setting, event.target.value);
@@ -481,30 +512,6 @@ async function setupGatt(device) {
 			console.log(`error loading characteristic ${key}`);
 			console.log(error.message);
 		}
-	}
-
-	// Live-mirror projector stream subscribes LAST, after the connection is fully
-	// open (every characteristic above is set up). This is the trigger that makes
-	// the firmware start broadcasting display frames to this page.
-	try {
-		const setting = settings.projector;
-		if (setting.characteristic && setting.characteristic.properties.notify) {
-			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
-				handleIncoming(setting, event.target.value);
-			});
-			for (let attempt = 0; ; attempt++) {
-				try {
-					await setting.characteristic.startNotifications();
-					break;
-				} catch (error) {
-					if (attempt >= 3) throw error;
-					await sleep(200);
-				}
-			}
-		}
-	} catch (error) {
-		console.log("error subscribing to projector mirror");
-		console.log(error.message);
 	}
 }
 
@@ -529,6 +536,7 @@ function setConnectedUI() {
 }
 
 function setDisconnectedUI() {
+	clearMirror();
 	connectButton.className = "btn btn-danger";
 	connectButton.disabled = false;
 	connectButton.innerText = "Connect";
@@ -617,6 +625,7 @@ async function onDisconnected() {
 	// Disconnected: every control returns to its disconnected state. Only the
 	// Connect button is then overridden to signal the in-progress reconnect.
 	setDisconnectedUI();
+	stopProjectorStream();
 	connectButton.className = "btn btn-primary";
 	connectButton.disabled = true;
 	connectButton.innerText = "Reconnecting…";
@@ -847,6 +856,26 @@ function renderProjectorFrame(dataReceived) {
 		}
 	}
 	context.putImageData(img, 0, 0);
+}
+
+// Clear the mirror canvas to black (on disconnect, so a stale frame can't linger).
+function clearMirror() {
+	context.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// Stop the live-mirror projector stream and clear the mirror. Called on
+// disconnect so the firmware stops flooding frames and the mirror returns to
+// black while the device is gone.
+function stopProjectorStream() {
+	const setting = settings.projector;
+	// Drop any frame queued for the next animation frame so it can't paint.
+	setting._pendingFrame = null;
+	setting._renderScheduled = false;
+	// Stop notifications on the (possibly already-stale) characteristic.
+	if (setting.characteristic && setting.characteristic.properties.notify) {
+		try { setting.characteristic.stopNotifications(); } catch (e) {}
+	}
+	clearMirror();
 }
 
 function updateText(value) {
