@@ -39,12 +39,17 @@ let lastRealBackgroundMode = 0;
 
 let ambience = false;
 const FPS = 30;
-const RECONNECT_DELAY = 500;
-const RECONNECT_MAX_DELAY = 5000;
+// Fixed reconnect interval: keep trying every 5s forever (no backoff, no max).
+const RECONNECT_INTERVAL = 5000;
 // Whole-setup watchdog: on Chrome/Linux, a GATT op past connect() (e.g.
 // getPrimaryService, Chromium #40212297) can hang forever after a drop, which
 // would stall the reconnect loop and freeze the mirror. Cap the entire setup.
 const RECONNECT_SETUP_TIMEOUT = 15000;
+
+// Minimum gap between reconnect attempts when an advertisement wakes the loop
+// early (prevents a tight retry loop while the peripheral is advertising). The
+// fixed RECONNECT_INTERVAL timer remains the guaranteed cadence.
+const MIN_RETRY_INTERVAL = 1000;
 
 let server = null;
 let service = null;
@@ -338,11 +343,15 @@ form.addEventListener("submit", function(event) {
 let device = null;
 let reconnecting = false;   // prevent parallel reconnect loops
 
+// Advertisement-driven fast reconnect state.
+let adWake = null;             // resolves the current reconnect sleep early
+let watchingAds = false;       // true while watchAdvertisements() is active
+let lastReconnectAttempt = 0;  // timestamp of last attempt (ad-wake spacing)
+
 
 
 // Connect: reuse device or prompt, then run shared GATT setup.
 async function connect() {
-	
 	// While connecting, every control is in its disconnected (inert) state.
 	setDisconnectedUI();
 	connectButton.className = "btn btn-primary";
@@ -359,7 +368,6 @@ async function connect() {
 				],
 				optionalServices: [DIS_UUID],
 			});
-             
 		}
 
 		// Register once so reconnect never stacks duplicate listeners.
@@ -539,9 +547,64 @@ function setDisconnectedUI() {
 	}
 }
 
+// ---- Advertisement-driven fast reconnect ----
+// While disconnected we passively scan for the device's advertisements. When it
+// re-advertises (e.g. the instant an ESP32 finishes rebooting) we reconnect
+// immediately instead of always waiting out the fixed 5s poll. If the browser
+// doesn't support watchAdvertisements (some Linux Chrome builds need the
+// #experimental-web-platform-features flag), this no-ops and the 5s loop alone
+// keeps reconnecting.
 
-// Device dropped: reconnect in place with exponential backoff so the page
+// Sleep for `ms`, but resolve early if the device re-advertises.
+function sleepOrAd(ms) {
+	return new Promise((resolve) => {
+		const finish = () => {
+			clearTimeout(timer);
+			if (adWake === finish) adWake = null;
+			resolve();
+		};
+		const timer = setTimeout(finish, ms);
+		adWake = finish;
+	});
+}
+
+// Fired when the already-permitted device broadcasts an advertisement: wake the
+// reconnect loop so it retries now rather than waiting out the 5s interval.
+// Rate-limited to MIN_RETRY_INTERVAL so a busy advertiser can't spin the loop.
+function onAdvertisement() {
+	if (adWake && Date.now() - lastReconnectAttempt >= MIN_RETRY_INTERVAL) {
+		const wake = adWake;
+		adWake = null;
+		wake();
+	}
+}
+
+// Start passive scanning for re-advertisements. Best-effort: on failure we just
+// fall back to the fixed 5s poll.
+async function startWatchingAds() {
+	if (!device || typeof device.watchAdvertisements !== "function" || watchingAds) return;
+	try {
+		device.addEventListener("advertisementreceived", onAdvertisement);
+		await device.watchAdvertisements();
+		watchingAds = true;
+	} catch (e) {
+		console.warn("watchAdvertisements unavailable, using 5s polling only:", e && e.message);
+		try { device.removeEventListener("advertisementreceived", onAdvertisement); } catch (_) {}
+	}
+}
+
+// Stop scanning; called once the connection is restored (or the loop exits).
+function stopWatchingAds() {
+	watchingAds = false;
+	if (!device) return;
+	try { device.removeEventListener("advertisementreceived", onAdvertisement); } catch (_) {}
+	try { if (typeof device.unwatchAdvertisements === "function") device.unwatchAdvertisements(); } catch (_) {}
+}
+
+
+// Device dropped: reconnect in place at a fixed 5s interval so the page
 // (and a running ambience stream) survives transient drops. Never reloads.
+// An advertisement watch short-circuits the wait as soon as the device returns.
 async function onDisconnected() {
 	if (reconnecting) return;
 	reconnecting = true;
@@ -558,10 +621,17 @@ async function onDisconnected() {
 	connectButton.disabled = true;
 	connectButton.innerText = "Reconnecting…";
 
-	let backoff = RECONNECT_DELAY;
+	startWatchingAds();
 	try {
 		for (;;) {
-			await sleep(backoff);
+			await sleepOrAd(RECONNECT_INTERVAL);
+			// Tear down any stale or half-open GATT connection before retrying so the
+			// next connect() starts fresh. Linux/BlueZ leaves the old link lingering,
+			// and gatt.connect() would otherwise return the same hung pending promise.
+			if (device && device.gatt) {
+				try { device.gatt.disconnect(); } catch (e) {}
+			}
+			lastReconnectAttempt = Date.now();
 			try {
 				await withTimeout(setupGatt(device), RECONNECT_SETUP_TIMEOUT);
 				onConnected();
@@ -572,11 +642,13 @@ async function onDisconnected() {
 					setDisconnectedUI();
 					return;
 				}
-				backoff = Math.min(backoff * 2, RECONNECT_MAX_DELAY);
+				// No backoff, no retry cap: loop again after RECONNECT_INTERVAL.
 			}
 		}
 	} finally {
 		reconnecting = false;
+		adWake = null;
+		stopWatchingAds();
 	}
 }
 
