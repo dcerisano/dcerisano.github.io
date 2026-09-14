@@ -729,6 +729,22 @@ function hardReset() {
 	if (!settings.reset.characteristic) return;
 	settings.reset.writeValue = Uint8Array.of(0);
 	BLEwriteTo("reset");
+
+	// Insensitive immediately: the device reboots and drops the link, and the
+	// reconnect loop re-arms the button once the firmware is back. Without this
+	// the button stays red until the drop is detected (up to ~2s on Linux).
+	if (resetButton) {
+		resetButton.className = "btn btn-secondary";
+		resetButton.disabled = true;
+	}
+
+	// Safety: if the write failed and the link is still up, re-arm the button.
+	setTimeout(() => {
+		if (device && device.gatt && device.gatt.connected && !reconnecting) {
+			resetButton.className = "btn btn-danger";
+			resetButton.disabled = !settings.reset.characteristic;
+		}
+	}, 3000);
 }
 
 function clamp(value, min, max) {
