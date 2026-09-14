@@ -12,29 +12,15 @@ const EXPECTED_FW_VERSION   = "0.2.0";
 const TONE_OFFSET_MIN = -424;
 const TONE_OFFSET_MAX = 1061;
 // Background modes, keyed to the -0008 characteristic value (mirror firmware
-// patterns.h BackgroundMode enum: 0=SOLID, 1=PLASMA, 2=STATIC, 3=LAVA,
-// 4=MATRIX). Drives the Background <select> options.
+// patterns.h BackgroundMode enum). Drives the Background <select> options.
 const BACKGROUND_MODES = [
-	{ value: 0, label: "Solid Color" },
-	{ value: 1, label: "Plasma" },
-	{ value: 2, label: "Noise" },
-	{ value: 3, label: "Lava" },
-	{ value: 4, label: "Matrix" }
+	{ value: 0, label: "Ambience" },
+	{ value: 1, label: "Solid Color" },
+	{ value: 2, label: "Plasma" },
+	{ value: 3, label: "Noise" },
+	{ value: 4, label: "Lava" },
+	{ value: 5, label: "Matrix" }
 ];
-
-// Transient -0008 value the firmware broadcasts while ambience frames stream.
-// It is never persisted; when frames stop the firmware restores the real mode.
-const BACKGROUND_AMBIENCE = 5;
-
-// The <select> option for Ambience. Client-only sentinel (the firmware value is
-// numeric BACKGROUND_AMBIENCE); the option is always visible but disabled on
-// browsers without getDisplayMedia, so every client can see when a remote client
-// is sharing.
-const AMBIENCE_SELECT_VALUE = "ambience";
-
-// Last real (0-4) mode read/broadcast. Ambience must not clobber this so we can
-// restore it when a local stream stops.
-let lastRealBackgroundMode = 0;
 
 let ambience = false;
 const FPS = 30;
@@ -58,23 +44,14 @@ const settings = {
 		data: { V: [] },
 		writeBusy: false,
 		writeValue: null,
-		// Last change wins from any client: a broadcast background value sets
-		// the menu, and any incoming mode change ends a local screenshare
+		// Last change wins from any client: the device broadcast sets the
+		// menu, and any move away from Ambience ends a local screenshare
 		// session (stops the track, clearing the browser sharing indicator).
 		dataUpdated: (self) => {
 			const v = self.data.V[0];
-			if (v === BACKGROUND_AMBIENCE) {
-				// A remote client is screen-sharing: show the (possibly disabled)
-				// Ambience entry but do NOT tear down our own stream.
-				if (backgroundSelect) backgroundSelect.value = AMBIENCE_SELECT_VALUE;
-				return;
-			}
 			const m = BACKGROUND_MODES.find((m) => m.value === v);
-			if (m) {
-				lastRealBackgroundMode = m.value;
-				if (backgroundSelect) backgroundSelect.value = m.value;
-				if (ambience) stopAmbience();
-			}
+			if (m && backgroundSelect) backgroundSelect.value = m.value;
+			if (v !== 0 && ambience) stopAmbience();
 		},
 	},
 	volume: {
@@ -224,35 +201,27 @@ const hasScreenCapture = !!(
 );
 
 
-// Background mode <select>. Real modes come from BACKGROUND_MODES (firmware
-// enum 0-4). The Ambience entry is ALWAYS present (disabled/greyed when the
-// browser cannot capture the screen) so every client can see — via the firmware's
-// transient -0008 broadcast — when a remote client is sharing. Picking it on a
-// capable browser starts the screenshare and selects Ambience on -0008.
+// Background mode <select> (options built from BACKGROUND_MODES).
+// Selecting "Ambience" (value 0) pops the screenshare picker via
+// connectAmbience(); any other choice stops a running ambience stream.
 const backgroundSelect = document.getElementById("backgroundSelect");
 if (backgroundSelect) {
-	const opt = document.createElement("option");
-	opt.value = AMBIENCE_SELECT_VALUE;
-	opt.textContent = "Ambience";
-	if (!hasScreenCapture) {
-		opt.disabled = true;
-		opt.title = "Screen sharing is not supported by this browser.";
-	}
-	backgroundSelect.appendChild(opt);
 	for (const m of BACKGROUND_MODES) {
+		if (m.value === 0 && !hasScreenCapture) continue;
 		const opt = document.createElement("option");
 		opt.value = m.value;
 		opt.textContent = m.label;
 		backgroundSelect.appendChild(opt);
 	}
 	backgroundSelect.onchange = () => {
-		if (backgroundSelect.value === AMBIENCE_SELECT_VALUE) {
-			if (hasScreenCapture && !ambience) connectAmbience();
-			return;
+		const v = Number(backgroundSelect.value);
+		if (v === 0) {
+			if (!ambience) connectAmbience();
+			else updateBackground(0);
+		} else {
+			if (ambience) stopAmbience();
+			updateBackground(v);
 		}
-		if (ambience) stopAmbience();
-		lastRealBackgroundMode = Number(backgroundSelect.value);
-		updateBackground(Number(backgroundSelect.value));
 	};
 }
 
@@ -660,11 +629,6 @@ function updateBackground(mode) {
 	BLEwriteTo("background");
 }
 
-// On page load (before any connection) the Background mode defaults to Solid
-// Color (BACKGROUND_MODES[0]). This only seeds the <select> so it isn't blank
-// while disconnected; a live device read (dataUpdated) overrides it on connect.
-if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
-
 function updateVolume(value) {
 
 	settings.volume.writeValue = Uint8Array.of(value);
@@ -688,9 +652,6 @@ function clamp(value, min, max) {
 }
 
 function updateProjector(value) {
-	// Defensive: never send a frame once ambience has stopped. A late frame
-	// would make the firmware re-enter ambience and re-show its last image.
-	if (!ambience) return;
 
 	settings.projector.writeValue = new Uint8Array(value.buffer);
 	BLEwriteTo("projector");
@@ -799,19 +760,12 @@ let capture = null;
 let interval = null;
 
 // Capture the screen, then stream downsampled 8x8 frames to the projector.
-// Selecting Ambience writes the transient -0008 value (BACKGROUND_AMBIENCE) so
-// every client's selector shows Ambience; the firmware persists nothing and
-// restores the real mode ~1s after frames stop. `lastRealBackgroundMode` is
-// remembered so we can restore it here on stop.
+// Triggered by picking "Ambience" (background effect 0) in the Background
+// menu, which pops the screenshare picker. On success the device is switched
+// to effect 0 so it tints the stream (default white = identity) and stays
+// sticky on the last frame. Cancelling the picker leaves the previous mode.
 async function connectAmbience() {
-	if (ambience || !hasScreenCapture) return;
-
-	// Capture the real mode BEFORE the firmware announces the transient Ambience
-	// value, so a stop restores the right mode.
-	const known = (settings.background.data.V && settings.background.data.V.length)
-		? settings.background.data.V[0]
-		: lastRealBackgroundMode;
-	if (BACKGROUND_MODES.some((m) => m.value === known)) lastRealBackgroundMode = known;
+	if (ambience) return;
 
 	const isAndroid = /Android/i.test(navigator.userAgent);
 	const constraints = isAndroid ? { video: true } : { video: { displaySurface: "monitor" } };
@@ -823,14 +777,16 @@ async function connectAmbience() {
 		track.addEventListener('ended', () => onAmbienceDisconnected());
 		interval = setInterval(streamer, FPS);
 		ambience = true;
-		// Set the characteristic (transient — the firmware never persists it).
-		updateBackground(BACKGROUND_AMBIENCE);
+		updateBackground(0);
 	} catch (err) {
 		console.log('requestMedia error:');
 		console.log(err);
 		ambience = false;
-		// Picker was cancelled: restore the menu to the persisted background.
-		restorePersistedBackground();
+		// Picker was cancelled: revert the menu to the device's current mode.
+		const current = (settings.background.data.V && settings.background.data.V.length)
+			? settings.background.data.V[0]
+			: 1;
+		if (backgroundSelect) backgroundSelect.value = current;
 	}
 }
 
@@ -844,56 +800,21 @@ function stopAmbience() {
 		track = null;
 	}
 	capture = null;
-	// Cancel any queued projector frame: BLEwriteTo coalesces writes with a
-	// writePending loop, so a frame queued just before the user switched modes
-	// would otherwise be emitted AFTER the -0008 write — the firmware treats
-	// every 256-byte -0006 write as ambience, so it would flip back and show the
-	// stale last frame for ~1s. Clearing writePending stops that extra write.
-	settings.projector.writePending = false;
-	settings.projector.writeValue = null;
 }
 
-// The last real background mode (0-4). While ambience runs the firmware
-// broadcasts the transient value on -0008, so we rely on the mode tracked from
-// the last real-mode notification (or captured before the local share started).
-function persistedBackgroundMode() {
-	const v = (settings.background.data.V && settings.background.data.V.length)
-		? settings.background.data.V[0]
-		: lastRealBackgroundMode;
-	if (BACKGROUND_MODES.some((m) => m.value === v)) {
-		lastRealBackgroundMode = v;
-		return v;
-	}
-	return lastRealBackgroundMode;
-}
-
-// Point the menu at the persisted background and write it back so the firmware
-// leaves ambience and every client agrees on the mode. A same-value write is a
-// firmware no-op (its onWrite returns early when already on that mode).
-function restorePersistedBackground() {
-	const mode = persistedBackgroundMode();
-	if (backgroundSelect) backgroundSelect.value = mode;
-	updateBackground(mode);
-}
-
-// Reset ambience state when the shared screen track ends (browser sharing UI
-// cleared, or the document was hidden). If we were streaming, restore the menu
-// and re-assert the real mode on -0008 so the firmware leaves ambience now.
-// Guarded on `ambience`: a user who already picked another mode has torn the
-// stream down, and we must not clobber their choice when `ended` fires late.
+// Reset ambience state when the shared screen track ends. Background stays on
+// effect 0 so the last frame remains sticky on the device.
 function onAmbienceDisconnected() {
-	if (!ambience) return;
 	stopAmbience();
-	restorePersistedBackground();
 }
 
 
 // Each tick: crop square, blur+contrast via offscreen canvas, downsample to 8x8, send.
 // CRITICAL: re-check ambience after the async grabFrame before writing. A frame
 // grabbed just before the user switched backgrounds would otherwise be written
-// to the projector characteristic, and firmware 0.2.0 treats EVERY 256-byte
-// projector write as an ambience frame — flipping the device straight back to
-// ambience/frozen on the stale last frame.
+// to the projector characteristic, and the firmware auto-selects Ambience
+// (sticky) on EVERY projector write — flipping the device straight back to
+// Ambience and freezing it on the stale last frame.
 async function streamer() {
 	if (!ambience) return;
 	if (document.hidden) {

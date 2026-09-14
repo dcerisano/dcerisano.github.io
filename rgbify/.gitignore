@@ -48,6 +48,3 @@ Thumbs.db
 *.mov
 *.wmv
 
-# Serena local project config (machine-specific, auto-migrates)
-.serena/project.yml
-
