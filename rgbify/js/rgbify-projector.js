@@ -9,8 +9,8 @@ const TONE_UUID        = "8bc01404-000a-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
 const EXPECTED_FW_VERSION   = "0.2.0";
-const TONE_OFFSET_MIN = 0;
-const TONE_OFFSET_MAX = 1000;
+const TONE_OFFSET_MIN = -424;
+const TONE_OFFSET_MAX = 1061;
 // Background modes, keyed to the -0008 characteristic value (mirror firmware
 // patterns.h BackgroundMode enum: 0=SOLID, 1=PLASMA, 2=STATIC, 3=LAVA,
 // 4=MATRIX). Drives the Background <select> options.
