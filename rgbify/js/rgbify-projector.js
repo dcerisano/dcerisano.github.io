@@ -343,6 +343,8 @@ let reconnecting = false;   // prevent parallel reconnect loops
 // Connect: reuse device or prompt, then run shared GATT setup.
 async function connect() {
 	
+	// While connecting, every control is in its disconnected (inert) state.
+	setDisconnectedUI();
 	connectButton.className = "btn btn-primary";
 	connectButton.disabled = true;
 	connectButton.innerText = "Connecting";
@@ -381,13 +383,7 @@ async function connect() {
 		onConnected();
 	} catch (error) {
 		console.error(error.message);
-		connectButton.className = "btn btn-danger";
-		connectButton.disabled = false;
-		connectButton.innerText = "Connect";
-		if (resetButton) {
-			resetButton.className = "btn btn-secondary";
-			resetButton.disabled = true;
-		}
+		setDisconnectedUI();
 	}
 }
 
@@ -555,15 +551,12 @@ async function onDisconnected() {
 	if (document.fullscreenElement) {
 		document.exitFullscreen().catch(() => {});
 	}
-	if (mirrorWrap) mirrorWrap.classList.add("disabled");
-
+	// Disconnected: every control returns to its disconnected state. Only the
+	// Connect button is then overridden to signal the in-progress reconnect.
+	setDisconnectedUI();
 	connectButton.className = "btn btn-primary";
 	connectButton.disabled = true;
 	connectButton.innerText = "Reconnecting…";
-	if (resetButton) {
-		resetButton.className = "btn btn-secondary";
-		resetButton.disabled = true;
-	}
 
 	let backoff = RECONNECT_DELAY;
 	try {
@@ -576,9 +569,7 @@ async function onDisconnected() {
 			} catch (error) {
 				console.error("Reconnect failed:", error.message);
 				if (error.message.startsWith("Firmware version mismatch")) {
-					connectButton.className = "btn btn-danger";
-					connectButton.disabled = false;
-					connectButton.innerText = "Connect";
+					setDisconnectedUI();
 					return;
 				}
 				backoff = Math.min(backoff * 2, RECONNECT_MAX_DELAY);
