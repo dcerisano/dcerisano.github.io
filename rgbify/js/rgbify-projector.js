@@ -148,7 +148,6 @@ const settings = {
 					try {
 						if (self._pendingFrame) {
 							renderProjectorFrame(new DataView(self._pendingFrame.buffer));
-							self._renderCount = (self._renderCount || 0) + 1;
 						}
 					} finally {
 						self._renderScheduled = false;
@@ -559,13 +558,6 @@ async function startProjectorStream(attemptId) {
 				// A real notification is the only proof the firmware's
 				// connect-suppress window has elapsed (see waitForMirrorLive).
 				setting._mirrorLive = true;
-				// Diagnostic: received vs rendered, so we can tell a dead
-				// notification stream from a stuck render loop.
-				setting._frameCount = (setting._frameCount || 0) + 1;
-				if (setting._frameCount % 20 === 0) {
-					console.log("projector frames received:", setting._frameCount,
-						"rendered:", setting._renderCount || 0);
-				}
 				handleIncoming(setting, event.target.value);
 			};
 			setting.characteristic.addEventListener("characteristicvaluechanged", setting._mirrorHandler);
