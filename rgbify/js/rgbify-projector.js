@@ -45,6 +45,18 @@ const RECONNECT_INTERVAL = 5000;
 // getPrimaryService, Chromium #40212297) can hang forever after a drop, which
 // would stall the reconnect loop and freeze the mirror. Cap the entire setup.
 const RECONNECT_SETUP_TIMEOUT = 15000;
+// Per-GATT-operation budget. EVERY individual GATT call in the setup/reconnect
+// path is wrapped in withTimeout(..., GATT_OP_TIMEOUT), so a single hung op
+// (Chromium #40212297 lets one hang forever) can never park the reconnect loop.
+const GATT_OP_TIMEOUT = 5000;
+// Whole-onConnected budget. onConnected() awaits stopNotifications()/
+// startNotifications(), which can hang forever on Linux Chrome; without this the
+// reconnect loop would park at `await onConnected()` and never retry.
+const ONCONNECT_TIMEOUT = 15000;
+// How long to wait for a still-pending device.gatt.connect() before issuing a
+// new one (single-flight). Two overlapping connects are what Chrome reports as
+// "Connection Error: Connection attempt failed".
+const CONNECT_SETTLE_WAIT_MS = 2000;
 // Firmware-revision read budget: the DIS 0x2A26 read once stalled 26s then
 // failed with "Unlikely Error" (firmware-side GATT wedge), wedging the shared
 // ATT queue until BlueZ timed it out and dropping the link for every client
@@ -366,6 +378,30 @@ form.addEventListener("submit", function(event) {
 let device = null;
 let reconnecting = false;   // prevent parallel reconnect loops
 
+// Reconnect generations. reconnectGen identifies the OWNING reconnect loop
+// (bumped by connect() and by each onDisconnected()); attemptGen identifies the
+// CURRENT setup attempt (bumped per attempt). A timed-out attempt abandoned by
+// withTimeout() therefore stops issuing GATT operations at its next await
+// instead of racing the new attempt on Chrome's serialized ATT queue.
+let reconnectGen = 0;
+let attemptGen = 0;
+// The in-flight device.gatt.connect() promise, if any. Before issuing another
+// connect we wait (bounded) for this one, so two connects never overlap.
+let gattConnecting = null;
+// Thrown by assertAttempt() when an attempt has been superseded.
+const SUPERSEDED = "superseded";
+
+// True while `attemptId` is still the current attempt (undefined = unchecked).
+function isAttempt(attemptId) {
+	return attemptId === undefined || attemptId === attemptGen;
+}
+
+// Throw SUPERSEDED when this attempt has been superseded by a newer one, so an
+// abandoned chain can't keep touching server/service/setting.characteristic.
+function assertAttempt(attemptId) {
+	if (!isAttempt(attemptId)) throw new Error(SUPERSEDED);
+}
+
 // Advertisement-driven fast reconnect state.
 let adWake = null;             // resolves the current reconnect sleep early
 let watchingAds = false;       // true while watchAdvertisements() is active
@@ -378,7 +414,13 @@ let lastReconnectAttempt = 0;  // timestamp of last attempt (ad-wake spacing)
 let uiConnected = false;
 
 // Connect: reuse device or prompt, then run shared GATT setup.
+// Connect: reuse device or prompt, then run shared GATT setup.
 async function connect() {
+	// A user-initiated connect supersedes any running reconnect loop AND any
+	// in-flight setup attempt, so the two can never race.
+	reconnectGen++;
+	const attemptId = ++attemptGen;
+
 	// While connecting, every control is in its disconnected (inert) state.
 	setDisconnectedUI();
 	connectButton.className = "btn btn-primary";
@@ -418,10 +460,10 @@ async function connect() {
 		// flash + re-pair cycle is re-verified. The automatic onDisconnected
 		// loop keeps the cache (a mere drop cannot change the firmware).
 		cachedFwVersion = null;
-		await setupGatt(device);
-		await onConnected();
+		await setupGatt(device, attemptId);
+		await onConnected(attemptId);
 	} catch (error) {
-		console.error(error.message);
+		console.error(error && error.message);
 		setDisconnectedUI();
 	}
 }
@@ -430,11 +472,11 @@ async function connect() {
 // Order matters: mark the UI connected, subscribe the live-mirror stream,
 // wait until frames are actually flowing, THEN send the "webble" greeting —
 // so the full scroll is visible in the mirror instead of only its tail.
-async function onConnected() {
+async function onConnected(attemptId) {
 	setConnectedUI();
 	// Start the live-mirror stream only now that the client is fully connected,
 	// so the firmware's frame flood can't block/delay the connect state.
-	await startProjectorStream();
+	await startProjectorStream(attemptId);
 	// Wait for proof the mirror is actually streaming. The firmware pauses its
 	// live-mirror broadcast for CONNECT_SUPPRESS_MS (2500ms) after the CCCD
 	// subscribe write, so anything sent before then scrolls on the matrix while
@@ -478,7 +520,7 @@ function waitForMirrorLive(timeoutMs) {
 // The event listener is registered BEFORE startNotifications() so the first
 // frame after subscribing can't slip through the gap; painting is still gated
 // by uiConnected (already true here) and dataUpdated's guards.
-async function startProjectorStream() {
+async function startProjectorStream(attemptId) {
 	try {
 		const setting = settings.projector;
 
@@ -487,10 +529,16 @@ async function startProjectorStream() {
 		// setupGatt can leave that stale object in place (its per-key catch
 		// swallows the error) — startNotifications() then rejects and the
 		// mirror silently freezes. Re-fetching here makes the stream self-heal.
+		// Bounded: on Linux Chrome a GATT op can hang forever (#40212297).
 		if (service) {
 			try {
-				setting.characteristic = await service.getCharacteristic(setting.uuid);
+				setting.characteristic = await withTimeout(
+					service.getCharacteristic(setting.uuid),
+					GATT_OP_TIMEOUT
+				);
+				assertAttempt(attemptId);
 			} catch (error) {
+				if (error && error.message === SUPERSEDED) throw error;
 				console.log("could not re-fetch projector characteristic");
 				console.log(error && error.message);
 			}
@@ -528,14 +576,17 @@ async function startProjectorStream() {
 			// broadcasts nothing — the mirror freezes while the console happily
 			// shows "projector notifications enabled". Explicitly stop first so
 			// the start performs a real CCCD write. (Linux-only symptom: the
-			// leaked BlueZ connection keeps the stale state alive.)
-			try { await setting.characteristic.stopNotifications(); } catch (e) {}
+			// leaked BlueZ connection keeps the stale state alive.) Bounded so a
+			// hung stop can't park the reconnect loop.
+			try { await withTimeout(setting.characteristic.stopNotifications(), GATT_OP_TIMEOUT); } catch (e) {}
+			assertAttempt(attemptId);
 			for (let attempt = 0; ; attempt++) {
 				try {
-					await setting.characteristic.startNotifications();
+					await withTimeout(setting.characteristic.startNotifications(), GATT_OP_TIMEOUT);
 					console.log("projector notifications enabled");
 					break;
 				} catch (error) {
+					if (error && error.message === SUPERSEDED) throw error;
 					if (attempt >= 3) {
 						console.log("projector startNotifications failed");
 						console.log(error && error.message);
@@ -544,6 +595,7 @@ async function startProjectorStream() {
 					await sleep(200);
 				}
 			}
+			assertAttempt(attemptId);
 			// NOTE: deliberately NO readValue() probe here. On Linux Chrome a
 			// GATT operation can hang forever after a drop (Chromium #40212297)
 			// and Chrome serialises a device's ATT queue, so one hung read
@@ -557,8 +609,10 @@ async function startProjectorStream() {
 			console.log("projector characteristic unavailable for the mirror stream");
 		}
 	} catch (error) {
+		// Let a superseded attempt abort the whole chain (handled by the caller).
+		if (error && error.message === SUPERSEDED) throw error;
 		console.log("error subscribing to projector mirror");
-		console.log(error.message);
+		console.log(error && error.message);
 	}
 }
 
@@ -568,8 +622,8 @@ async function startProjectorStream() {
 // slow, or errors, so the connection still proceeds as version-unknown.
 async function readFirmwareVersion(server) {
 	try {
-		const disService = await server.getPrimaryService(DIS_UUID);
-		const fwChar = await disService.getCharacteristic(FIRMWARE_REV_UUID);
+		const disService = await withTimeout(server.getPrimaryService(DIS_UUID), GATT_OP_TIMEOUT);
+		const fwChar = await withTimeout(disService.getCharacteristic(FIRMWARE_REV_UUID), GATT_OP_TIMEOUT);
 		const data = await withTimeout(fwChar.readValue(), FW_READ_TIMEOUT);
 		return new TextDecoder().decode(data).trim();
 	} catch (error) {
@@ -581,10 +635,28 @@ async function readFirmwareVersion(server) {
 // GATT setup, shared by the initial connect and every reconnect. The old
 // server/service/characteristic objects are stale after a drop, so this
 // re-fetches everything and re-subscribes on each call.
-async function setupGatt(device) {
-	server = await withTimeout(device.gatt.connect(), 5000);
+async function setupGatt(device, attemptId) {
+	// Single-flight: never issue a new device.gatt.connect() while a previous
+	// one is still pending. Two overlapping connects are what Chrome reports as
+	// "Connection Error: Connection attempt failed", and a timed-out connect
+	// leaves its promise pending forever on Linux (Chromium #40212297).
+	if (gattConnecting) {
+		try { await withTimeout(gattConnecting, CONNECT_SETTLE_WAIT_MS); } catch (e) {}
+		assertAttempt(attemptId);
+	}
+	const connectPromise = device.gatt.connect();
+	// gattConnecting must stay set until the underlying connect ACTUALLY settles
+	// (not merely until our timeout fires), so a hung connect is still visible to
+	// the next attempt. `tracked` never rejects, so waiters can't throw.
+	const tracked = connectPromise.catch(() => {});
+	gattConnecting = tracked;
+	tracked.then(() => { if (gattConnecting === tracked) gattConnecting = null; });
+	server = await withTimeout(connectPromise, GATT_OP_TIMEOUT);
+	assertAttempt(attemptId);
 	await sleep(500);
-	service = await server.getPrimaryService(SERVICE_UUID);
+	assertAttempt(attemptId);
+	service = await withTimeout(server.getPrimaryService(SERVICE_UUID), GATT_OP_TIMEOUT);
+	assertAttempt(attemptId);
 
 	// Firmware check, at most once per page load: a reconnect cannot change
 	// the firmware, so a cached version skips the DIS read entirely. A fresh
@@ -594,8 +666,10 @@ async function setupGatt(device) {
 	let fwVersion = cachedFwVersion;
 	if (fwVersion === null) {
 		fwVersion = await readFirmwareVersion(server);
+		assertAttempt(attemptId);
 		if (fwVersion === null) {
 			await sleep(2000);
+			assertAttempt(attemptId);
 		} else {
 			cachedFwVersion = fwVersion;
 		}
@@ -620,11 +694,16 @@ async function setupGatt(device) {
 			// failure here used to be swallowed by the per-key catch, leaving
 			// the STALE characteristic from the previous connection in place —
 			// every later operation on it then failed and the mirror froze.
+			// Every op is bounded so a hung GATT call can't stall the loop.
 			for (let attempt = 0; ; attempt++) {
 				try {
-					setting.characteristic = await service.getCharacteristic(setting.uuid);
+					setting.characteristic = await withTimeout(
+						service.getCharacteristic(setting.uuid),
+						GATT_OP_TIMEOUT
+					);
 					break;
 				} catch (error) {
+					if (error && error.message === SUPERSEDED) throw error;
 					if (attempt >= 3) {
 						setting.characteristic = null;
 						throw error;
@@ -632,14 +711,16 @@ async function setupGatt(device) {
 					await sleep(200);
 				}
 			}
+			assertAttempt(attemptId);
             
 		if (setting.properties.includes("BLERead") && key !== "projector") {
 			for (let attempt = 0; ; attempt++) {
 				try {
-					const data = await setting.characteristic.readValue();
+					const data = await withTimeout(setting.characteristic.readValue(), GATT_OP_TIMEOUT);
 					handleIncoming(setting, data);
 					break;
 				} catch (error) {
+					if (error && error.message === SUPERSEDED) throw error;
 					if (attempt >= 3) throw error;
 					await sleep(200);
 				}
@@ -657,9 +738,10 @@ async function setupGatt(device) {
 			});
 			for (let attempt = 0; ; attempt++) {
 				try {
-					await setting.characteristic.startNotifications();
+					await withTimeout(setting.characteristic.startNotifications(), GATT_OP_TIMEOUT);
 					break;
 				} catch (error) {
+					if (error && error.message === SUPERSEDED) throw error;
 					if (attempt >= 3) throw error;
 					await sleep(200);
 				}
@@ -668,9 +750,12 @@ async function setupGatt(device) {
 
 			setting.rendered = false;
 		} catch (error) {
+			// A superseded attempt must abort the whole chain, not be counted as
+			// a failed characteristic.
+			if (error && error.message === SUPERSEDED) throw error;
 			failed++;
 			console.log(`error loading characteristic ${key}`);
-			console.log(error.message);
+			console.log(error && error.message);
 		}
 	}
 	// A partially-loaded GATT table leaves every control dead while the link
@@ -784,6 +869,10 @@ function stopWatchingAds() {
 async function onDisconnected() {
 	if (reconnecting) return;
 	reconnecting = true;
+	// This loop owns the reconnect until connect() (or a newer loop) supersedes
+	// it. The generation is checked before every attempt so a superseded loop
+	// can never touch the device again.
+	const loopGen = ++reconnectGen;
 
 	// Drop fullscreen on link loss so the user is never stranded on a black
 	// fullscreen mirror; the mirror also goes inert until reconnect.
@@ -809,16 +898,30 @@ async function onDisconnected() {
 
 	startWatchingAds();
 	try {
+		// No backoff, no retry cap: this loop never gives up. Every step is
+		// time-bounded so a hung GATT op can't park it, and a superseded attempt
+		// aborts itself at its next await instead of racing the new one.
 		for (;;) {
 			await sleepOrAd(RECONNECT_INTERVAL);
+			// A user-initiated connect() (or a newer loop) supersedes this one.
+			if (loopGen !== reconnectGen) return;
 			lastReconnectAttempt = Date.now();
+			// A fresh attempt id supersedes any attempt abandoned by withTimeout.
+			const attemptId = ++attemptGen;
 			try {
-				await withTimeout(setupGatt(device), RECONNECT_SETUP_TIMEOUT);
-				await onConnected();
+				await withTimeout(setupGatt(device, attemptId), RECONNECT_SETUP_TIMEOUT);
+				if (loopGen !== reconnectGen || attemptId !== attemptGen) return;
+				await withTimeout(onConnected(attemptId), ONCONNECT_TIMEOUT);
 				return;
 			} catch (error) {
-				console.error("Reconnect failed:", error.message);
-				if (error.message.startsWith("Firmware version mismatch")) {
+				// A superseded attempt is not a failure — keep retrying, unless
+				// a user-initiated connect() took over (then bow out at once).
+				if (error && error.message === SUPERSEDED) {
+					if (loopGen !== reconnectGen) return;
+					continue;
+				}
+				console.error("Reconnect failed:", error && error.message);
+				if (error && error.message && error.message.startsWith("Firmware version mismatch")) {
 					setDisconnectedUI();
 					return;
 				}
