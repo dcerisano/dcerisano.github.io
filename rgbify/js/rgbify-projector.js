@@ -45,6 +45,17 @@ const RECONNECT_INTERVAL = 5000;
 // getPrimaryService, Chromium #40212297) can hang forever after a drop, which
 // would stall the reconnect loop and freeze the mirror. Cap the entire setup.
 const RECONNECT_SETUP_TIMEOUT = 15000;
+// Firmware-revision read budget: the DIS 0x2A26 read once stalled 26s then
+// failed with "Unlikely Error" (firmware-side GATT wedge), wedging the shared
+// ATT queue until BlueZ timed it out and dropping the link for every client
+// (2026-09-15). Never let it stall setup: fail fast, fail open (proceed as
+// version-unknown), and let the queue drain before continuing.
+const FW_READ_TIMEOUT = 4000;
+// Known firmware version, cached per page load. The firmware cannot change
+// across a mere reconnect (only across flash + re-pair), so the DIS read runs
+// at most once per page — reconnects skip it entirely instead of re-rolling
+// the stall dice every 5s.
+let cachedFwVersion = null;
 
 // Minimum gap between reconnect attempts when an advertisement wakes the loop
 // early (prevents a tight retry loop while the peripheral is advertising). The
@@ -394,6 +405,10 @@ async function connect() {
 			}, 2000);
 		}
 
+		// User-initiated (re)connect: forget any cached firmware version so a
+		// flash + re-pair cycle is re-verified. The automatic onDisconnected
+		// loop keeps the cache (a mere drop cannot change the firmware).
+		cachedFwVersion = null;
 		await setupGatt(device);
 		await onConnected();
 	} catch (error) {
@@ -449,12 +464,14 @@ async function startProjectorStream() {
 }
 
 // Read firmware version from Device Information Service (DIS).
-// Returns null if DIS is unavailable so the connection can still proceed.
+// Time-bounded and fail-open: a wedged DIS read must resolve (as null) in
+// FW_READ_TIMEOUT, never stall setup. Returns null when DIS is unavailable,
+// slow, or errors, so the connection still proceeds as version-unknown.
 async function readFirmwareVersion(server) {
 	try {
 		const disService = await server.getPrimaryService(DIS_UUID);
 		const fwChar = await disService.getCharacteristic(FIRMWARE_REV_UUID);
-		const data = await fwChar.readValue();
+		const data = await withTimeout(fwChar.readValue(), FW_READ_TIMEOUT);
 		return new TextDecoder().decode(data).trim();
 	} catch (error) {
 		console.warn("Could not read firmware version from DIS:", error);
@@ -470,7 +487,20 @@ async function setupGatt(device) {
 	await sleep(500);
 	service = await server.getPrimaryService(SERVICE_UUID);
 
-	const fwVersion = await readFirmwareVersion(server);
+	// Firmware check, at most once per page load: a reconnect cannot change
+	// the firmware, so a cached version skips the DIS read entirely. A fresh
+	// read that stalls/fails yields null (fail open); the ATT queue may still
+	// be wedged until BlueZ times the stuck op out, so pause before piling the
+	// characteristic reads on — every immediate retry deepens the stall.
+	let fwVersion = cachedFwVersion;
+	if (fwVersion === null) {
+		fwVersion = await readFirmwareVersion(server);
+		if (fwVersion === null) {
+			await sleep(2000);
+		} else {
+			cachedFwVersion = fwVersion;
+		}
+	}
 	if (fwVersion !== null) {
 		firmwareVersion.textContent = fwVersion;
 	}
