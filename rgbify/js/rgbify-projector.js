@@ -125,7 +125,6 @@ const settings = {
 		dataUpdated: (self, dataReceived) => {
 			if (!uiConnected) return;
 			if (!dataReceived || dataReceived.byteLength < 256) return;
-			self._mirrorLive = true;
 			if (!self._pendingFrame) self._pendingFrame = new Uint8Array(256);
 			self._pendingFrame.set(new Uint8Array(dataReceived.buffer, dataReceived.byteOffset, 256));
 			if (!self._renderScheduled) {
@@ -429,8 +428,12 @@ async function onConnected() {
 	// Start the live-mirror stream only now that the client is fully connected,
 	// so the firmware's frame flood can't block/delay the connect state.
 	await startProjectorStream();
-	// Wait for proof the mirror is live (notification or read-back frame).
-	// Timeout falls through so a static/change-muted display can't wedge startup.
+	// Wait for proof the mirror is actually streaming. The firmware pauses its
+	// live-mirror broadcast for CONNECT_SUPPRESS_MS (2500ms) after the CCCD
+	// subscribe write, so anything sent before then scrolls on the matrix while
+	// the mirror is muted — the mirror would only pick up the tail. A real
+	// notification can only arrive once that window has elapsed. Timeout falls
+	// through so a static/change-muted display can't wedge startup.
 	await waitForMirrorLive(3000);
 	try {
 		await updateText("  web\xe0\x44\x44\xffble");
@@ -440,8 +443,10 @@ async function onConnected() {
 	}
 }
 
-// Resolve once a live projector frame has been received (see
-// settings.projector._mirrorLive, set by dataUpdated), or after timeoutMs.
+// Resolve once a live projector NOTIFICATION frame has been received (see
+// settings.projector._mirrorLive, set only by the notification handler — NOT by
+// the read probe, which returns the current frame even while the firmware is
+// still suppressing the broadcast), or after timeoutMs.
 // Never rejects — returns true if live, false on timeout — so startup always
 // proceeds to the greeting even on a static display that sends no notifications.
 function waitForMirrorLive(timeoutMs) {
@@ -477,6 +482,9 @@ async function startProjectorStream() {
 				setting._mirrorHandler = null;
 			}
 			setting._mirrorHandler = (event) => {
+				// A real notification is the only proof the firmware's
+				// connect-suppress window has elapsed (see waitForMirrorLive).
+				setting._mirrorLive = true;
 				handleIncoming(setting, event.target.value);
 			};
 			setting.characteristic.addEventListener("characteristicvaluechanged", setting._mirrorHandler);
@@ -489,10 +497,12 @@ async function startProjectorStream() {
 					await sleep(200);
 				}
 			}
-			// Liveness probe: a read returns the current 256-byte frame even
+			// Immediate paint: a read returns the current 256-byte frame even
 			// when the display is static (change-detected notifications skip
-			// static frames). This both proves the stream is flowing and
-			// paints the mirror immediately. Failure is non-fatal —
+			// static frames). This shows the live display right away, but it
+			// does NOT prove the broadcast is flowing — the firmware may still
+			// be in its connect-suppress window, so _mirrorLive is deliberately
+			// left to the notification handler. Failure is non-fatal —
 			// notifications may still arrive.
 			try {
 				const data = await withTimeout(setting.characteristic.readValue(), 4000);
