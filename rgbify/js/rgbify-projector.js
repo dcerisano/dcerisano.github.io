@@ -120,9 +120,12 @@ const settings = {
 		// never replayed through the mirror — it jumps straight to the latest.
 		_pendingFrame: null,
 		_renderScheduled: false,
+		_mirrorLive: false,
+		_mirrorHandler: null,
 		dataUpdated: (self, dataReceived) => {
 			if (!uiConnected) return;
 			if (!dataReceived || dataReceived.byteLength < 256) return;
+			self._mirrorLive = true;
 			if (!self._pendingFrame) self._pendingFrame = new Uint8Array(256);
 			self._pendingFrame.set(new Uint8Array(dataReceived.buffer, dataReceived.byteOffset, 256));
 			if (!self._renderScheduled) {
@@ -418,30 +421,65 @@ async function connect() {
 }
 
 // Called whenever GATT setup succeeds (initial connect or reconnect).
-// Must be async so we await startProjectorStream() — the UI must be
-// fully rendered as connected before any stream events arrive.
+// Order matters: mark the UI connected, subscribe the live-mirror stream,
+// wait until frames are actually flowing, THEN send the "webble" greeting —
+// so the full scroll is visible in the mirror instead of only its tail.
 async function onConnected() {
-	updateText("  web\xe0\x44\x44\xffble");
 	setConnectedUI();
 	// Start the live-mirror stream only now that the client is fully connected,
 	// so the firmware's frame flood can't block/delay the connect state.
 	await startProjectorStream();
+	// Wait for proof the mirror is live (notification or read-back frame).
+	// Timeout falls through so a static/change-muted display can't wedge startup.
+	await waitForMirrorLive(3000);
+	try {
+		await updateText("  web\xe0\x44\x44\xffble");
+	} catch (error) {
+		console.log("error sending startup greeting");
+		console.log(error && error.message);
+	}
+}
+
+// Resolve once a live projector frame has been received (see
+// settings.projector._mirrorLive, set by dataUpdated), or after timeoutMs.
+// Never rejects — returns true if live, false on timeout — so startup always
+// proceeds to the greeting even on a static display that sends no notifications.
+function waitForMirrorLive(timeoutMs) {
+	const setting = settings.projector;
+	if (setting._mirrorLive) return Promise.resolve(true);
+	return new Promise((resolve) => {
+		const start = Date.now();
+		const timer = setInterval(() => {
+			if (setting._mirrorLive || Date.now() - start >= timeoutMs) {
+				clearInterval(timer);
+				resolve(!!setting._mirrorLive);
+			}
+		}, 50);
+	});
 }
 
 
 // Subscribe the live-mirror projector stream. Called only AFTER the client is
 // fully connected (onConnected → setConnectedUI) so the firmware's frame flood
 // can't block or delay the connect state from completing.
-// The event listener is registered AFTER startNotifications() completes so
-// no characteristicvaluechanged events can arrive before the browser has
-// painted the connected UI state.
+// The event listener is registered BEFORE startNotifications() so the first
+// frame after subscribing can't slip through the gap; painting is still gated
+// by uiConnected (already true here) and dataUpdated's guards.
 async function startProjectorStream() {
 	try {
 		const setting = settings.projector;
 		if (setting.characteristic && setting.characteristic.properties.notify) {
-			// Start notifications first — the event listener is registered
-			// only after this completes, so no frames can paint before
-			// setConnectedUI() has been painted by the browser.
+			setting._mirrorLive = false;
+			// Drop any stale handler from a previous connect so reconnects
+			// don't stack duplicate handleIncoming calls per notification.
+			if (setting._mirrorHandler) {
+				try { setting.characteristic.removeEventListener("characteristicvaluechanged", setting._mirrorHandler); } catch (e) {}
+				setting._mirrorHandler = null;
+			}
+			setting._mirrorHandler = (event) => {
+				handleIncoming(setting, event.target.value);
+			};
+			setting.characteristic.addEventListener("characteristicvaluechanged", setting._mirrorHandler);
 			for (let attempt = 0; ; attempt++) {
 				try {
 					await setting.characteristic.startNotifications();
@@ -451,11 +489,18 @@ async function startProjectorStream() {
 					await sleep(200);
 				}
 			}
-			// Now register the listener — no notifications can arrive
-			// before this point, giving the browser time to paint.
-			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
-				handleIncoming(setting, event.target.value);
-			});
+			// Liveness probe: a read returns the current 256-byte frame even
+			// when the display is static (change-detected notifications skip
+			// static frames). This both proves the stream is flowing and
+			// paints the mirror immediately. Failure is non-fatal —
+			// notifications may still arrive.
+			try {
+				const data = await withTimeout(setting.characteristic.readValue(), 4000);
+				handleIncoming(setting, data);
+			} catch (error) {
+				console.log("projector mirror read probe failed, waiting on notifications");
+				console.log(error && error.message);
+			}
 		}
 	} catch (error) {
 		console.log("error subscribing to projector mirror");
@@ -718,6 +763,7 @@ window.addEventListener("pagehide", function() {
 async function BLEwriteTo(key) {
 
 	const setting = settings[key];
+	if (!setting.characteristic) return;
 	if (setting.writeBusy) {
 		setting.writePending = true;
 		return;
@@ -912,6 +958,11 @@ function stopProjectorStream() {
 	// Drop any frame queued for the next animation frame so it can't paint.
 	setting._pendingFrame = null;
 	setting._renderScheduled = false;
+	setting._mirrorLive = false;
+	if (setting._mirrorHandler && setting.characteristic) {
+		try { setting.characteristic.removeEventListener("characteristicvaluechanged", setting._mirrorHandler); } catch (e) {}
+		setting._mirrorHandler = null;
+	}
 	// Stop notifications on the (possibly already-stale) characteristic.
 	if (setting.characteristic && setting.characteristic.properties.notify) {
 		try { setting.characteristic.stopNotifications(); } catch (e) {}
@@ -922,13 +973,13 @@ function stopProjectorStream() {
 function updateText(value) {
 	value = value.slice(0, 256);
 	settings.text.writeValue = new Uint8Array(str2ab(value));
-	BLEwriteTo("text");
+	return BLEwriteTo("text");
 }
 
 function updateBridgeText(value) {
 	value = value.slice(0, 256);
 	settings.bridge.writeValue = new Uint8Array(str2ab(value));
-	BLEwriteTo("bridge");
+	return BLEwriteTo("bridge");
 }
 
 
