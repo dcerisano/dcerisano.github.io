@@ -130,10 +130,17 @@ const settings = {
 			if (!self._renderScheduled) {
 				self._renderScheduled = true;
 				requestAnimationFrame(() => {
-					if (self._pendingFrame) {
-						renderProjectorFrame(new DataView(self._pendingFrame.buffer));
+					// try/finally: if a render ever throws, _renderScheduled must
+					// still be cleared — otherwise every later frame is dropped
+					// and the mirror freezes while notifications keep arriving.
+					try {
+						if (self._pendingFrame) {
+							renderProjectorFrame(new DataView(self._pendingFrame.buffer));
+							self._renderCount = (self._renderCount || 0) + 1;
+						}
+					} finally {
+						self._renderScheduled = false;
 					}
-					self._renderScheduled = false;
 				});
 			}
 		}
@@ -437,6 +444,7 @@ async function onConnected() {
 	await waitForMirrorLive(3000);
 	try {
 		await updateText("  web\xe0\x44\x44\xffble");
+		console.log("startup greeting sent");
 	} catch (error) {
 		console.log("error sending startup greeting");
 		console.log(error && error.message);
@@ -503,6 +511,13 @@ async function startProjectorStream() {
 				// A real notification is the only proof the firmware's
 				// connect-suppress window has elapsed (see waitForMirrorLive).
 				setting._mirrorLive = true;
+				// Diagnostic: received vs rendered, so we can tell a dead
+				// notification stream from a stuck render loop.
+				setting._frameCount = (setting._frameCount || 0) + 1;
+				if (setting._frameCount % 20 === 0) {
+					console.log("projector frames received:", setting._frameCount,
+						"rendered:", setting._renderCount || 0);
+				}
 				handleIncoming(setting, event.target.value);
 			};
 			setting.characteristic.addEventListener("characteristicvaluechanged", setting._mirrorHandler);
