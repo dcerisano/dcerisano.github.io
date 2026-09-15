@@ -521,6 +521,15 @@ async function startProjectorStream() {
 				handleIncoming(setting, event.target.value);
 			};
 			setting.characteristic.addEventListener("characteristicvaluechanged", setting._mirrorHandler);
+			// Chrome caches notification state per characteristic, and after a
+			// reconnect startNotifications() can resolve WITHOUT re-writing the
+			// projector CCCD (it still believes notifications are on from before
+			// the drop). The firmware then never re-registers this client and
+			// broadcasts nothing — the mirror freezes while the console happily
+			// shows "projector notifications enabled". Explicitly stop first so
+			// the start performs a real CCCD write. (Linux-only symptom: the
+			// leaked BlueZ connection keeps the stale state alive.)
+			try { await setting.characteristic.stopNotifications(); } catch (e) {}
 			for (let attempt = 0; ; attempt++) {
 				try {
 					await setting.characteristic.startNotifications();
