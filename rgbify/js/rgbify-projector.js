@@ -484,7 +484,7 @@ async function setupGatt(device) {
 			const setting = settings[key];
 			setting.characteristic = await service.getCharacteristic(setting.uuid);
             
-		if (setting.properties.includes("BLERead")) {
+		if (setting.properties.includes("BLERead") && key !== "projector") {
 			for (let attempt = 0; ; attempt++) {
 				try {
 					const data = await setting.characteristic.readValue();
