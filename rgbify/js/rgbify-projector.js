@@ -403,9 +403,6 @@ async function connect() {
 async function onConnected() {
 	updateText("  web\xe0\x44\x44\xffble");
 	setConnectedUI();
-	// Yield to the browser so setConnectedUI() has painted before
-	// any characteristicvaluechanged events can reach the canvas.
-	await new Promise(resolve => requestAnimationFrame(resolve));
 	// Start the live-mirror stream only now that the client is fully connected,
 	// so the firmware's frame flood can't block/delay the connect state.
 	await startProjectorStream();
@@ -415,13 +412,16 @@ async function onConnected() {
 // Subscribe the live-mirror projector stream. Called only AFTER the client is
 // fully connected (onConnected → setConnectedUI) so the firmware's frame flood
 // can't block or delay the connect state from completing.
+// The event listener is registered AFTER startNotifications() completes so
+// no characteristicvaluechanged events can arrive before the browser has
+// painted the connected UI state.
 async function startProjectorStream() {
 	try {
 		const setting = settings.projector;
 		if (setting.characteristic && setting.characteristic.properties.notify) {
-			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
-				handleIncoming(setting, event.target.value);
-			});
+			// Start notifications first — the event listener is registered
+			// only after this completes, so no frames can paint before
+			// setConnectedUI() has been painted by the browser.
 			for (let attempt = 0; ; attempt++) {
 				try {
 					await setting.characteristic.startNotifications();
@@ -431,6 +431,11 @@ async function startProjectorStream() {
 					await sleep(200);
 				}
 			}
+			// Now register the listener — no notifications can arrive
+			// before this point, giving the browser time to paint.
+			setting.characteristic.addEventListener("characteristicvaluechanged", (event) => {
+				handleIncoming(setting, event.target.value);
+			});
 		}
 	} catch (error) {
 		console.log("error subscribing to projector mirror");
