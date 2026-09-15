@@ -110,6 +110,7 @@ const settings = {
 		_pendingFrame: null,
 		_renderScheduled: false,
 		dataUpdated: (self, dataReceived) => {
+			if (!uiConnected) return;
 			if (!dataReceived || dataReceived.byteLength < 256) return;
 			if (!self._pendingFrame) self._pendingFrame = new Uint8Array(256);
 			self._pendingFrame.set(new Uint8Array(dataReceived.buffer, dataReceived.byteOffset, 256));
@@ -352,6 +353,10 @@ let lastReconnectAttempt = 0;  // timestamp of last attempt (ad-wake spacing)
 
 
 
+// UI connected flag — prevents canvas from painting frames
+// before setConnectedUI() has been called.
+let uiConnected = false;
+
 // Connect: reuse device or prompt, then run shared GATT setup.
 async function connect() {
 	// While connecting, every control is in its disconnected (inert) state.
@@ -526,6 +531,7 @@ async function setupGatt(device) {
 }
 
 function setConnectedUI() {
+	uiConnected = true;
 	connectButton.className = "btn btn-success";
 	connectButton.disabled = true;
 	connectButton.innerText = "Connected";
@@ -546,6 +552,7 @@ function setConnectedUI() {
 }
 
 function setDisconnectedUI() {
+	uiConnected = false;
 	clearMirror();
 	connectButton.className = "btn btn-danger";
 	connectButton.disabled = false;
