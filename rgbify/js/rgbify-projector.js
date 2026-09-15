@@ -473,6 +473,21 @@ function waitForMirrorLive(timeoutMs) {
 async function startProjectorStream() {
 	try {
 		const setting = settings.projector;
+
+		// Always take the characteristic from the CURRENT service. After a
+		// reconnect the previous object is dead, and a partially-failed
+		// setupGatt can leave that stale object in place (its per-key catch
+		// swallows the error) — startNotifications() then rejects and the
+		// mirror silently freezes. Re-fetching here makes the stream self-heal.
+		if (service) {
+			try {
+				setting.characteristic = await service.getCharacteristic(setting.uuid);
+			} catch (error) {
+				console.log("could not re-fetch projector characteristic");
+				console.log(error && error.message);
+			}
+		}
+
 		if (setting.characteristic && setting.characteristic.properties.notify) {
 			setting._mirrorLive = false;
 			// Drop any stale handler from a previous connect so reconnects
@@ -482,6 +497,9 @@ async function startProjectorStream() {
 				setting._mirrorHandler = null;
 			}
 			setting._mirrorHandler = (event) => {
+				// Diagnostic: logged once per connect/reconnect, so the console
+				// shows whether the -0006 stream is actually flowing.
+				if (!setting._mirrorLive) console.log("projector mirror stream live");
 				// A real notification is the only proof the firmware's
 				// connect-suppress window has elapsed (see waitForMirrorLive).
 				setting._mirrorLive = true;
@@ -491,9 +509,14 @@ async function startProjectorStream() {
 			for (let attempt = 0; ; attempt++) {
 				try {
 					await setting.characteristic.startNotifications();
+					console.log("projector notifications enabled");
 					break;
 				} catch (error) {
-					if (attempt >= 3) throw error;
+					if (attempt >= 3) {
+						console.log("projector startNotifications failed");
+						console.log(error && error.message);
+						throw error;
+					}
 					await sleep(200);
 				}
 			}
@@ -511,6 +534,8 @@ async function startProjectorStream() {
 				console.log("projector mirror read probe failed, waiting on notifications");
 				console.log(error && error.message);
 			}
+		} else {
+			console.log("projector characteristic unavailable for the mirror stream");
 		}
 	} catch (error) {
 		console.log("error subscribing to projector mirror");
@@ -570,9 +595,23 @@ async function setupGatt(device) {
 	for (const key of settingKeys) {
 		
 		try {
-			console.log(key);
 			const setting = settings[key];
-			setting.characteristic = await service.getCharacteristic(setting.uuid);
+			// Retry like the reads/notifications below: a single transient GATT
+			// failure here used to be swallowed by the per-key catch, leaving
+			// the STALE characteristic from the previous connection in place —
+			// every later operation on it then failed and the mirror froze.
+			for (let attempt = 0; ; attempt++) {
+				try {
+					setting.characteristic = await service.getCharacteristic(setting.uuid);
+					break;
+				} catch (error) {
+					if (attempt >= 3) {
+						setting.characteristic = null;
+						throw error;
+					}
+					await sleep(200);
+				}
+			}
             
 		if (setting.properties.includes("BLERead") && key !== "projector") {
 			for (let attempt = 0; ; attempt++) {
@@ -973,9 +1012,13 @@ function stopProjectorStream() {
 		try { setting.characteristic.removeEventListener("characteristicvaluechanged", setting._mirrorHandler); } catch (e) {}
 		setting._mirrorHandler = null;
 	}
-	// Stop notifications on the (possibly already-stale) characteristic.
-	if (setting.characteristic && setting.characteristic.properties.notify) {
-		try { setting.characteristic.stopNotifications(); } catch (e) {}
+	// Only stop notifications while the link is still up. On a drop the
+	// characteristic is already dead, and calling stopNotifications() on it
+	// merely rejects (unhandled) and can leave Chrome's notification state
+	// dirty for the next connection.
+	if (device && device.gatt && device.gatt.connected &&
+		setting.characteristic && setting.characteristic.properties.notify) {
+		try { Promise.resolve(setting.characteristic.stopNotifications()).catch(() => {}); } catch (e) {}
 	}
 	clearMirror();
 }
