@@ -535,20 +535,15 @@ async function startProjectorStream() {
 					await sleep(200);
 				}
 			}
-			// Immediate paint: a read returns the current 256-byte frame even
-			// when the display is static (change-detected notifications skip
-			// static frames). This shows the live display right away, but it
-			// does NOT prove the broadcast is flowing — the firmware may still
-			// be in its connect-suppress window, so _mirrorLive is deliberately
-			// left to the notification handler. Failure is non-fatal —
-			// notifications may still arrive.
-			try {
-				const data = await withTimeout(setting.characteristic.readValue(), 4000);
-				handleIncoming(setting, data);
-			} catch (error) {
-				console.log("projector mirror read probe failed, waiting on notifications");
-				console.log(error && error.message);
-			}
+			// NOTE: deliberately NO readValue() probe here. On Linux Chrome a
+			// GATT operation can hang forever after a drop (Chromium #40212297)
+			// and Chrome serialises a device's ATT queue, so one hung read
+			// blocks every later op — the startup greeting write never reaches
+			// the firmware and the mirror sits on a single frame while
+			// notifications keep arriving. (That failure is Linux-only, which
+			// matches the symptom.) The first -0006 notification paints the
+			// mirror instead: the firmware zeroes its change-detection baseline
+			// on connect, so one always arrives once the suppress window ends.
 		} else {
 			console.log("projector characteristic unavailable for the mirror stream");
 		}
