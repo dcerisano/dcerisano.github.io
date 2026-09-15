@@ -390,7 +390,7 @@ async function connect() {
 		}
 
 		await setupGatt(device);
-		onConnected();
+		await onConnected();
 	} catch (error) {
 		console.error(error.message);
 		setDisconnectedUI();
@@ -398,12 +398,14 @@ async function connect() {
 }
 
 // Called whenever GATT setup succeeds (initial connect or reconnect).
-function onConnected() {
+// Must be async so we await startProjectorStream() — the UI must be
+// fully rendered as connected before any stream events arrive.
+async function onConnected() {
 	updateText("  web\xe0\x44\x44\xffble");
 	setConnectedUI();
 	// Start the live-mirror stream only now that the client is fully connected,
 	// so the firmware's frame flood can't block/delay the connect state.
-	startProjectorStream();
+	await startProjectorStream();
 }
 
 
@@ -637,7 +639,7 @@ async function onDisconnected() {
 			lastReconnectAttempt = Date.now();
 			try {
 				await withTimeout(setupGatt(device), RECONNECT_SETUP_TIMEOUT);
-				onConnected();
+				await onConnected();
 				return;
 			} catch (error) {
 				console.error("Reconnect failed:", error.message);
