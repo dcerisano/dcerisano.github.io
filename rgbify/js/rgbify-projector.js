@@ -634,12 +634,6 @@ async function onDisconnected() {
 	try {
 		for (;;) {
 			await sleepOrAd(RECONNECT_INTERVAL);
-			// Tear down any stale or half-open GATT connection before retrying so the
-			// next connect() starts fresh. Linux/BlueZ leaves the old link lingering,
-			// and gatt.connect() would otherwise return the same hung pending promise.
-			if (device && device.gatt) {
-				try { device.gatt.disconnect(); } catch (e) {}
-			}
 			lastReconnectAttempt = Date.now();
 			try {
 				await withTimeout(setupGatt(device), RECONNECT_SETUP_TIMEOUT);
