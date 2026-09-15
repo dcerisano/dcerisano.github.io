@@ -602,6 +602,7 @@ async function setupGatt(device) {
 		throw new Error(`Firmware version mismatch: ${fwVersion}`);
 	}
 
+	let failed = 0;
 	for (const key of settingKeys) {
 		
 		try {
@@ -658,9 +659,16 @@ async function setupGatt(device) {
 
 			setting.rendered = false;
 		} catch (error) {
+			failed++;
 			console.log(`error loading characteristic ${key}`);
 			console.log(error.message);
 		}
+	}
+	// A partially-loaded GATT table leaves every control dead while the link
+	// still looks up. Fail the whole setup so connect()/the reconnect loop
+	// retries instead of showing a "Connected" UI that cannot do anything.
+	if (failed > 0) {
+		throw new Error(`GATT setup incomplete: ${failed} characteristic(s) failed to load`);
 	}
 }
 
