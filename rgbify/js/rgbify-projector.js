@@ -782,6 +782,15 @@ async function onDisconnected() {
 	// Connect button is then overridden to signal the in-progress reconnect.
 	setDisconnectedUI();
 	stopProjectorStream();
+	// A write in flight when the link dropped may never settle (Chromium
+	// #40212297: a GATT op can hang forever after a drop), leaving writeBusy
+	// stuck true. Every later write is then coalesced into writePending and
+	// silently never sent — including the startup greeting after a reconnect —
+	// so the mirror sits on one stale frame while notifications still arrive.
+	for (const key of settingKeys) {
+		settings[key].writeBusy = false;
+		settings[key].writePending = false;
+	}
 	connectButton.className = "btn btn-primary";
 	connectButton.disabled = true;
 	connectButton.innerText = "Reconnecting…";
@@ -829,14 +838,17 @@ async function BLEwriteTo(key) {
 	const setting = settings[key];
 	if (!setting.characteristic) return;
 	if (setting.writeBusy) {
+		console.log("write coalesced while busy:", key);
 		setting.writePending = true;
 		return;
 	}
 	setting.writeBusy = true;
 	do {
 		setting.writePending = false;
-		await setting.characteristic
-			.writeValueWithResponse(setting.writeValue)
+		// Time-bound the write: a GATT op can hang forever after a drop
+		// (Chromium #40212297), which would leave writeBusy stuck true and
+		// silently swallow every later write (see onDisconnected).
+		await withTimeout(setting.characteristic.writeValueWithResponse(setting.writeValue), 5000)
 			.catch((error) => {
 				console.log(error);
 			});
