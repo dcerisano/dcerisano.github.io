@@ -403,6 +403,9 @@ async function connect() {
 async function onConnected() {
 	updateText("  web\xe0\x44\x44\xffble");
 	setConnectedUI();
+	// Yield to the browser so setConnectedUI() has painted before
+	// any characteristicvaluechanged events can reach the canvas.
+	await new Promise(resolve => requestAnimationFrame(resolve));
 	// Start the live-mirror stream only now that the client is fully connected,
 	// so the firmware's frame flood can't block/delay the connect state.
 	await startProjectorStream();
