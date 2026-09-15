@@ -482,9 +482,6 @@ async function startProjectorStream() {
 				setting._mirrorHandler = null;
 			}
 			setting._mirrorHandler = (event) => {
-				// Diagnostic: logs once per connect/reconnect, so the console
-				// proves whether the -0006 stream is actually flowing.
-				if (!setting._mirrorLive) console.log("projector mirror stream live");
 				// A real notification is the only proof the firmware's
 				// connect-suppress window has elapsed (see waitForMirrorLive).
 				setting._mirrorLive = true;
@@ -496,27 +493,17 @@ async function startProjectorStream() {
 					await setting.characteristic.startNotifications();
 					break;
 				} catch (error) {
-					if (attempt >= 3) {
-						// Do NOT bail: the read probe below still re-arms the
-						// firmware's mirror broadcast (a projector READ registers
-						// the client as a live-mirror subscriber), which covers a
-						// reconnect where the CCCD re-write is skipped. Log it so
-						// the console distinguishes the two failure modes.
-						console.log("projector startNotifications failed, relying on the read probe");
-						console.log(error && error.message);
-						break;
-					}
+					if (attempt >= 3) throw error;
 					await sleep(200);
 				}
 			}
-			// Read probe: paints the mirror immediately AND (firmware-side) marks
-			// this client as wanting the live display, so a reconnect that skipped
-			// the CCCD write still re-arms the broadcast. A read returns the
-			// current 256-byte frame even when the display is static
-			// (change-detected notifications skip static frames). It does NOT
-			// prove the broadcast is flowing — the firmware may still be in its
-			// connect-suppress window — so _mirrorLive stays owned by the
-			// notification handler. Run even when startNotifications() failed.
+			// Immediate paint: a read returns the current 256-byte frame even
+			// when the display is static (change-detected notifications skip
+			// static frames). This shows the live display right away, but it
+			// does NOT prove the broadcast is flowing — the firmware may still
+			// be in its connect-suppress window, so _mirrorLive is deliberately
+			// left to the notification handler. Failure is non-fatal —
+			// notifications may still arrive.
 			try {
 				const data = await withTimeout(setting.characteristic.readValue(), 4000);
 				handleIncoming(setting, data);
