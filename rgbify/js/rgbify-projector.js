@@ -798,6 +798,23 @@ function setDisconnectedUI() {
 		resetButton.className = "btn btn-secondary";
 		resetButton.disabled = true;
 	}
+	// Return every control to its page-load initial state (programmatic sets
+	// don't fire input/change events, so nothing is written to the device).
+	message.value = "";
+	bridgeMessage.value = "";
+	volumeRange.value = 0;
+	toneRange.value = 0;
+	if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
+	firmwareVersion.textContent = "x.y.z";
+	solidColorInput.value = "#000000";
+	// Drop the color wheel to black (luma zero). Setting the picker fires
+	// color:change synchronously, so suppress the write (same pattern as
+	// remote updates) — otherwise a black write queues onto the dead link.
+	if (settings.solidColor.colorPicker) {
+		settings.solidColor.suppressWrite = true;
+		settings.solidColor.colorPicker.color.rgbString = "rgb(0, 0, 0)";
+		setTimeout(() => { settings.solidColor.suppressWrite = false; }, 0);
+	}
 }
 
 // ---- Advertisement-driven fast reconnect ----
