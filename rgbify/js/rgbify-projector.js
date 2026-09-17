@@ -1113,7 +1113,7 @@ function renderProjectorFrame(dataReceived) {
 		dataReceived.byteOffset,
 		256
 	);
-	const img = context.createImageData(8, 8);
+	const img = mirrorSrcCtx.createImageData(8, 8);
 	for (let y = 0; y < 8; y++) {
 		const srcRow = y * 32;
 		for (let x = 0; x < 8; x++) {
@@ -1125,11 +1125,16 @@ function renderProjectorFrame(dataReceived) {
 			img.data[dst + 3] = bytes[src + 3];
 		}
 	}
-	context.putImageData(img, 0, 0);
+	mirrorSrcCtx.putImageData(img, 0, 0);
+	// Blit onto the composited canvas via the normal paint path. The full-canvas
+	// destination overwrites every pixel, so no clear is needed.
+	context.imageSmoothingEnabled = false;
+	context.drawImage(mirrorSrc, 0, 0, 8, 8, 0, 0, canvas.width, canvas.height);
 }
 
 // Clear the mirror canvas to black (on disconnect, so a stale frame can't linger).
 function clearMirror() {
+	mirrorSrcCtx.clearRect(0, 0, 8, 8);
 	context.clearRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -1191,6 +1196,17 @@ overlay.style.height = '100%';
 overlay.style.backgroundImage = "url('" + DOTS_PNG + "')";
 
 const context = canvas.getContext('2d');
+
+// Offscreen 8x8 source for the mirror. The visible canvas is GPU-composited and
+// CSS-scaled up; writing it directly with putImageData re-uploads the tiny 8x8
+// texture on every notification, which flashes on Android Chrome at the ~30fps
+// mirror rate. Composing into this software-backed source and blitting once with
+// drawImage keeps the composited canvas on the normal paint path. Separate from
+// the ambience frameCanvas, which owns the downsample pipeline.
+const mirrorSrc = document.createElement('canvas');
+mirrorSrc.width = 8;
+mirrorSrc.height = 8;
+const mirrorSrcCtx = mirrorSrc.getContext('2d', { willReadFrequently: true });
 
 // Mirror fullscreen: click toggles fullscreen, click again exits.
 // Sizing (70vmin square on black) is handled by #mirrorWrap:fullscreen CSS
