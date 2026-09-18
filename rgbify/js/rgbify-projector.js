@@ -9,7 +9,7 @@ const TONE_UUID        = "8bc01404-000a-4bf4-95d1-ce27a0477183";
 const RESET_UUID       = "8bc01404-000b-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
-const EXPECTED_FW_VERSION   = "0.3.0-unbonded";
+const EXPECTED_FW_VERSION   = "0.2.0";
 const TONE_OFFSET_MIN = 0;
 const TONE_OFFSET_MAX = 1000;
 // Background modes, keyed to the -0008 characteristic value (mirror firmware
