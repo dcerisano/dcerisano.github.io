@@ -69,8 +69,10 @@ const FW_READ_TIMEOUT = 4000;
 // the stall dice every 5s.
 let cachedFwVersion = null;
 
-// (No same-identity retry budget: the dropped device is never retried — every
-// re-attach comes from a fresh LE-scan discovery. See onDisconnected.)
+// Minimum gap between reconnect attempts when an advertisement wakes the loop
+// early (prevents a tight retry loop while the peripheral is advertising). The
+// fixed RECONNECT_INTERVAL timer remains the guaranteed cadence.
+const MIN_RETRY_INTERVAL = 1000;
 
 let server = null;
 let service = null;
@@ -400,7 +402,9 @@ function assertAttempt(attemptId) {
 }
 
 // Advertisement-driven fast reconnect state.
-let adWake = null;             // resolves the current reconnect sleep early (scan hit)
+let adWake = null;             // resolves the current reconnect sleep early
+let watchingAds = false;       // true while watchAdvertisements() is active
+let lastReconnectAttempt = 0;  // timestamp of last attempt (ad-wake spacing)
 
 
 
@@ -414,7 +418,6 @@ async function connect() {
 	// A user-initiated connect supersedes any running reconnect loop AND any
 	// in-flight setup attempt, so the two can never race.
 	reconnectGen++;
-	stopLeScanPickup();   // a scan from a dead-identity loop must not adopt mid-click
 	const attemptId = ++attemptGen;
 
 	// While connecting, every control is in its disconnected (inert) state.
@@ -435,9 +438,22 @@ async function connect() {
 			});
 		}
 
-		// Disconnect listener + link watchdog (shared helper — scan adoption
-		// uses the identical arming).
-		armDevice(device);
+		// Register once so reconnect never stacks duplicate listeners.
+		if (!device._hasDisconnectListener) {
+			device.addEventListener("gattserverdisconnected", onDisconnected);
+			device._hasDisconnectListener = true;
+		}
+
+		// Linux Chrome does not reliably fire gattserverdisconnected, so
+		// poll device.gatt.connected to detect a dropped link and
+		// trigger reconnect.
+		if (!device._bleWd) {
+			device._bleWd = setInterval(() => {
+				if (device && device.gatt && !device.gatt.connected && !reconnecting) {
+					onDisconnected();
+				}
+			}, 2000);
+		}
 
 		// User-initiated (re)connect: forget any cached firmware version so a
 		// flash + re-pair cycle is re-verified. The automatic onDisconnected
@@ -801,17 +817,15 @@ function setDisconnectedUI() {
 	}
 }
 
-// ---- Scan-driven rediscovery ----
-// Reconnect never touches the dropped BluetoothDevice: the firmware
-// randomizes its MAC on every reset, so that identity is useless by design,
-// and even a transient drop re-advertises and is picked up fresh. While
-// disconnected we run a filtered LE scan (no user gesture needed; some Linux
-// Chrome builds need the #experimental-web-platform-features flag); each scan
-// hit wakes the loop below for an immediate attempt instead of waiting out
-// the 5s poll. Without scan support the Connect button is re-armed for a
-// manual fresh pick.
+// ---- Advertisement-driven fast reconnect ----
+// While disconnected we passively scan for the device's advertisements. When it
+// re-advertises (e.g. the instant an ESP32 finishes rebooting) we reconnect
+// immediately instead of always waiting out the fixed 5s poll. If the browser
+// doesn't support watchAdvertisements (some Linux Chrome builds need the
+// #experimental-web-platform-features flag), this no-ops and the 5s loop alone
+// keeps reconnecting.
 
-// Sleep for `ms`, but resolve early when the LE scan picks the device up.
+// Sleep for `ms`, but resolve early if the device re-advertises.
 function sleepOrAd(ms) {
 	return new Promise((resolve) => {
 		const finish = () => {
@@ -824,109 +838,43 @@ function sleepOrAd(ms) {
 	});
 }
 
-// ---- New-identity pickup (random-MAC reboots) ----
-// The firmware randomizes its BT MAC every boot, so after a reboot the cached
-// `device` is a dead identity: gatt.connect() and watchAdvertisements() on it
-// can never succeed. Two pickup routes, best first:
-// 1. requestLEScan (Chrome; experimental flag on some Linux builds): devices
-//    discovered by a filtered scan are connectable WITHOUT a user gesture,
-//    so the page re-attaches zero-click.
-// 2. User click: connect() with device==null runs requestDevice() (needs the
-//    gesture) and the picker shows the rebooted peripheral as a fresh entry.
-let leScan = null;            // active LE scan object, if any
-let scannedDevice = null;     // newly-discovered identity awaiting adoption
-let scanGuidanceShown = false; // one-time flag guidance per page load (see below)
-
-// Register the disconnect listener + link watchdog on a device object. Shared
-// by connect() (fresh picker device) and scan adoption so both get identical
-// drop detection. The watchdog only fires for the CURRENT global device, so a
-// dropped identity's interval goes inert after adoption instead of double
-// triggering onDisconnected().
-function armDevice(d) {
-	// Register once so reconnect never stacks duplicate listeners.
-	if (!d._hasDisconnectListener) {
-		d.addEventListener("gattserverdisconnected", onDisconnected);
-		d._hasDisconnectListener = true;
-	}
-	// Linux Chrome does not reliably fire gattserverdisconnected, so poll
-	// device.gatt.connected to detect a dropped link and trigger reconnect.
-	if (!d._bleWd) {
-		const ref = d;
-		ref._bleWd = setInterval(() => {
-			if (device === ref && ref.gatt && !ref.gatt.connected && !reconnecting) {
-				onDisconnected();
-			}
-		}, 2000);
+// Fired when the already-permitted device broadcasts an advertisement: wake the
+// reconnect loop so it retries now rather than waiting out the 5s interval.
+// Rate-limited to MIN_RETRY_INTERVAL so a busy advertiser can't spin the loop.
+function onAdvertisement() {
+	if (adWake && Date.now() - lastReconnectAttempt >= MIN_RETRY_INTERVAL) {
+		const wake = adWake;
+		adWake = null;
+		wake();
 	}
 }
 
-// Adopt a newly-discovered identity as the live device and wake the reconnect
-// loop so it runs setup on it immediately.
-function adoptScannedDevice(d) {
-	if (!d) return;
-	cachedFwVersion = null;   // new identity: re-verify firmware once
-	scannedDevice = d;
-	if (adWake) { const wake = adWake; adWake = null; wake(); }
-}
-
-// navigator.bluetooth-level advertisement handler for LE-scan pickup.
-function onLeScanAd(ev) {
-	const d = ev && ev.device;
-	if (!d || !reconnecting) return;
-	if (device && device.gatt && device.gatt.connected) return; // already back
-	adoptScannedDevice(d);
-}
-
-// Start a filtered LE scan for the rebooted peripheral. Best-effort: false on
-// unsupported browsers/failure, and the click-to-pick fallback covers it.
-// NOTE: requestLEScan is a SEPARATE experimental API from requestDevice — a
-// browser can support Connect but not scanning (Linux Chrome needs
-// chrome://flags/#enable-experimental-web-platform-features). A missing
-// function therefore means "flag off", not "Bluetooth broken".
-async function startLeScanPickup() {
-	if (leScan) return true;
-	if (!navigator.bluetooth || typeof navigator.bluetooth.requestLEScan !== "function") {
-		console.warn("requestLEScan missing: auto-reconnect needs the experimental Web Platform flag.");
-		scanMissingFlag();
-		return false;
-	}
+// Start passive scanning for re-advertisements. Best-effort: on failure we just
+// fall back to the fixed 5s poll.
+async function startWatchingAds() {
+	if (!device || typeof device.watchAdvertisements !== "function" || watchingAds) return;
 	try {
-		navigator.bluetooth.addEventListener("advertisementreceived", onLeScanAd);
-		leScan = await navigator.bluetooth.requestLEScan({ filters: [{ services: [SERVICE_UUID] }], keepRepeatedDevices: false });
-		console.log("LE-scan pickup active — waiting for rebooted device");
-		return true;
+		device.addEventListener("advertisementreceived", onAdvertisement);
+		await device.watchAdvertisements();
+		watchingAds = true;
 	} catch (e) {
-		console.warn("requestLEScan failed:", e && e.message);
-		try { navigator.bluetooth.removeEventListener("advertisementreceived", onLeScanAd); } catch (_) {}
-		leScan = null;
-		return false;
+		console.warn("watchAdvertisements unavailable, using 5s polling only:", e && e.message);
+		try { device.removeEventListener("advertisementreceived", onAdvertisement); } catch (_) {}
 	}
 }
 
-// One-time guidance when auto-reconnect scanning is unavailable: the fix is a
-// Chrome flag + relaunch, after which resets re-attach with zero clicks.
-function scanMissingFlag() {
-	if (scanGuidanceShown) return;
-	scanGuidanceShown = true;
-	console.warn("Auto-reconnect disabled: enable chrome://flags/#enable-experimental-web-platform-features and relaunch Chrome.");
-	try {
-		alert("Automatic reconnect needs one Chrome flag:\n\nchrome://flags/#enable-experimental-web-platform-features\n\nEnable it, relaunch Chrome, and the page will pick the projector back up on its own after every reset.\n\nUntil then, use the Connect button to pick it manually.");
-	} catch (_) {}
-}
-
-// Stop LE-scan pickup; called on connect, supersede, and loop exit.
-function stopLeScanPickup() {
-	if (leScan) { try { leScan.stop(); } catch (_) {} leScan = null; }
-	try { navigator.bluetooth.removeEventListener("advertisementreceived", onLeScanAd); } catch (_) {}
-	scannedDevice = null;
+// Stop scanning; called once the connection is restored (or the loop exits).
+function stopWatchingAds() {
+	watchingAds = false;
+	if (!device) return;
+	try { device.removeEventListener("advertisementreceived", onAdvertisement); } catch (_) {}
+	try { if (typeof device.unwatchAdvertisements === "function") device.unwatchAdvertisements(); } catch (_) {}
 }
 
 
-// Device dropped: rediscover and re-attach in place so the page (and a running
-// ambience stream) survives reboots and transient drops. Never reloads, and
-// NEVER retries the dropped identity — every attempt runs on a fresh LE-scan
-// discovery, reboot (new MAC) or transient drop (same MAC, re-advertised)
-// alike. A scan hit short-circuits the wait as soon as the peripheral is seen.
+// Device dropped: reconnect in place at a fixed 5s interval so the page
+// (and a running ambience stream) survives transient drops. Never reloads.
+// An advertisement watch short-circuits the wait as soon as the device returns.
 async function onDisconnected() {
 	if (reconnecting) return;
 	reconnecting = true;
@@ -940,8 +888,8 @@ async function onDisconnected() {
 	if (document.fullscreenElement) {
 		document.exitFullscreen().catch(() => {});
 	}
-	// Disconnected: every control returns to its disconnected state. The Connect
-	// button is re-armed below as a manual override while auto-rediscovery runs.
+	// Disconnected: every control returns to its disconnected state. Only the
+	// Connect button is then overridden to signal the in-progress reconnect.
 	setDisconnectedUI();
 	stopProjectorStream();
 	// A write in flight when the link dropped may never settle (Chromium
@@ -957,30 +905,7 @@ async function onDisconnected() {
 	connectButton.disabled = true;
 	connectButton.innerText = "Reconnecting…";
 
-	// The dropped identity is dead on arrival: no gatt.connect() on it, ever.
-	// (The firmware randomizes its MAC on every reset, so the old object is
-	// useless by design — and a transient drop re-advertises for fresh pickup.)
-	if (device) {
-		try { clearInterval(device._bleWd); } catch (_) {}
-		try { device._bleWd = null; } catch (_) {}
-		try { device.removeEventListener("gattserverdisconnected", onDisconnected); } catch (_) {}
-		device = null;
-	}
-	cachedFwVersion = null;   // rediscovery means a new identity: re-verify once
-	server = null;
-	service = null;
-
-	// Zero-click path first: a filtered LE scan needs no user gesture and its
-	// hits are connectable. Without scan support the button goes back at once
-	// for a manual fresh pick.
-	const scanOn = await startLeScanPickup();
-	if (loopGen !== reconnectGen) return;
-	// The button stays armed as a manual override throughout: auto-rediscovery
-	// runs in the background, and a click takes over cleanly via connect().
-	connectButton.disabled = false;
-	connectButton.innerText = "Connect";
-	if (scanOn) console.log("Rediscovering projector via LE scan… (or click Connect)");
-	else console.log("No LE scan — pick the device from the Connect picker (or enable the experimental Web Platform flag for auto-reconnect)");
+	startWatchingAds();
 	try {
 		// No backoff, no retry cap: this loop never gives up. Every step is
 		// time-bounded so a hung GATT op can't park it, and a superseded attempt
@@ -989,22 +914,7 @@ async function onDisconnected() {
 			await sleepOrAd(RECONNECT_INTERVAL);
 			// A user-initiated connect() (or a newer loop) supersedes this one.
 			if (loopGen !== reconnectGen) return;
-			// Adopt whatever the scan found while we slept. EVERY setup below
-			// runs on a fresh scan hit — the same object is never retried,
-			// reboot (new MAC) or transient drop (same MAC) alike.
-			if (scannedDevice) {
-				device = scannedDevice;
-				scannedDevice = null;
-				armDevice(device);
-				console.log("Adopted rediscovered device from LE scan");
-			}
-			if (!device) {
-				// Nothing discovered yet: with a scan running, keep waiting
-				// for the adoption wake; without one, the re-armed Connect
-				// button owns the next attempt (connect() supersedes here).
-				if (!leScan) return;
-				continue;
-			}
+			lastReconnectAttempt = Date.now();
 			// A fresh attempt id supersedes any attempt abandoned by withTimeout.
 			const attemptId = ++attemptGen;
 			try {
@@ -1024,25 +934,13 @@ async function onDisconnected() {
 					setDisconnectedUI();
 					return;
 				}
-				// A failed adoption is dropped like everything else — never
-				// retried. Restart the scan so the still-advertising
-				// peripheral reports fresh (a continuous scan with
-				// keepRepeatedDevices:false reports each advertiser only
-				// once); the next iteration adopts the next scan hit.
-				if (device) {
-					console.warn("Adopted device failed setup — dropping it, rediscovering");
-					try { clearInterval(device._bleWd); } catch (_) {}
-					device = null;
-				}
-				stopLeScanPickup();
-				await startLeScanPickup();
-				// Loop again after RECONNECT_INTERVAL (or a scan wake).
+				// No backoff, no retry cap: loop again after RECONNECT_INTERVAL.
 			}
 		}
 	} finally {
 		reconnecting = false;
 		adWake = null;
-		stopLeScanPickup();
+		stopWatchingAds();
 	}
 }
 
