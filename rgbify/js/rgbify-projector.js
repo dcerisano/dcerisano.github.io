@@ -74,6 +74,31 @@ let cachedFwVersion = null;
 // fixed RECONNECT_INTERVAL timer remains the guaranteed cadence.
 const MIN_RETRY_INTERVAL = 1000;
 
+// Phantom-link strike counting. On Linux, BlueZ can report a device as
+// connected (device.gatt.connected === true) while no bearer exists (captured:
+// kernel shows no ACL, ESP shows 0 conns) — every GATT op then fails or times
+// out, but the reconnect loop never triggers because it keys off
+// connected===false / the disconnect event. Count consecutive bounded-GATT-op
+// failures; at GATT_STRIKE_LIMIT with the link still "up", force a local
+// gatt.disconnect(): tearing the bearer down flushes Chrome's queued ATT and
+// forces BlueZ to resync, and the (possibly missed) disconnect event/watchdog
+// starts a clean redial. Single transient failures (e.g. Android "GATT
+// operation failed" with a successful retry) reset the counter and never act.
+const GATT_STRIKE_LIMIT = 3;
+let gattTimeoutStrikes = 0;
+function noteGattOp(ok, what) {
+	if (ok) {
+		gattTimeoutStrikes = 0;
+		return;
+	}
+	gattTimeoutStrikes++;
+	if (gattTimeoutStrikes >= GATT_STRIKE_LIMIT && device && device.gatt && device.gatt.connected) {
+		console.warn(`phantom link suspected (${gattTimeoutStrikes} consecutive failed GATT ops at ${what}) — forcing disconnect to resync`);
+		gattTimeoutStrikes = 0;
+		try { device.gatt.disconnect(); } catch (e) {}
+	}
+}
+
 let server = null;
 let service = null;
 
@@ -419,6 +444,8 @@ async function connect() {
 	// in-flight setup attempt, so the two can never race.
 	reconnectGen++;
 	const attemptId = ++attemptGen;
+	// Fresh episode: stale strikes from a previous one must not force instantly.
+	gattTimeoutStrikes = 0;
 
 	// While connecting, every control is in its disconnected (inert) state.
 	setDisconnectedUI();
@@ -576,12 +603,14 @@ async function startProjectorStream(attemptId) {
 				try {
 					await withTimeout(setting.characteristic.startNotifications(), GATT_OP_TIMEOUT);
 					console.log("projector notifications enabled");
+					noteGattOp(true);
 					break;
 				} catch (error) {
 					if (error && error.message === SUPERSEDED) throw error;
 					if (attempt >= 3) {
 						console.log("projector startNotifications failed");
 						console.log(error && error.message);
+						noteGattOp(false, "projector startNotifications");
 						throw error;
 					}
 					await sleep(200);
@@ -754,8 +783,10 @@ async function setupGatt(device, attemptId) {
 	// still looks up. Fail the whole setup so connect()/the reconnect loop
 	// retries instead of showing a "Connected" UI that cannot do anything.
 	if (failed > 0) {
+		noteGattOp(false, "setupGatt");
 		throw new Error(`GATT setup incomplete: ${failed} characteristic(s) failed to load`);
 	}
+	noteGattOp(true);
 }
 
 function setConnectedUI() {
@@ -878,6 +909,8 @@ function stopWatchingAds() {
 async function onDisconnected() {
 	if (reconnecting) return;
 	reconnecting = true;
+	// Fresh episode: stale strikes from a previous one must not force instantly.
+	gattTimeoutStrikes = 0;
 	// This loop owns the reconnect until connect() (or a newer loop) supersedes
 	// it. The generation is checked before every attempt so a superseded loop
 	// can never touch the device again.
@@ -973,9 +1006,13 @@ async function BLEwriteTo(key) {
 		// (Chromium #40212297), which would leave writeBusy stuck true and
 		// silently swallow every later write (see onDisconnected).
 		await withTimeout(setting.characteristic.writeValueWithResponse(setting.writeValue), 5000)
-			.catch((error) => {
-				console.log(error);
-			});
+			.then(
+				() => noteGattOp(true),
+				(error) => {
+					console.log(error);
+					noteGattOp(false, "write " + key);
+				}
+			);
 		// If new values arrived while writing, loop again with the latest one.
 	} while (setting.writePending);
 	setting.writeBusy = false;
