@@ -835,6 +835,7 @@ function sleepOrAd(ms) {
 //    gesture) and the picker shows the rebooted peripheral as a fresh entry.
 let leScan = null;            // active LE scan object, if any
 let scannedDevice = null;     // newly-discovered identity awaiting adoption
+let scanGuidanceShown = false; // one-time flag guidance per page load (see below)
 
 // Register the disconnect listener + link watchdog on a device object. Shared
 // by connect() (fresh picker device) and scan adoption so both get identical
@@ -878,20 +879,39 @@ function onLeScanAd(ev) {
 
 // Start a filtered LE scan for the rebooted peripheral. Best-effort: false on
 // unsupported browsers/failure, and the click-to-pick fallback covers it.
+// NOTE: requestLEScan is a SEPARATE experimental API from requestDevice — a
+// browser can support Connect but not scanning (Linux Chrome needs
+// chrome://flags/#enable-experimental-web-platform-features). A missing
+// function therefore means "flag off", not "Bluetooth broken".
 async function startLeScanPickup() {
 	if (leScan) return true;
-	if (!navigator.bluetooth || typeof navigator.bluetooth.requestLEScan !== "function") return false;
+	if (!navigator.bluetooth || typeof navigator.bluetooth.requestLEScan !== "function") {
+		console.warn("requestLEScan missing: auto-reconnect needs the experimental Web Platform flag.");
+		scanMissingFlag();
+		return false;
+	}
 	try {
 		navigator.bluetooth.addEventListener("advertisementreceived", onLeScanAd);
 		leScan = await navigator.bluetooth.requestLEScan({ filters: [{ services: [SERVICE_UUID] }], keepRepeatedDevices: false });
 		console.log("LE-scan pickup active — waiting for rebooted device");
 		return true;
 	} catch (e) {
-		console.warn("requestLEScan unavailable:", e && e.message);
+		console.warn("requestLEScan failed:", e && e.message);
 		try { navigator.bluetooth.removeEventListener("advertisementreceived", onLeScanAd); } catch (_) {}
 		leScan = null;
 		return false;
 	}
+}
+
+// One-time guidance when auto-reconnect scanning is unavailable: the fix is a
+// Chrome flag + relaunch, after which resets re-attach with zero clicks.
+function scanMissingFlag() {
+	if (scanGuidanceShown) return;
+	scanGuidanceShown = true;
+	console.warn("Auto-reconnect disabled: enable chrome://flags/#enable-experimental-web-platform-features and relaunch Chrome.");
+	try {
+		alert("Automatic reconnect needs one Chrome flag:\n\nchrome://flags/#enable-experimental-web-platform-features\n\nEnable it, relaunch Chrome, and the page will pick the projector back up on its own after every reset.\n\nUntil then, use the Connect button to pick it manually.");
+	} catch (_) {}
 }
 
 // Stop LE-scan pickup; called on connect, supersede, and loop exit.
@@ -960,7 +980,7 @@ async function onDisconnected() {
 	connectButton.disabled = false;
 	connectButton.innerText = "Connect";
 	if (scanOn) console.log("Rediscovering projector via LE scan… (or click Connect)");
-	else console.log("Pick the device from the Connect picker");
+	else console.log("No LE scan — pick the device from the Connect picker (or enable the experimental Web Platform flag for auto-reconnect)");
 	try {
 		// No backoff, no retry cap: this loop never gives up. Every step is
 		// time-bounded so a hung GATT op can't park it, and a superseded attempt
