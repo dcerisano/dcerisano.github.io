@@ -1,9 +1,9 @@
 {
-  "name":             "RGB LED Matrix",
-  "short_name":       "rgb-led-matrix",
+  "name":             "Blitter",
+  "short_name":       "blitter",
   "start_url":        ".",
   "display":          "standalone",
   "orientation":      "landscape",
   "background_color": "#000",
-  "description":      "RGB LED Matrix."
+  "description":      "Blitter — 8x8 LED matrix controller."
 }
