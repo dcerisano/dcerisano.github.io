@@ -1,0 +1,7 @@
+# dcerisano.github.io — deployment & caching
+
+- GitHub Pages **user site**; repo `dcerisano/dcerisano.github.io`, branch **`gh-pages`** (remote `origin`, `https://github.com/dcerisano/dcerisano.github.io.git`). Live at https://dcerisano.github.io/. Pushing `gh-pages` deploys directly.
+- The **`blitter/`** subtree is deployed by the **blitter-website** repo's `./deploy.sh`: it builds from that repo's `main` via `git archive`, strips `.serena`/`.opencode`, does `git rm -r blitter` + copies the fresh build into `blitter/`, commits "Update blitter site from main", force-pushes `gh-pages`. Only `blitter/` is replaced — all other directories persist.
+- Relevant gh-pages history: `19487d0` moved the site `rgbify/` → `blitter/` (left a redirect stub); `d02e83e` deployed the rebranded Blitter PWA manifest (linked from `index.html`); `6d5bf20` removed the `rgbify/` stub so `/rgbify/` 404s.
+- **Cache caveat**: GitHub Pages serves documents with `cache-control: max-age=600` (10 min), which OVERRIDES a page's own `no-cache` meta tags — a normal (even hard) reload can serve the previous document for up to 10 min. Use `?nocache=1` (new cache key), DevTools → Network → Disable cache, or a private window. Fastly/Varnish headers: `x-cache`, `age`.
+- Verify live: `curl -s https://dcerisano.github.io/blitter/manifest.json` (expect `"name": "Blitter"`); `curl -sI https://dcerisano.github.io/rgbify/` (expect **404**); `curl -s https://dcerisano.github.io/blitter/ | grep -o '<title>[^<]*</title>'` (expect Blitter).
