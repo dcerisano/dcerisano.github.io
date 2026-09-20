@@ -6,7 +6,6 @@ const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
 const BRIDGE_UUID      = "8bc01404-0009-4bf4-95d1-ce27a0477183";
 const BACKGROUND_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
 const TONE_UUID        = "8bc01404-000a-4bf4-95d1-ce27a0477183";
-const RESET_UUID       = "8bc01404-000b-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
 const EXPECTED_FW_VERSION   = "0.2.0";
@@ -235,16 +234,6 @@ const settings = {
 			}
 		},
 	},
-	// Write-only: any write hard-resets the blitter (-000b). The device
-	// reboots and drops the link; the reconnect loop brings the page back.
-	reset: {
-		uuid: RESET_UUID,
-		properties: ["BLEWrite"],
-		structure: ["Uint8"],
-		data: { V: [] },
-		writeBusy: false,
-		writeValue: null
-	},
 };
 
 const settingKeys = Object.keys(settings);
@@ -287,7 +276,6 @@ let color = {
 };
 
 const connectButton = document.getElementById("connectButton");
-const resetButton = document.getElementById("resetButton");
 const message = document.getElementById("message");
 const bridgeMessage = document.getElementById("bridgeMessage");
 const firmwareVersion = document.getElementById("firmwareVersion");
@@ -373,15 +361,6 @@ if (connectButton && "bluetooth" in navigator) {
 		reason += "\n\nOn Linux, Web Bluetooth is experimental. Enable the flag in Chrome:\nchrome://flags/#enable-experimental-web-platform-features\n(requires Linux Kernel 3.19+ and BlueZ 5.41+)";
 	}
 	alert("Error: " + reason + "\n\nTry using Chrome.");
-}
-
-// Hard reset button: inert while disconnected (the button is disabled), red and
-// armed only once a device is connected.
-if (resetButton) {
-	resetButton.addEventListener("click", function(event) {
-		event.preventDefault();
-		hardReset();
-	});
 }
 
 // Ambience needs no button: it is launched from the Background menu.
@@ -803,11 +782,6 @@ function setConnectedUI() {
 	toneRange.disabled = false;
 	document.getElementById("color-picker-container").classList.remove("disabled");
 	if (mirrorWrap) mirrorWrap.classList.remove("disabled");
-	// Hard reset is only armed while a device is connected; it is red (danger).
-	if (resetButton) {
-		resetButton.className = "btn btn-danger";
-		resetButton.disabled = !settings.reset.characteristic;
-	}
 }
 
 function setDisconnectedUI() {
@@ -825,10 +799,6 @@ function setDisconnectedUI() {
 	toneRange.disabled = true;
 	document.getElementById("color-picker-container").classList.add("disabled");
 	if (mirrorWrap) mirrorWrap.classList.add("disabled");
-	if (resetButton) {
-		resetButton.className = "btn btn-secondary";
-		resetButton.disabled = true;
-	}
 	// Return every control to its page-load initial state (programmatic sets
 	// don't fire input/change events, so nothing is written to the device).
 	message.value = "";
@@ -1115,32 +1085,6 @@ function updateTone(value) {
 	settings.tone.writeValue = new Uint8Array(buf);
 	BLEwriteTo("tone");
 
-}
-
-// Hard reset the blitter: a single write to the -000b Reset characteristic
-// reboots the ESP32. The device drops the link and the reconnect loop restores
-// the page once the firmware is back up. Guarded so it is inert when a device
-// without the characteristic is connected.
-function hardReset() {
-	if (!settings.reset.characteristic) return;
-	settings.reset.writeValue = Uint8Array.of(0);
-	BLEwriteTo("reset");
-
-	// Insensitive immediately: the device reboots and drops the link, and the
-	// reconnect loop re-arms the button once the firmware is back. Without this
-	// the button stays red until the drop is detected (up to ~2s on Linux).
-	if (resetButton) {
-		resetButton.className = "btn btn-secondary";
-		resetButton.disabled = true;
-	}
-
-	// Safety: if the write failed and the link is still up, re-arm the button.
-	setTimeout(() => {
-		if (device && device.gatt && device.gatt.connected && !reconnecting) {
-			resetButton.className = "btn btn-danger";
-			resetButton.disabled = !settings.reset.characteristic;
-		}
-	}, 3000);
 }
 
 function clamp(value, min, max) {
