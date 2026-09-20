@@ -53,14 +53,11 @@ main {
 	margin-bottom: 0.5rem;
 }
 
-/* Background / Volume / Tone: pack this cluster tightly. */
+/* Background / Volume: pack this cluster tightly. */
 .form-group.row:has(#backgroundSelect) {
 	margin-bottom: 0.3rem;
 }
 .form-group.row:has(#volumeRange) {
-	margin-bottom: 0.3rem;
-}
-.form-group.row:has(#toneRange) {
 	margin-bottom: 0.3rem;
 }
 
@@ -221,15 +218,6 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Tone offset slider -->
-			<div class="form-group row">
-				<label class="col-form-label">Tone</label>
-				<div>
-					<input id="toneRange" class="custom-range" type="range" step="10"
-						min="0" max="1000" value="0" disabled />
-				</div>
-			</div>
-
 			<!-- Bluetooth connection -->
 			<div class="form-group row">
 				<label class="col-form-label">Bluetooth</label>
@@ -261,7 +249,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=e767e3d"></script>
+<script src="js/blitter.js?v=7491eb2"></script>
 </html>
 
 

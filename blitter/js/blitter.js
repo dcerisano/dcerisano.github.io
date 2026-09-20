@@ -5,12 +5,9 @@ const BLITTER_UUID   = "8bc01404-0006-4bf4-95d1-ce27a0477183";
 const TEXT_UUID        = "8bc01404-0007-4bf4-95d1-ce27a0477183";
 const BRIDGE_UUID      = "8bc01404-0009-4bf4-95d1-ce27a0477183";
 const BACKGROUND_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
-const TONE_UUID        = "8bc01404-000a-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
 const EXPECTED_FW_VERSION   = "0.2.0";
-const TONE_OFFSET_MIN = 0;
-const TONE_OFFSET_MAX = 1000;
 // Background modes offered by the UI, keyed to the -0008 characteristic value
 // (mirror firmware patterns.h BackgroundMode enum: 0=SOLID, 1=PLASMA,
 // 2=STATIC, 3=LAVA, 4=MATRIX). Drives the Background <select> options.
@@ -207,18 +204,6 @@ const settings = {
 		writeBusy: false,
 		writeValue: null
 	},
-	// Read/write: auralizer pitch offset (int16 Hz). Shifts the 3-octave scale.
-	tone: {
-		uuid: TONE_UUID,
-		properties: ["BLERead", "BLEWrite"],
-		structure: ["Int16"],
-		data: { V: [] },
-		writeBusy: false,
-		writeValue: null,
-		dataUpdated: (self) => {
-			toneRange.value = self.data.V[0];
-		},
-	},
 };
 
 const settingKeys = Object.keys(settings);
@@ -302,15 +287,6 @@ const volumeRange = document.getElementById("volumeRange");
 volumeRange.oninput = () => {
 	updateVolume(volumeRange.value);
 };
-
-const toneRange = document.getElementById("toneRange");
-
-// Tone slider: auralizer pitch offset (Hz).
-toneRange.oninput = () => {
-	const v = clamp(Number(toneRange.value), TONE_OFFSET_MIN, TONE_OFFSET_MAX);
-	updateTone(v);
-};
-
 
 // The brightness control has been removed; the firmware owns solidColor.
 
@@ -745,7 +721,6 @@ function setConnectedUI() {
 	if (bridgeMessage) { bridgeMessage.disabled = false; bridgeMessage.placeholder = "Enter text"; }
 	if (backgroundSelect) backgroundSelect.disabled = false;
 	volumeRange.disabled = false;
-	toneRange.disabled = false;
 	if (mirrorWrap) mirrorWrap.classList.remove("disabled");
 }
 
@@ -759,14 +734,12 @@ function setDisconnectedUI() {
 	if (bridgeMessage) { bridgeMessage.disabled = true; bridgeMessage.placeholder = "Disconnected"; }
 	if (backgroundSelect) backgroundSelect.disabled = true;
 	volumeRange.disabled = true;
-	toneRange.disabled = true;
 	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 	// Return every control to its page-load initial state (programmatic sets
 	// don't fire input/change events, so nothing is written to the device).
 	if (message) message.value = "";
 	if (bridgeMessage) bridgeMessage.value = "";
 	volumeRange.value = 0;
-	toneRange.value = 0;
 	if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
 	firmwareVersion.textContent = "x.y.z";
 }
@@ -986,17 +959,6 @@ function updateVolume(value) {
 
 	settings.volume.writeValue = Uint8Array.of(value);
 	BLEwriteTo("volume");
-
-}
-
-function updateTone(value) {
-
-	// Signed int16, little-endian (matches firmware Tone characteristic).
-	const buf = new ArrayBuffer(2);
-	const dv = new DataView(buf);
-	dv.setInt16(0, value, true);
-	settings.tone.writeValue = new Uint8Array(buf);
-	BLEwriteTo("tone");
 
 }
 
