@@ -53,12 +53,12 @@ main {
 	margin-bottom: 0.5rem;
 }
 
-/* Tint (color picker): a little separation before the Background menu. */
+/* Brightness (value slider): a little separation before the Background menu. */
 .form-group.row:has(#color-picker-container) {
 	margin-bottom: 0.6rem;
 }
 
-/* Align the "Tint" label with the TOP of the picker, beside the luma slider. */
+/* Align the "Brightness" label with the TOP of the picker. */
 .form-group.row:has(#color-picker-container) > label {
 	align-self: flex-start;
 	margin-top: 0;
@@ -221,9 +221,9 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Hue color picker (tint) -->
+			<!-- Brightness (luma) picker -->
 			<div class="form-group row">
-				<label class="col-form-label">Tint</label>
+				<label class="col-form-label">Brightness</label>
 				<div>
 					<div id="color-picker-container"></div>
 				</div>
@@ -294,7 +294,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=4d611aa"></script>
+<script src="js/blitter.js?v=560bacb"></script>
 </html>
 
 
