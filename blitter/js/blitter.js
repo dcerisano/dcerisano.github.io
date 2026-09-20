@@ -1037,13 +1037,33 @@ function initColorPicker() {
 
 	// RGB Color Picker
 	settings.solidColor.colorPicker.on("color:change", updateColor);
-	function updateColor(color) {
+
+	// Last hue the user picked. The firmware's default tints are fully
+	// desaturated (white / grey), so a later value change on such a tint would
+	// otherwise fall back to hue 0 (red); this keeps the user's chosen hue.
+	let lastHue = 0;
+
+	function updateColor(color, changes) {
 
 		// Never echo a color that arrived via a notification back to the device:
 		// that would make the firmware broadcast it to every other client,
 		// which re-triggers their color:change and re-writes it — an infinite
 		// ping-pong that makes every picker jitter.
 		if (settings.solidColor.suppressWrite) return;
+
+		// The layout has only hue and value sliders, so nothing ever raises
+		// saturation. The firmware's default tints are desaturated (s=0),
+		// which makes the hue slider a no-op and paints iro's value slider as
+		// a grey ramp (its gradient is drawn from the current hue/saturation).
+		// Pin saturation to full so hue always applies and the value slider is
+		// tinted by the selected hue.
+		if (color.saturation < 100) {
+			// On a desaturated tint keep the last user hue — unless the user
+			// just moved the hue slider, in which case adopt the new hue.
+			if (!(changes && changes.h)) color.hue = lastHue;
+			color.saturation = 100;
+		}
+		lastHue = color.hue;
 
 		var rgb_values = Uint8Array.of(color.rgb.r, color.rgb.g, color.rgb.b);
 		settings.solidColor.writeValue = rgb_values;
