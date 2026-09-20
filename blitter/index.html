@@ -76,10 +76,7 @@ main {
 	margin-bottom: 0.3rem;
 }
 
-/* Scroller / Blitter / Bluetooth: roomier so text fields and the connect
-   action stand out from the packed cluster above them. */
-.form-group.row:has(#message),
-.form-group.row:has(#bridgeMessage),
+/* Bluetooth: roomier so the connect action stands out from the packed cluster above. */
 .form-group.row:has(#connectButton) {
 	margin-bottom: 0.7rem;
 }
@@ -156,29 +153,14 @@ canvas {
 	transform: translate(-50%, -50%);
 }
 
-/* Text boxes: keep compact so a row fits portrait widths. */
-#message,
-#bridgeMessage {
-	max-width: 100%;
-}
+
 
 /* Connect button matches the color wheel / mirror / text-field width (173px). */
 #connectButton {
 	width: 173px;
 }
 
-/* Text box placeholder: red while disconnected; light gray when connected (default). */
-#message:disabled::placeholder,
-#bridgeMessage:disabled::placeholder {
-	color: #dc3545;
-}
 
-/* Grey out the text box background while disconnected. */
-#message:disabled,
-#bridgeMessage:disabled {
-	background-color: #9e9e9e;
-	color: #d0d0d0;
-}
 
 /* Standard disabled look for the iro color picker until connected. */
 #color-picker-container.disabled {
@@ -274,22 +256,6 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Scroller text -->
-			<div class="form-group row">
-				<label class="col-form-label">Scroller</label>
-				<div>
-					<input id="message" class="form-control" style="width: 173px" type="text" maxlength="256" placeholder="Disconnected" disabled>
-				</div>
-			</div>
-
-			<!-- Blitter text -->
-			<div class="form-group row">
-				<label class="col-form-label">Blitter</label>
-				<div>
-					<input id="bridgeMessage" class="form-control" style="width: 173px" type="text" maxlength="256" placeholder="Disconnected" disabled>
-				</div>
-			</div>
-
 			<!-- Bluetooth connection -->
 			<div class="form-group row">
 				<label class="col-form-label">Bluetooth</label>
@@ -328,7 +294,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=8a7c2a9"></script>
+<script src="js/blitter.js?v=62fc6e2"></script>
 </html>
 
 

@@ -371,9 +371,9 @@ if (connectButton && "bluetooth" in navigator) {
 form.addEventListener("submit", function(event) {
 	event.preventDefault();
 	const active = document.activeElement;
-	if (active === message) {
+	if (message && active === message) {
 		updateText(message.value);
-	} else if (active === bridgeMessage) {
+	} else if (bridgeMessage && active === bridgeMessage) {
 		updateBridgeText(bridgeMessage.value);
 	}
 });
@@ -773,10 +773,8 @@ function setConnectedUI() {
 	connectButton.className = "btn btn-success";
 	connectButton.disabled = true;
 	connectButton.innerText = "Connected";
-	message.disabled = false;
-	message.placeholder = "Enter text";
-	bridgeMessage.disabled = false;
-	bridgeMessage.placeholder = "Enter text";
+	if (message) { message.disabled = false; message.placeholder = "Enter text"; }
+	if (bridgeMessage) { bridgeMessage.disabled = false; bridgeMessage.placeholder = "Enter text"; }
 	if (backgroundSelect) backgroundSelect.disabled = false;
 	volumeRange.disabled = false;
 	toneRange.disabled = false;
@@ -790,10 +788,8 @@ function setDisconnectedUI() {
 	connectButton.className = "btn btn-danger";
 	connectButton.disabled = false;
 	connectButton.innerText = "Connect";
-	message.disabled = true;
-	message.placeholder = "Disconnected";
-	bridgeMessage.disabled = true;
-	bridgeMessage.placeholder = "Disconnected";
+	if (message) { message.disabled = true; message.placeholder = "Disconnected"; }
+	if (bridgeMessage) { bridgeMessage.disabled = true; bridgeMessage.placeholder = "Disconnected"; }
 	if (backgroundSelect) backgroundSelect.disabled = true;
 	volumeRange.disabled = true;
 	toneRange.disabled = true;
@@ -801,8 +797,8 @@ function setDisconnectedUI() {
 	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 	// Return every control to its page-load initial state (programmatic sets
 	// don't fire input/change events, so nothing is written to the device).
-	message.value = "";
-	bridgeMessage.value = "";
+	if (message) message.value = "";
+	if (bridgeMessage) bridgeMessage.value = "";
 	volumeRange.value = 0;
 	toneRange.value = 0;
 	if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
