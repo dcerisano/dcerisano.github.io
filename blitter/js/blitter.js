@@ -803,13 +803,13 @@ function setDisconnectedUI() {
 	toneRange.value = 0;
 	if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
 	firmwareVersion.textContent = "x.y.z";
-	solidColorInput.value = "#000000";
-	// Drop the color wheel to black (luma zero). Setting the picker fires
-	// color:change synchronously, so suppress the write (same pattern as
-	// remote updates) — otherwise a black write queues onto the dead link.
+	solidColorInput.value = "#ff0000";
+	// Drop the color to red (hue 0, full saturation/value). Setting the
+	// picker fires color:change synchronously, so suppress the write —
+	// otherwise a write queues onto the dead link.
 	if (settings.solidColor.colorPicker) {
 		settings.solidColor.suppressWrite = true;
-		settings.solidColor.colorPicker.color.rgbString = "rgb(0, 0, 0)";
+		settings.solidColor.colorPicker.color.rgbString = "rgb(255, 0, 0)";
 		setTimeout(() => { settings.solidColor.suppressWrite = false; }, 0);
 	}
 }
