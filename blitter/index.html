@@ -53,18 +53,6 @@ main {
 	margin-bottom: 0.5rem;
 }
 
-/* Brightness (value slider): a little separation before the Background menu. */
-.form-group.row:has(#color-picker-container) {
-	margin-bottom: 0.6rem;
-}
-
-/* Align the "Brightness" label with the TOP of the picker. */
-.form-group.row:has(#color-picker-container) > label {
-	align-self: flex-start;
-	margin-top: 0;
-	padding-top: 0;
-}
-
 /* Background / Volume / Tone: pack this cluster tightly. */
 .form-group.row:has(#backgroundSelect) {
 	margin-bottom: 0.3rem;
@@ -162,12 +150,6 @@ canvas {
 
 
 
-/* Standard disabled look for the iro color picker until connected. */
-#color-picker-container.disabled {
-	opacity: 0.3;
-	pointer-events: none;
-}
-
 /* Portrait / short screens: compress row spacing and controls so the whole
    control panel fits on one screen without vertical scrolling. */
 @media (max-width: 480px), (max-height: 720px) {
@@ -221,14 +203,6 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Brightness (luma) picker -->
-			<div class="form-group row">
-				<label class="col-form-label">Brightness</label>
-				<div>
-					<div id="color-picker-container"></div>
-				</div>
-			</div>
-
 			<!-- Background mode (options injected from JS BACKGROUND_MODES) -->
 			<div class="form-group row">
 				<label class="col-form-label">Background</label>
@@ -271,13 +245,6 @@ canvas {
 				<div id="firmwareVersion" style="color: #d0d0d0">x.y.z</div>
 			</div>
 
-			<!-- Hidden input synced with the iro picker -->
-			<div hidden class="form-group row">
-				<label class="col-form-label"></label>
-				<div>
-					<input type="color" id="solidColorInput" value="#ff0000" />
-				</div>
-			</div>
 			<link rel="alternate" type="application/atom+xml" href="https://mail.google.com/mail/feed/atom" title="swqee news">
 		</form>
 
@@ -294,7 +261,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=560bacb"></script>
+<script src="js/blitter.js?v=e767e3d"></script>
 </html>
 
 

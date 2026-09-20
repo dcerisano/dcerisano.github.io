@@ -219,30 +219,6 @@ const settings = {
 			toneRange.value = self.data.V[0];
 		},
 	},
-	solidColor: {
-		uuid: COLOR_UUID,
-		properties: ["BLERead", "BLEWrite"],
-		structure: ["Uint8", "Uint8", "Uint8"],
-		data: { R: [], G: [], B: [] },
-		writeBusy: false,
-		writeValue: null,
-		suppressWrite: false,
-		dataUpdated: (self) => {
-			if (
-				self.data.R &&
-				self.data.R.length &&
-				self.data.G &&
-				self.data.G.length &&
-				self.data.B &&
-				self.data.B.length
-			) {
-				// A remote (other-client) update: apply it without echoing a write back.
-				self.suppressWrite = true;
-				self.colorPicker.color.rgbString = `rgb(${self.data.R[0]}, ${self.data.G[0]}, ${self.data.B[0]})`;
-				setTimeout(() => { self.suppressWrite = false; }, 0);
-			}
-		},
-	},
 };
 
 const settingKeys = Object.keys(settings);
@@ -274,15 +250,6 @@ function getSettingKey(uuid) {
 		if (setting.uuid === uuid) return key;
 	}
 }
-
-let color = {
-	rgb: {
-		r: 255,
-		g: 0,
-		b: 0,
-	},
-	hexString: "#ff0000",
-};
 
 const connectButton = document.getElementById("connectButton");
 const message = document.getElementById("message");
@@ -345,15 +312,7 @@ toneRange.oninput = () => {
 };
 
 
-// Hue picker: hidden input mirrors the iro picker's color.
-const solidColorInput = document.getElementById("solidColorInput");
-solidColorInput.oninput = () => {
-	const colorPicker = settings.solidColor.colorPicker;
-
-	colorPicker.color.hexString = solidColorInput.value;
-};
-
-initColorPicker();
+// The brightness control has been removed; the firmware owns solidColor.
 
 // Web Bluetooth support check + Connect button.
 if (connectButton && "bluetooth" in navigator) {
@@ -787,7 +746,6 @@ function setConnectedUI() {
 	if (backgroundSelect) backgroundSelect.disabled = false;
 	volumeRange.disabled = false;
 	toneRange.disabled = false;
-	document.getElementById("color-picker-container").classList.remove("disabled");
 	if (mirrorWrap) mirrorWrap.classList.remove("disabled");
 }
 
@@ -802,7 +760,6 @@ function setDisconnectedUI() {
 	if (backgroundSelect) backgroundSelect.disabled = true;
 	volumeRange.disabled = true;
 	toneRange.disabled = true;
-	document.getElementById("color-picker-container").classList.add("disabled");
 	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 	// Return every control to its page-load initial state (programmatic sets
 	// don't fire input/change events, so nothing is written to the device).
@@ -812,15 +769,6 @@ function setDisconnectedUI() {
 	toneRange.value = 0;
 	if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
 	firmwareVersion.textContent = "x.y.z";
-	solidColorInput.value = "#ff0000";
-	// Drop the color to red (hue 0, full saturation/value). Setting the
-	// picker fires color:change synchronously, so suppress the write —
-	// otherwise a write queues onto the dead link.
-	if (settings.solidColor.colorPicker) {
-		settings.solidColor.suppressWrite = true;
-		settings.solidColor.colorPicker.color.rgbString = "rgb(255, 0, 0)";
-		setTimeout(() => { settings.solidColor.suppressWrite = false; }, 0);
-	}
 }
 
 // ---- Advertisement-driven fast reconnect ----
@@ -1020,49 +968,6 @@ function handleIncoming(setting, dataReceived) {
 	});
 	setting.rendered = false;
 	if (setting.dataUpdated) setting.dataUpdated(setting, dataReceived);
-}
-
-// Create the iro color picker wired to the solidColor characteristic.
-function initColorPicker() {
-	const container = document.getElementById("color-picker-container");
-	if (!container) return; // element missing (e.g. stale cached HTML) — don't crash init
-	settings.solidColor.colorPicker = new iro.ColorPicker(
-		"#color-picker-container",
-		{
-			width: 173,
-			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`,
-			// Luma only: a single value slider. The selected background mode
-			// supplies the tint color, so no hue control is offered.
-			layout: [
-				{ component: iro.ui.Slider, options: { sliderType: "value" } }
-			]
-		}
-	);
-
-	// Standard disabled look until connected: fade out + block interaction.
-	document.getElementById("color-picker-container").classList.add("disabled");
-
-	solidColorInput.value = color.hexString;
-
-	// RGB Color Picker: a single luma (value) slider. iro preserves the
-	// current hue/saturation, so the slider only changes brightness and its
-	// gradient follows the current tint (colored for Lava/Matrix, grey for the
-	// desaturated mode defaults).
-	settings.solidColor.colorPicker.on("color:change", updateColor);
-	function updateColor(color) {
-
-		// Never echo a color that arrived via a notification back to the device:
-		// that would make the firmware broadcast it to every other client,
-		// which re-triggers their color:change and re-writes it — an infinite
-		// ping-pong that makes every picker jitter.
-		if (settings.solidColor.suppressWrite) return;
-
-		var rgb_values = Uint8Array.of(color.rgb.r, color.rgb.g, color.rgb.b);
-		settings.solidColor.writeValue = rgb_values;
-		BLEwriteTo("solidColor");
-
-		solidColorInput.value = color.hexString;
-	}
 }
 
 // Update helpers: set a Uint8 value and write it to the device.
