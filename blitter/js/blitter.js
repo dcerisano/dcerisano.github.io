@@ -433,6 +433,9 @@ async function onConnected(attemptId) {
 	// notification can only arrive once that window has elapsed. Timeout falls
 	// through so a static/change-muted display can't wedge startup.
 	await waitForMirrorLive(3000);
+	// User-requested settle time: wait an extra 2s after the link is connected
+	// and the mirror is live before sending the "webble" greeting.
+	await sleep(2000);
 	try {
 		await updateText("  web\xe0\x44\x44\xffble");
 		console.log("startup greeting sent");
