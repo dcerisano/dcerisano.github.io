@@ -1022,11 +1022,10 @@ function initColorPicker() {
 		{
 			width: 173,
 			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`,
-			// Stack the lightness/value slider ABOVE the wheel (iro's default puts
-			// it underneath the wheel). Vertical stacking order = array order.
+			// Two sliders only: hue on top, value (luma) below.
 			layout: [
-				{ component: iro.ui.Slider, options: { sliderType: "value" } },
-				{ component: iro.ui.Wheel }
+				{ component: iro.ui.Slider, options: { sliderType: "hue" } },
+				{ component: iro.ui.Slider, options: { sliderType: "value" } }
 			]
 		}
 	);
