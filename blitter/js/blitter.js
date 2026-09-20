@@ -11,16 +11,21 @@ const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
 const EXPECTED_FW_VERSION   = "0.2.0";
 const TONE_OFFSET_MIN = 0;
 const TONE_OFFSET_MAX = 1000;
-// Background modes, keyed to the -0008 characteristic value (mirror firmware
-// patterns.h BackgroundMode enum: 0=SOLID, 1=PLASMA, 2=STATIC, 3=LAVA,
-// 4=MATRIX). Drives the Background <select> options.
+// Background modes offered by the UI, keyed to the -0008 characteristic value
+// (mirror firmware patterns.h BackgroundMode enum: 0=SOLID, 1=PLASMA,
+// 2=STATIC, 3=LAVA, 4=MATRIX). Drives the Background <select> options.
+// Mode 0 (Solid) is intentionally NOT offered — it is a flat tint with no
+// pattern — and a device reporting it is shown as SOLID_MODE_FALLBACK below.
 const BACKGROUND_MODES = [
-	{ value: 0, label: "Solid Color" },
 	{ value: 1, label: "Plasma" },
 	{ value: 2, label: "Noise" },
 	{ value: 3, label: "Lava" },
 	{ value: 4, label: "Matrix" }
 ];
+
+// Firmware mode 0 (Solid) is no longer offered; the menu displays it as this
+// mode instead of going unsynced. This is never written to the device.
+const SOLID_MODE_FALLBACK = 1;
 
 // Transient -0008 value the firmware broadcasts while ambience frames stream.
 // It is never persisted; when frames stop the firmware restores the real mode.
@@ -32,9 +37,10 @@ const BACKGROUND_AMBIENCE = 5;
 // is sharing.
 const AMBIENCE_SELECT_VALUE = "ambience";
 
-// Last real (0-4) mode read/broadcast. Ambience must not clobber this so we can
-// restore it when a local stream stops.
-let lastRealBackgroundMode = 0;
+// Last real configured mode read/broadcast. Ambience must not clobber this so
+// we can restore it when a local stream stops. Seeded to the fallback (Plasma,
+// the firmware default) since Solid (0) is no longer offered.
+let lastRealBackgroundMode = SOLID_MODE_FALLBACK;
 
 let ambience = false;
 const FPS = 30;
@@ -122,7 +128,10 @@ const settings = {
 				if (backgroundSelect) backgroundSelect.value = AMBIENCE_SELECT_VALUE;
 				return;
 			}
-			const m = BACKGROUND_MODES.find((m) => m.value === v);
+			// Solid (0) is no longer offered; map it to the fallback so the
+			// menu stays in sync with the device without writing anything.
+			const mode = v === 0 ? SOLID_MODE_FALLBACK : v;
+			const m = BACKGROUND_MODES.find((m) => m.value === mode);
 			if (m) {
 				lastRealBackgroundMode = m.value;
 				if (backgroundSelect) backgroundSelect.value = m.value;
@@ -1022,9 +1031,9 @@ function initColorPicker() {
 		{
 			width: 173,
 			color: `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`,
-			// Two sliders only: hue on top, value (luma) below.
+			// Luma only: a single value slider. The selected background mode
+			// supplies the tint color, so no hue control is offered.
 			layout: [
-				{ component: iro.ui.Slider, options: { sliderType: "hue" } },
 				{ component: iro.ui.Slider, options: { sliderType: "value" } }
 			]
 		}
@@ -1035,35 +1044,18 @@ function initColorPicker() {
 
 	solidColorInput.value = color.hexString;
 
-	// RGB Color Picker
+	// RGB Color Picker: a single luma (value) slider. iro preserves the
+	// current hue/saturation, so the slider only changes brightness and its
+	// gradient follows the current tint (colored for Lava/Matrix, grey for the
+	// desaturated mode defaults).
 	settings.solidColor.colorPicker.on("color:change", updateColor);
-
-	// Last hue the user picked. The firmware's default tints are fully
-	// desaturated (white / grey), so a later value change on such a tint would
-	// otherwise fall back to hue 0 (red); this keeps the user's chosen hue.
-	let lastHue = 0;
-
-	function updateColor(color, changes) {
+	function updateColor(color) {
 
 		// Never echo a color that arrived via a notification back to the device:
 		// that would make the firmware broadcast it to every other client,
 		// which re-triggers their color:change and re-writes it — an infinite
 		// ping-pong that makes every picker jitter.
 		if (settings.solidColor.suppressWrite) return;
-
-		// The layout has only hue and value sliders, so nothing ever raises
-		// saturation. The firmware's default tints are desaturated (s=0),
-		// which makes the hue slider a no-op and paints iro's value slider as
-		// a grey ramp (its gradient is drawn from the current hue/saturation).
-		// Pin saturation to full so hue always applies and the value slider is
-		// tinted by the selected hue.
-		if (color.saturation < 100) {
-			// On a desaturated tint keep the last user hue — unless the user
-			// just moved the hue slider, in which case adopt the new hue.
-			if (!(changes && changes.h)) color.hue = lastHue;
-			color.saturation = 100;
-		}
-		lastHue = color.hue;
 
 		var rgb_values = Uint8Array.of(color.rgb.r, color.rgb.g, color.rgb.b);
 		settings.solidColor.writeValue = rgb_values;
@@ -1079,9 +1071,10 @@ function updateBackground(mode) {
 	BLEwriteTo("background");
 }
 
-// On page load (before any connection) the Background mode defaults to Solid
-// Color (BACKGROUND_MODES[0]). This only seeds the <select> so it isn't blank
-// while disconnected; a live device read (dataUpdated) overrides it on connect.
+// On page load (before any connection) the Background mode defaults to the
+// first offered mode (Plasma, BACKGROUND_MODES[0]). This only seeds the
+// <select> so it isn't blank while disconnected; a live device read
+// (dataUpdated) overrides it on connect.
 if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
 
 function updateVolume(value) {
