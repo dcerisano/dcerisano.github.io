@@ -128,8 +128,6 @@ canvas {
 	height: 70vmin !important;
 	flex: 0 0 auto;
 	image-rendering: pixelated;
-	transform: scale(0.8) !important;
-	transform-origin: center center !important;
 }
 #mirrorWrap:fullscreen #overlay,
 #mirrorWrap:-webkit-full-screen #overlay {
@@ -137,18 +135,7 @@ canvas {
 	height: 70vmin !important;
 	top: 50% !important;
 	left: 50% !important;
-	transform: translate(-50%, -50%) scale(0.81) !important;
-	transform-origin: center center !important;
-}
-#mirrorWrap:fullscreen img[src*="tv"],
-#mirrorWrap:-webkit-full-screen img[src*="tv"] {
-	width: 70vmin !important;
-	height: 70vmin !important;
-	top: 50% !important;
-	left: 50% !important;
-	transform: translate(-50%, -50%) !important;
-	transform-origin: center center !important;
-	object-fit: contain !important;
+	transform: translate(-50%, -50%);
 }
 
 
@@ -264,7 +251,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=7f80af3"></script>
+<script src="js/blitter.js?v=8e88112"></script>
 </html>
 
 
