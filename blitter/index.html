@@ -131,12 +131,11 @@ canvas {
 }
 #mirrorWrap:fullscreen #overlay,
 #mirrorWrap:-webkit-full-screen #overlay {
+	position: relative;
 	width: 70vmin !important;
 	height: 70vmin !important;
 	flex: 0 0 auto;
-	top: 50% !important;
-	left: 50% !important;
-	transform: translate(-50%, -50%) scale(0.8);
+	transform: scale(0.8);
 	transform-origin: center center !important;
 }
 #mirrorWrap:fullscreen img[src="img/tv.png"],
@@ -259,7 +258,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=ee50150"></script>
+<script src="js/blitter.js?v=ea669e7"></script>
 </html>
 
 
