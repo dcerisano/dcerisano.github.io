@@ -100,8 +100,8 @@ canvas {
 	height: 100%;
 }
 
-/* Clickable mirror: fullscreen uses the plugin wallpaper sizing
-   (min(viewport) * 0.7 square, centered on black). */
+/* Clickable mirror: fullscreen is 80vmin square, canvas + overlay
+   stacked centered over each other on black. */
 #mirrorWrap {
 	cursor: default;
 }
@@ -115,27 +115,33 @@ canvas {
 	aspect-ratio: auto;
 	border-radius: 0;
 	background: #000;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	display: block;
+	position: relative;
 }
-#mirrorWrap:fullscreen::backdrop {
+#mirrorWrap:fullscreen::backdrop,
+#mirrorWrap:-webkit-full-screen::backdrop {
 	background: #000;
 }
 #mirrorWrap:fullscreen #screencanvas,
 #mirrorWrap:-webkit-full-screen #screencanvas {
-	width: 70vmin !important;
-	height: 70vmin !important;
-	flex: 0 0 auto;
+	position: absolute !important;
+	top: 50% !important;
+	left: 50% !important;
+	width: 80vmin !important;
+	height: 80vmin !important;
+	transform: translate(-50%, -50%) !important;
+	transform-origin: center center;
 	image-rendering: pixelated;
 }
 #mirrorWrap:fullscreen #overlay,
 #mirrorWrap:-webkit-full-screen #overlay {
-	width: 70vmin !important;
-	height: 70vmin !important;
-	flex: 0 0 auto;
-	transform: scale(0.8);
-	transform-origin: center center !important;
+	position: absolute !important;
+	top: 50% !important;
+	left: 50% !important;
+	width: 81vmin !important;
+	height: 81vmin !important;
+	transform: translate(-50%, -50%) !important;
+	transform-origin: center center;
 }
 #mirrorWrap:fullscreen img[src="img/tv.png"],
 #mirrorWrap:-webkit-full-screen img[src="img/tv.png"],
@@ -195,7 +201,7 @@ canvas {
 			<input type="submit" style="display: none" />
 
 			<!-- Live Blitter matrix display: always visible, mirrors the device's 8x8 output.
-			     Click toggles fullscreen (plugin wallpaper sizing: 70% of viewport min). -->
+			     Click toggles fullscreen (80vmin square, canvas + overlay centered). -->
 			<div class="form-group row">
 				<label class="col-form-label">Mirror</label>
 				<div id="mirrorWrap" class="disabled" style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto;">
@@ -257,7 +263,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=7221cc5"></script>
+<script src="js/blitter.js?v=3041490"></script>
 </html>
 
 

@@ -979,6 +979,15 @@ function updateBlitter(value) {
 
 }
 
+// Inverse-gamma(2.0) display correction for the mirror canvas: the panel
+// output looks dark on sRGB screens, so each channel is mapped through
+// (v/255)^(1/2.0). A 256-entry LUT keeps the per-frame cost trivial
+// (64 pixels). Display-only: nothing sent back to the device is touched.
+const GAMMA_LUT = new Uint8Array(256);
+for (let i = 0; i < 256; i++) {
+	GAMMA_LUT[i] = Math.round(Math.pow(i / 255, 0.5) * 255);
+}
+
 // Render a 256-byte 8x8 RGBA frame from the firmware into the mirror canvas.
 // Rendered upright (buffer row y -> canvas row y) so text reads correctly.
 function renderBlitterFrame(dataReceived) {
@@ -995,9 +1004,9 @@ function renderBlitterFrame(dataReceived) {
 		for (let x = 0; x < 8; x++) {
 			const src = srcRow + x * 4;
 			const dst = (y * 8 + x) * 4;
-			img.data[dst]     = bytes[src];
-			img.data[dst + 1] = bytes[src + 1];
-			img.data[dst + 2] = bytes[src + 2];
+			img.data[dst]     = GAMMA_LUT[bytes[src]];
+			img.data[dst + 1] = GAMMA_LUT[bytes[src + 1]];
+			img.data[dst + 2] = GAMMA_LUT[bytes[src + 2]];
 			img.data[dst + 3] = bytes[src + 3];
 		}
 	}
@@ -1069,8 +1078,8 @@ overlay.style.backgroundImage = "url('" + DOTS_PNG + "')";
 const context = canvas.getContext('2d');
 
 // Mirror fullscreen: click toggles fullscreen, click again exits.
-// Sizing (70vmin square on black) is handled by #mirrorWrap:fullscreen CSS
-// to match the opencode-blitter-plugin wallpaper page.
+// Sizing (80vmin square, canvas + overlay centered on black)
+// is handled by #mirrorWrap:fullscreen CSS.
 function toggleMirrorFullscreen() {
 	// Inert unless the BLE link is up: a disconnected (black) mirror must not open.
 	if (!device || !device.gatt || !device.gatt.connected) return;
