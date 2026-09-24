@@ -172,10 +172,13 @@ canvas {
 	width: 31px;
 	height: 31px;
 	padding: 2px;
-	border: 1px solid #777;
+	border: 0;
 	border-radius: 4px;
-	background: #222;
+	background: transparent;
+	box-shadow: none;
+	outline: none;
 	cursor: pointer;
+	appearance: none;
 }
 .background-button img {
 	display: block;
@@ -184,16 +187,7 @@ canvas {
 	object-fit: cover;
 	pointer-events: none;
 }
-.background-button:hover:not(:disabled),
-.background-button:focus-visible {
-	border-color: #ddd;
-}
-.background-button[aria-pressed="true"] {
-	border-color: #5bc0de;
-	box-shadow: 0 0 0 1px #5bc0de;
-}
 .background-button:disabled {
-	opacity: 0.4;
 	cursor: default;
 }
 
@@ -303,7 +297,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=b13114e"></script>
+<script src="js/blitter.js?v=622e81e"></script>
 </html>
 
 
