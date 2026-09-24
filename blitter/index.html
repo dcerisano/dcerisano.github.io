@@ -37,8 +37,8 @@ main {
 	max-width: 100%;
 }
 
-/* Every control row: label left of the control, never wrapping so a fixed-size
-   child (mirror, color wheel) can't get squeezed off to the side or clipped.
+/* Every control row keeps its control on one line, so a fixed-size child
+   (mirror, color wheel) can't get squeezed off the side or clipped.
    Spacing is applied per-row as margin-bottom (margin-top stays 0), so the gap
    below each row is exactly that row's margin — easy to reason about. */
 .form-group.row {
@@ -64,17 +64,6 @@ main {
 /* Bluetooth: roomier so the connect action stands out from the packed cluster above. */
 .form-group.row:has(#connectButton) {
 	margin-bottom: 0.7rem;
-}
-
-label {
-	width: 115px;
-	flex: 0 0 115px;
-	display: inline-block;
-	text-align: right;
-	padding-right: 10px;
-	margin-bottom: 0;
-	color: #d0d0d0;
-	font-size: 1.02rem;
 }
 
 /* Control cell: center horizontally, but never flex-stretch children vertically
@@ -162,12 +151,6 @@ canvas {
 /* Portrait / short screens: compress row spacing and controls so the whole
    control panel fits on one screen without vertical scrolling. */
 @media (max-width: 480px), (max-height: 720px) {
-	label {
-		width: 96px;
-		flex-basis: 96px;
-		font-size: 0.94rem;
-		padding-right: 8px;
-	}
 	.form-group.row {
 		margin-bottom: 0.5rem;
 	}
@@ -203,7 +186,6 @@ canvas {
 			<!-- Live Blitter matrix display: always visible, mirrors the device's 8x8 output.
 			     Click toggles fullscreen (80vmin square, canvas + overlay centered). -->
 			<div class="form-group row">
-				<label class="col-form-label">Mirror</label>
 				<div id="mirrorWrap" class="disabled" style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto;">
 					<img src="img/tv.png" alt="TV" style="position: absolute; top: 0; left: 0; width: 173px; height: 173px; z-index: -1; object-fit: contain;" />
 					<canvas id="screencanvas"
@@ -216,7 +198,6 @@ canvas {
 
 			<!-- Background mode (options injected from JS BACKGROUND_MODES) -->
 			<div class="form-group row">
-				<label class="col-form-label">Background</label>
 				<div>
 					<select id="backgroundSelect" class="form-control"
 						style="width: 173px" disabled></select>
@@ -225,7 +206,6 @@ canvas {
 
 			<!-- Volume slider -->
 			<div class="form-group row">
-				<label class="col-form-label">Volume</label>
 				<div>
 					<input id="volumeRange" class="custom-range" type="range" step="1"
 						min="0" max="10" value="0" disabled />
@@ -234,7 +214,6 @@ canvas {
 
 			<!-- Bluetooth connection -->
 			<div class="form-group row">
-				<label class="col-form-label">Bluetooth</label>
 				<div>
 					<button id="connectButton" class="btn btn-danger" type="button">Connect</button>
 				</div>
@@ -243,7 +222,6 @@ canvas {
 
 			<!-- Firmware version (read from DIS) -->
 			<div class="form-group row">
-				<label class="col-form-label">Firmware</label>
 				<div id="firmwareVersion" style="color: #d0d0d0">x.y.z</div>
 			</div>
 
@@ -263,7 +241,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=3041490"></script>
+<script src="js/blitter.js?v=18b56fd"></script>
 </html>
 
 
