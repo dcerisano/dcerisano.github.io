@@ -285,6 +285,7 @@ function applySoundVolume() {
 if (soundButton) {
 	soundButton.addEventListener("click", function(event) {
 		event.preventDefault();
+		if (!uiConnected) return;
 		setSoundImg(soundState === 'on' ? 'off' : 'on');
 		applySoundVolume();
 	});
@@ -294,6 +295,14 @@ if (soundButton) {
 // (volume 10) once the link is up.
 setSoundImg('off');
 applySoundVolume();
+// Boot = disconnected: sound toggle is insensitive until BLE connects
+// (setConnectedUI re-enables it). Guarded by uiConnected in the click
+// handler; dimmed here so the disabled state is visible pre-connect.
+if (soundButton) {
+	soundButton.style.opacity = '0.4';
+	soundButton.style.cursor = 'default';
+	soundButton.style.pointerEvents = 'none';
+}
 
 // Screen-capture capability: without getDisplayMedia there is no Ambience
 // background option (the mirror canvas stays visible regardless).
@@ -772,6 +781,11 @@ async function setupGatt(device, attemptId) {
 
 function setConnectedUI() {
 	uiConnected = true;
+	if (soundButton) {
+		soundButton.style.opacity = '1';
+		soundButton.style.cursor = 'pointer';
+		soundButton.style.pointerEvents = 'auto';
+	}
 	setConnectImg('connected');
 	if (message) { message.disabled = false; message.placeholder = "Enter text"; }
 	if (bridgeMessage) { bridgeMessage.disabled = false; bridgeMessage.placeholder = "Enter text"; }
@@ -781,6 +795,11 @@ function setConnectedUI() {
 
 function setDisconnectedUI() {
 	uiConnected = false;
+	if (soundButton) {
+		soundButton.style.opacity = '0.4';
+		soundButton.style.cursor = 'default';
+		soundButton.style.pointerEvents = 'none';
+	}
 	clearMirror();
 	setConnectImg('disconnected');
 	if (message) { message.disabled = true; message.placeholder = "Disconnected"; }
