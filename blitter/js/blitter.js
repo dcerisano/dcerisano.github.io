@@ -270,7 +270,7 @@ function setConnectImg(state) {
 // (img/sound-on.png, volume 10). The toggle is authoritative: device reads
 // (settings.volume.dataUpdated) never override the image.
 const soundButton = document.getElementById("soundButton");
-let soundState = 'on';
+let soundState = 'off';
 function setSoundImg(state) {
 	soundState = state;
 	if (!soundButton) return;
@@ -289,10 +289,10 @@ if (soundButton) {
 		applySoundVolume();
 	});
 }
-// Seed the boot/reload default: on at volume 10. BLEwriteTo() no-ops safely
-// while disconnected (no characteristic yet); onConnected() re-applies the
-// current state once the link is up.
-setSoundImg('on');
+// Seed the boot/reload default: off at volume 3. BLEwriteTo() no-ops safely
+// while disconnected (no characteristic yet); onConnected() auto-flips to on
+// (volume 10) once the link is up.
+setSoundImg('off');
 applySoundVolume();
 
 // Screen-capture capability: without getDisplayMedia there is no Ambience
@@ -474,8 +474,9 @@ async function connect() {
 // so the full scroll is visible in the mirror instead of only its tail.
 async function onConnected(attemptId) {
 	setConnectedUI();
-	// Re-apply the current sound-toggle volume now the link is up (the init
-	// seed no-ops while disconnected).
+	// Auto-flip sound to on (volume 10) at every connect — initial + reconnect.
+	// The boot seed no-ops while disconnected, so the device gets vol 10 here.
+	setSoundImg('on');
 	applySoundVolume();
 	// Start the live-mirror stream only now that the client is fully connected,
 	// so the firmware's frame flood can't block/delay the connect state.
