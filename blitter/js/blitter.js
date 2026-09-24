@@ -10,9 +10,9 @@ const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
 const EXPECTED_FW_VERSION   = "0.2.0";
 // Background modes offered by the UI, keyed to the -0008 characteristic value
 // (mirror firmware patterns.h BackgroundMode enum: 0=SOLID, 1=PLASMA,
-// 2=STATIC, 3=LAVA, 4=MATRIX). Drives the Background <select> options.
+// 2=STATIC, 3=LAVA, 4=MATRIX). Drives the real background image controls.
 // Mode 0 (Solid) is intentionally NOT offered — it is a flat tint with no
-// pattern — and a device reporting it is shown as SOLID_MODE_FALLBACK below.
+// pattern — and a device reporting it falls back to SOLID_MODE_FALLBACK below.
 const BACKGROUND_MODES = [
 	{ value: 1, label: "Plasma" },
 	{ value: 2, label: "Noise" },
@@ -20,7 +20,7 @@ const BACKGROUND_MODES = [
 	{ value: 4, label: "Matrix" }
 ];
 
-// Firmware mode 0 (Solid) is no longer offered; the menu displays it as this
+// Firmware mode 0 (Solid) is no longer offered; the controls display it as this
 // mode instead of going unsynced. This is never written to the device.
 const SOLID_MODE_FALLBACK = 1;
 
@@ -28,11 +28,11 @@ const SOLID_MODE_FALLBACK = 1;
 // It is never persisted; when frames stop the firmware restores the real mode.
 const BACKGROUND_AMBIENCE = 5;
 
-// The <select> option for Ambience. Client-only sentinel (the firmware value is
-// numeric BACKGROUND_AMBIENCE); the option is always visible but disabled on
+// Client-only UI value for the Ambience image control. The firmware value is
+// numeric BACKGROUND_AMBIENCE; the control is always visible but disabled on
 // browsers without getDisplayMedia, so every client can see when a remote client
 // is sharing.
-const AMBIENCE_SELECT_VALUE = "ambience";
+const AMBIENCE_UI_VALUE = "ambience";
 
 // Last real configured mode read/broadcast. Ambience must not clobber this so
 // we can restore it when a local stream stops. Seeded to the fallback (Plasma,
@@ -114,24 +114,24 @@ const settings = {
 		data: { V: [] },
 		writeBusy: false,
 		writeValue: null,
-		// Last change wins from any client: a broadcast background value sets
-		// the menu, and any incoming mode change ends a local screenshare
+		// Last change wins from any client: a broadcast background value updates
+		// the image controls, and any incoming mode change ends a local screenshare
 		// session (stops the track, clearing the browser sharing indicator).
 		dataUpdated: (self) => {
 			const v = self.data.V[0];
 			if (v === BACKGROUND_AMBIENCE) {
-				// A remote client is screen-sharing: show the (possibly disabled)
-				// Ambience entry but do NOT tear down our own stream.
-				if (backgroundSelect) backgroundSelect.value = AMBIENCE_SELECT_VALUE;
+				// A remote client is screen-sharing: activate the (possibly disabled)
+				// Ambience control but do NOT tear down our own stream.
+				setBackgroundButtonState(AMBIENCE_UI_VALUE);
 				return;
 			}
 			// Solid (0) is no longer offered; map it to the fallback so the
-			// menu stays in sync with the device without writing anything.
+			// controls stay in sync with the device without writing anything.
 			const mode = v === 0 ? SOLID_MODE_FALLBACK : v;
 			const m = BACKGROUND_MODES.find((m) => m.value === mode);
 			if (m) {
 				lastRealBackgroundMode = m.value;
-				if (backgroundSelect) backgroundSelect.value = m.value;
+				setBackgroundButtonState(m.value);
 				if (ambience) stopAmbience();
 			}
 		},
@@ -304,44 +304,60 @@ if (soundButton) {
 	soundButton.style.pointerEvents = 'none';
 }
 
-// Screen-capture capability: without getDisplayMedia there is no Ambience
-// background option (the mirror canvas stays visible regardless).
+// Screen-capture capability: without getDisplayMedia the Ambience background
+// control stays disabled (the mirror canvas remains visible regardless).
 const hasScreenCapture = !!(
 	navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia
 );
 
 
-// Background mode <select>. Real modes come from BACKGROUND_MODES (firmware
-// enum 0-4). The Ambience entry is ALWAYS present (disabled/greyed when the
+// Background image controls. Real modes come from BACKGROUND_MODES (firmware
+// enum 0-4). The Ambience image is ALWAYS present (disabled/greyed when the
 // browser cannot capture the screen) so every client can see — via the firmware's
-// transient -0008 broadcast — when a remote client is sharing. Picking it on a
-// capable browser starts the screenshare and selects Ambience on -0008.
-const backgroundSelect = document.getElementById("backgroundSelect");
-if (backgroundSelect) {
-	const opt = document.createElement("option");
-	opt.value = AMBIENCE_SELECT_VALUE;
-	opt.textContent = "Ambience";
-	if (!hasScreenCapture) {
-		opt.disabled = true;
-		opt.title = "Screen sharing is not supported by this browser.";
+// transient -0008 broadcast — when a remote client is sharing. Its click runs
+// connectAmbience(); real-mode clicks run the existing
+// stopAmbience()/lastRealBackgroundMode/updateBackground() sequence.
+const backgroundControls = document.getElementById("backgroundControls");
+const backgroundButtons = backgroundControls
+	? Array.from(backgroundControls.querySelectorAll("button"))
+	: [];
+
+function setBackgroundButtonState(mode) {
+	const selectedMode = String(mode);
+	for (const button of backgroundButtons) {
+		const selected = button.dataset.backgroundMode === selectedMode;
+		button.setAttribute("aria-pressed", selected ? "true" : "false");
 	}
-	backgroundSelect.appendChild(opt);
-	for (const m of BACKGROUND_MODES) {
-		const opt = document.createElement("option");
-		opt.value = m.value;
-		opt.textContent = m.label;
-		backgroundSelect.appendChild(opt);
+}
+
+function setBackgroundControlsEnabled(enabled) {
+	for (const button of backgroundButtons) {
+		const unsupportedAmbience = button.dataset.backgroundMode === AMBIENCE_UI_VALUE
+			&& !hasScreenCapture;
+		button.disabled = !enabled || unsupportedAmbience;
+		if (unsupportedAmbience) {
+			button.title = "Screen sharing is not supported by this browser.";
+		} else {
+			button.removeAttribute("title");
+		}
 	}
-	backgroundSelect.onchange = () => {
-		if (backgroundSelect.value === AMBIENCE_SELECT_VALUE) {
+}
+
+for (const button of backgroundButtons) {
+	button.addEventListener("click", () => {
+		if (button.disabled || !uiConnected) return;
+		const value = button.dataset.backgroundMode;
+		setBackgroundButtonState(value);
+		if (value === AMBIENCE_UI_VALUE) {
 			if (hasScreenCapture && !ambience) connectAmbience();
 			return;
 		}
 		if (ambience) stopAmbience();
-		lastRealBackgroundMode = Number(backgroundSelect.value);
-		updateBackground(Number(backgroundSelect.value));
-	};
+		lastRealBackgroundMode = Number(value);
+		updateBackground(Number(value));
+	});
 }
+setBackgroundControlsEnabled(false);
 
 // The brightness control has been removed; the firmware owns solidColor.
 
@@ -369,7 +385,7 @@ if (connectButton && "bluetooth" in navigator) {
 	alert("Error: " + reason + "\n\nTry using Chrome.");
 }
 
-// Ambience needs no button: it is launched from the Background menu.
+// Ambience needs no separate Bluetooth-row button; it is launched from the background controls.
 
 // Send the message on form submit. Only the field that triggered the submit
 // (the focused input) is sent, so Enter in Message writes only text and Enter
@@ -789,7 +805,7 @@ function setConnectedUI() {
 	setConnectImg('connected');
 	if (message) { message.disabled = false; message.placeholder = "Enter text"; }
 	if (bridgeMessage) { bridgeMessage.disabled = false; bridgeMessage.placeholder = "Enter text"; }
-	if (backgroundSelect) backgroundSelect.disabled = false;
+	setBackgroundControlsEnabled(true);
 	if (mirrorWrap) mirrorWrap.classList.remove("disabled");
 }
 
@@ -804,13 +820,13 @@ function setDisconnectedUI() {
 	setConnectImg('disconnected');
 	if (message) { message.disabled = true; message.placeholder = "Disconnected"; }
 	if (bridgeMessage) { bridgeMessage.disabled = true; bridgeMessage.placeholder = "Disconnected"; }
-	if (backgroundSelect) backgroundSelect.disabled = true;
+	setBackgroundControlsEnabled(false);
 	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 	// Return every control to its page-load initial state (programmatic sets
 	// don't fire input/change events, so nothing is written to the device).
 	if (message) message.value = "";
 	if (bridgeMessage) bridgeMessage.value = "";
-	if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
+	setBackgroundButtonState(BACKGROUND_MODES[0].value);
 	firmwareVersion.textContent = "x.y.z";
 }
 
@@ -1019,10 +1035,9 @@ function updateBackground(mode) {
 }
 
 // On page load (before any connection) the Background mode defaults to the
-// first offered mode (Plasma, BACKGROUND_MODES[0]). This only seeds the
-// <select> so it isn't blank while disconnected; a live device read
-// (dataUpdated) overrides it on connect.
-if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
+// first offered mode (Plasma, BACKGROUND_MODES[0]). This only seeds the active
+// image control while disconnected; a live device read overrides it on connect.
+setBackgroundButtonState(BACKGROUND_MODES[0].value);
 
 function updateVolume(value) {
 
@@ -1186,7 +1201,7 @@ let interval = null;
 
 // Capture the screen, then stream downsampled 8x8 frames to the blitter.
 // Selecting Ambience writes the transient -0008 value (BACKGROUND_AMBIENCE) so
-// every client's selector shows Ambience; the firmware persists nothing and
+// every client's Ambience image is active; the firmware persists nothing and
 // restores the real mode ~1s after frames stop. `lastRealBackgroundMode` is
 // remembered so we can restore it here on stop.
 async function connectAmbience() {
@@ -1215,7 +1230,7 @@ async function connectAmbience() {
 		console.log('requestMedia error:');
 		console.log(err);
 		ambience = false;
-		// Picker was cancelled: restore the menu to the persisted background.
+		// Picker was cancelled: restore the active control to the persisted background.
 		restorePersistedBackground();
 	}
 }
@@ -1253,18 +1268,18 @@ function persistedBackgroundMode() {
 	return lastRealBackgroundMode;
 }
 
-// Point the menu at the persisted background and write it back so the firmware
-// leaves ambience and every client agrees on the mode. A same-value write is a
-// firmware no-op (its onWrite returns early when already on that mode).
+// Point the image controls at the persisted background and write it back so the
+// firmware leaves ambience and every client agrees on the mode. A same-value
+// write is a firmware no-op (its onWrite returns early when already on that mode).
 function restorePersistedBackground() {
 	const mode = persistedBackgroundMode();
-	if (backgroundSelect) backgroundSelect.value = mode;
+	setBackgroundButtonState(mode);
 	updateBackground(mode);
 }
 
 // Reset ambience state when the shared screen track ends (browser sharing UI
-// cleared, or the document was hidden). If we were streaming, restore the menu
-// and re-assert the real mode on -0008 so the firmware leaves ambience now.
+// cleared, or the document was hidden). If we were streaming, restore the active
+// image and re-assert the real mode on -0008 so the firmware leaves ambience now.
 // Guarded on `ambience`: a user who already picked another mode has torn the
 // stream down, and we must not clobber their choice when `ended` fires late.
 function onAmbienceDisconnected() {

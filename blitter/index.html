@@ -55,8 +55,8 @@ main {
 	margin-bottom: 0.5rem;
 }
 
-/* Background: pack this cluster tightly. */
-.form-group.row:has(#backgroundSelect) {
+/* Background: pack the five image controls tightly. */
+.form-group.row:has(#backgroundControls) {
 	margin-bottom: 0.3rem;
 }
 /* Bluetooth: roomier so the connect action stands out from the packed cluster above. */
@@ -162,6 +162,41 @@ canvas {
 	gap: 10px;
 }
 
+/* Five compact background-pattern buttons (31px each plus 3px gaps = 167px). */
+#backgroundControls {
+	display: flex;
+	gap: 3px;
+	justify-content: center;
+}
+.background-button {
+	width: 31px;
+	height: 31px;
+	padding: 2px;
+	border: 1px solid #777;
+	border-radius: 4px;
+	background: #222;
+	cursor: pointer;
+}
+.background-button img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	pointer-events: none;
+}
+.background-button:hover:not(:disabled),
+.background-button:focus-visible {
+	border-color: #ddd;
+}
+.background-button[aria-pressed="true"] {
+	border-color: #5bc0de;
+	box-shadow: 0 0 0 1px #5bc0de;
+}
+.background-button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
 
 
 /* Portrait / short screens: compress row spacing and controls so the whole
@@ -212,11 +247,29 @@ canvas {
 				</div>
 			</div>
 
-			<!-- Background mode (options injected from JS BACKGROUND_MODES) -->
+			<!-- Background mode: each button uses its existing mode-specific action. -->
 			<div class="form-group row">
-				<div>
-					<select id="backgroundSelect" class="form-control"
-						style="width: 173px" disabled></select>
+				<div id="backgroundControls" role="group" aria-label="Background pattern">
+					<button class="background-button" type="button" data-background-mode="ambience"
+						aria-label="Ambience background" aria-pressed="false" disabled>
+						<img src="img/ambience.png" alt="Ambience background" />
+					</button>
+					<button class="background-button" type="button" data-background-mode="1"
+						aria-label="Plasma background" aria-pressed="true" disabled>
+						<img src="img/plasma.png" alt="Plasma background" />
+					</button>
+					<button class="background-button" type="button" data-background-mode="2"
+						aria-label="Noise background" aria-pressed="false" disabled>
+						<img src="img/noise.png" alt="Noise background" />
+					</button>
+					<button class="background-button" type="button" data-background-mode="3"
+						aria-label="Lava background" aria-pressed="false" disabled>
+						<img src="img/lava.png" alt="Lava background" />
+					</button>
+					<button class="background-button" type="button" data-background-mode="4"
+						aria-label="Matrix background" aria-pressed="false" disabled>
+						<img src="img/matrix.png" alt="Matrix background" />
+					</button>
 				</div>
 			</div>
 
@@ -250,7 +303,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=20bb8b7"></script>
+<script src="js/blitter.js?v=b13114e"></script>
 </html>
 
 
