@@ -242,6 +242,31 @@ const bridgeMessage = document.getElementById("bridgeMessage");
 const firmwareVersion = document.getElementById("firmwareVersion");
 const mirrorWrap = document.getElementById('mirrorWrap');
 
+// 3-state connect image, driven by connection state (like the old button
+// text was): 'disconnected' (img/disconnected.png), 'connecting'
+// (img/connecting.png) during connecting/reconnecting, 'connected'
+// (img/connected.png) when connected. Display only — the click handler stays
+// 2-state (disconnected -> connect, anything else -> reload).
+let connectImgState = 'disconnected';
+function setConnectImg(state) {
+	connectImgState = state;
+	if (!connectButton) return;
+	if (connectButton.tagName === 'IMG') {
+		const srcMap = {
+			disconnected: 'img/disconnected.png',
+			connecting: 'img/connecting.png',
+			connected: 'img/connected.png',
+		};
+		const altMap = {
+			disconnected: 'Connect',
+			connecting: 'Connecting (click to reload)',
+			connected: 'Connected (click to reload)',
+		};
+		connectButton.src = srcMap[state] || srcMap.disconnected;
+		connectButton.alt = altMap[state] || altMap.disconnected;
+	}
+}
+
 // Screen-capture capability: without getDisplayMedia there is no Ambience
 // background option (the mirror canvas stays visible regardless).
 const hasScreenCapture = !!(
@@ -290,14 +315,21 @@ volumeRange.oninput = () => {
 
 // The brightness control has been removed; the firmware owns solidColor.
 
-// Web Bluetooth support check + Connect button.
+// Web Bluetooth support check + clickable connect image.
+// Display is 3-state (disconnected/connecting/connected); the click action is
+// 2-state: disconnected -> launch WebBLE picker via connect(), connecting or
+// connected -> location.reload().
 if (connectButton && "bluetooth" in navigator) {
 	connectButton.addEventListener("click", function(event) {
 		event.preventDefault();
-		connect();
+		if (connectImgState === 'disconnected') {
+			setConnectImg('connecting');
+			connect();
+		} else {
+			location.reload();
+		}
 	});
 } else if (connectButton) {
-	connectButton.className = "btn btn-danger";
 	let reason = "This browser doesn't support Web Bluetooth.";
 	if (!window.isSecureContext) {
 		reason += "\n\nWeb Bluetooth requires a secure context. Serve this page over HTTPS or from localhost.";
@@ -372,9 +404,7 @@ async function connect() {
 
 	// While connecting, every control is in its disconnected (inert) state.
 	setDisconnectedUI();
-	connectButton.className = "btn btn-primary";
-	connectButton.disabled = true;
-	connectButton.innerText = "Connecting";
+	setConnectImg('connecting');
 
 	try {
 		if (device == null) {
@@ -717,9 +747,7 @@ async function setupGatt(device, attemptId) {
 
 function setConnectedUI() {
 	uiConnected = true;
-	connectButton.className = "btn btn-success";
-	connectButton.disabled = true;
-	connectButton.innerText = "Connected";
+	setConnectImg('connected');
 	if (message) { message.disabled = false; message.placeholder = "Enter text"; }
 	if (bridgeMessage) { bridgeMessage.disabled = false; bridgeMessage.placeholder = "Enter text"; }
 	if (backgroundSelect) backgroundSelect.disabled = false;
@@ -730,9 +758,7 @@ function setConnectedUI() {
 function setDisconnectedUI() {
 	uiConnected = false;
 	clearMirror();
-	connectButton.className = "btn btn-danger";
-	connectButton.disabled = false;
-	connectButton.innerText = "Connect";
+	setConnectImg('disconnected');
 	if (message) { message.disabled = true; message.placeholder = "Disconnected"; }
 	if (bridgeMessage) { bridgeMessage.disabled = true; bridgeMessage.placeholder = "Disconnected"; }
 	if (backgroundSelect) backgroundSelect.disabled = true;
@@ -833,9 +859,8 @@ async function onDisconnected() {
 		settings[key].writeBusy = false;
 		settings[key].writePending = false;
 	}
-	connectButton.className = "btn btn-primary";
-	connectButton.disabled = true;
-	connectButton.innerText = "Reconnecting…";
+	// Reconnecting shows the connecting image.
+	setConnectImg('connecting');
 
 	startWatchingAds();
 	try {

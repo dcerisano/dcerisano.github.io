@@ -141,9 +141,13 @@ canvas {
 
 
 
-/* Connect button matches the color wheel / mirror / text-field width (173px). */
+/* Connect toggle: one third of the column width. */
 #connectButton {
-	width: 173px;
+	width: 33.333%;
+	max-width: 33.333%;
+	height: auto;
+	display: block;
+	cursor: pointer;
 }
 
 
@@ -215,7 +219,7 @@ canvas {
 			<!-- Bluetooth connection -->
 			<div class="form-group row">
 				<div>
-					<button id="connectButton" class="btn btn-danger" type="button">Connect</button>
+					<img id="connectButton" src="img/disconnected.png" alt="Connect" style="cursor:pointer;" />
 				</div>
 			</div>
 
@@ -241,7 +245,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=18b56fd"></script>
+<script src="js/blitter.js?v=0f77261"></script>
 </html>
 
 
