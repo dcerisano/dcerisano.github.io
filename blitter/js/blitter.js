@@ -144,7 +144,6 @@ const settings = {
 		writeBusy: false,
 		writeValue: null,
 		dataUpdated: (self) => {
-			volumeRange.value = self.data.V[0];
 		},
 	},
 	// Read/write: 256-byte 8x8 RGBA ambience frame.
@@ -267,6 +266,35 @@ function setConnectImg(state) {
 	}
 }
 
+// 2-state sound toggle: 'off' (img/sound-off.png, volume 3) <-> 'on'
+// (img/sound-on.png, volume 10). The toggle is authoritative: device reads
+// (settings.volume.dataUpdated) never override the image.
+const soundButton = document.getElementById("soundButton");
+let soundState = 'off';
+function setSoundImg(state) {
+	soundState = state;
+	if (!soundButton) return;
+	if (soundButton.tagName === 'IMG') {
+		soundButton.src = state === 'on' ? 'img/sound-on.png' : 'img/sound-off.png';
+		soundButton.alt = state === 'on' ? 'Sound on' : 'Sound off';
+	}
+}
+function applySoundVolume() {
+	updateVolume(soundState === 'on' ? 10 : 3);
+}
+if (soundButton) {
+	soundButton.addEventListener("click", function(event) {
+		event.preventDefault();
+		setSoundImg(soundState === 'on' ? 'off' : 'on');
+		applySoundVolume();
+	});
+}
+// Seed the boot/reload default: off at volume 3. BLEwriteTo() no-ops safely
+// while disconnected (no characteristic yet); onConnected() re-applies the
+// current state once the link is up.
+setSoundImg('off');
+applySoundVolume();
+
 // Screen-capture capability: without getDisplayMedia there is no Ambience
 // background option (the mirror canvas stays visible regardless).
 const hasScreenCapture = !!(
@@ -305,13 +333,6 @@ if (backgroundSelect) {
 		updateBackground(Number(backgroundSelect.value));
 	};
 }
-
-const volumeRange = document.getElementById("volumeRange");
-
-// Volume slider.
-volumeRange.oninput = () => {
-	updateVolume(volumeRange.value);
-};
 
 // The brightness control has been removed; the firmware owns solidColor.
 
@@ -453,6 +474,9 @@ async function connect() {
 // so the full scroll is visible in the mirror instead of only its tail.
 async function onConnected(attemptId) {
 	setConnectedUI();
+	// Re-apply the current sound-toggle volume now the link is up (the init
+	// seed no-ops while disconnected).
+	applySoundVolume();
 	// Start the live-mirror stream only now that the client is fully connected,
 	// so the firmware's frame flood can't block/delay the connect state.
 	await startBlitterStream(attemptId);
@@ -751,7 +775,6 @@ function setConnectedUI() {
 	if (message) { message.disabled = false; message.placeholder = "Enter text"; }
 	if (bridgeMessage) { bridgeMessage.disabled = false; bridgeMessage.placeholder = "Enter text"; }
 	if (backgroundSelect) backgroundSelect.disabled = false;
-	volumeRange.disabled = false;
 	if (mirrorWrap) mirrorWrap.classList.remove("disabled");
 }
 
@@ -762,13 +785,11 @@ function setDisconnectedUI() {
 	if (message) { message.disabled = true; message.placeholder = "Disconnected"; }
 	if (bridgeMessage) { bridgeMessage.disabled = true; bridgeMessage.placeholder = "Disconnected"; }
 	if (backgroundSelect) backgroundSelect.disabled = true;
-	volumeRange.disabled = true;
 	if (mirrorWrap) mirrorWrap.classList.add("disabled");
 	// Return every control to its page-load initial state (programmatic sets
 	// don't fire input/change events, so nothing is written to the device).
 	if (message) message.value = "";
 	if (bridgeMessage) bridgeMessage.value = "";
-	volumeRange.value = 0;
 	if (backgroundSelect) backgroundSelect.value = BACKGROUND_MODES[0].value;
 	firmwareVersion.textContent = "x.y.z";
 }
