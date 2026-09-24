@@ -48,8 +48,10 @@ main {
 	margin: 0 0 0.6rem;
 }
 
-/* Mirror (top row): modest gap down to the color picker. */
+/* Mirror (top row): modest gap down to the color picker, and always centered
+   in the row so wider sibling rows (e.g. toggles sized in %) can't pull it left. */
 .form-group.row:has(#screencanvas) {
+	justify-content: center;
 	margin-bottom: 0.5rem;
 }
 
@@ -63,8 +65,10 @@ main {
 }
 
 /* Control cell: center horizontally, but never flex-stretch children vertically
-   (that squishes the mirror), never shrink them below their natural size. */
-.form-group.row > div {
+   (that squishes the mirror), never shrink them below their natural size.
+   #mirrorWrap is excluded: it is a fixed-size stage, not a control cell —
+   making it a flex container disturbs the mirror canvas centering. */
+.form-group.row > div:not(#mirrorWrap) {
 	display: flex !important;
 	flex: 1 1 auto;
 	min-width: 0;
@@ -152,8 +156,9 @@ canvas {
 	display: block;
 	cursor: pointer;
 }
-/* Gap between the two Bluetooth-row toggles, layout stays centered. */
-.form-group.row:has(#connectButton) > div {
+/* Gap between the two Bluetooth-row toggles, layout stays centered.
+   Scoped to #bluetoothCell so no other row (mirror, background, firmware) is affected. */
+#bluetoothCell {
 	gap: 10px;
 }
 
@@ -217,9 +222,9 @@ canvas {
 
 			<!-- Bluetooth connection -->
 			<div class="form-group row">
-				<div>
+				<div id="bluetoothCell">
 					<img id="connectButton" src="img/disconnected.png" alt="Connect" style="cursor:pointer;" />
-					<img id="soundButton" src="img/sound-off.png" alt="Sound off" style="cursor:pointer;" />
+					<img id="soundButton" src="img/sound-on.png" alt="Sound on" style="cursor:pointer;" />
 				</div>
 			</div>
 
@@ -245,7 +250,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=14850a3"></script>
+<script src="js/blitter.js?v=f8c6b31"></script>
 </html>
 
 

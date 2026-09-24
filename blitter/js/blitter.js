@@ -270,7 +270,7 @@ function setConnectImg(state) {
 // (img/sound-on.png, volume 10). The toggle is authoritative: device reads
 // (settings.volume.dataUpdated) never override the image.
 const soundButton = document.getElementById("soundButton");
-let soundState = 'off';
+let soundState = 'on';
 function setSoundImg(state) {
 	soundState = state;
 	if (!soundButton) return;
@@ -289,10 +289,10 @@ if (soundButton) {
 		applySoundVolume();
 	});
 }
-// Seed the boot/reload default: off at volume 3. BLEwriteTo() no-ops safely
+// Seed the boot/reload default: on at volume 10. BLEwriteTo() no-ops safely
 // while disconnected (no characteristic yet); onConnected() re-applies the
 // current state once the link is up.
-setSoundImg('off');
+setSoundImg('on');
 applySoundVolume();
 
 // Screen-capture capability: without getDisplayMedia there is no Ambience
