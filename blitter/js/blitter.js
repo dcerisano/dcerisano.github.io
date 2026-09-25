@@ -144,6 +144,10 @@ const settings = {
 		writeBusy: false,
 		writeValue: null,
 		dataUpdated: (self) => {
+			const volume = self.data.V[0];
+			// Volume 3 is the protocol's off value; any value above it,
+			// including 10, represents an audible/on state.
+			setSoundImg(volume > 3 ? 'on' : 'off');
 		},
 	},
 	// Read/write: 256-byte 8x8 RGBA ambience frame.
@@ -242,33 +246,55 @@ const firmwareVersion = document.getElementById("firmwareVersion");
 const mirrorWrap = document.getElementById('mirrorWrap');
 
 // 3-state connect image, driven by connection state (like the old button
-// text was): 'disconnected' (img/disconnected.png), 'connecting'
-// (img/connecting.png) during connecting/reconnecting, 'connected'
+// text was): 'disconnected' (img/disconnected.png), 'connecting' alternates
+// between disconnected/connected while connecting/reconnecting, 'connected'
 // (img/connected.png) when connected. Display only — the click handler stays
 // 2-state (disconnected -> connect, anything else -> reload).
 let connectImgState = 'disconnected';
+let connectImgFlashTimer = null;
 function setConnectImg(state) {
 	connectImgState = state;
-	if (!connectButton) return;
-	if (connectButton.tagName === 'IMG') {
-		const srcMap = {
-			disconnected: 'img/disconnected.png',
-			connecting: 'img/connecting.png',
-			connected: 'img/connected.png',
-		};
-		const altMap = {
-			disconnected: 'Connect',
-			connecting: 'Connecting (click to reload)',
-			connected: 'Connected (click to reload)',
-		};
+	if (connectImgFlashTimer !== null) {
+		clearInterval(connectImgFlashTimer);
+		connectImgFlashTimer = null;
+	}
+	if (!connectButton || connectButton.tagName !== 'IMG') return;
+
+	const srcMap = {
+		disconnected: 'img/disconnected.png',
+		connected: 'img/connected.png',
+	};
+	const altMap = {
+		disconnected: 'Connect',
+		connecting: 'Connecting (click to reload)',
+		connected: 'Connected (click to reload)',
+	};
+	if (state === 'connecting') {
+		let showConnected = false;
+		connectButton.src = srcMap.disconnected;
+		connectButton.alt = altMap[state] || altMap.disconnected;
+		const flashTimer = setInterval(() => {
+			// A queued callback from a superseded connecting episode must not
+			// clear or mutate the current episode's timer/image.
+			if (connectImgFlashTimer !== flashTimer) return;
+			if (connectImgState !== 'connecting') {
+				clearInterval(flashTimer);
+				connectImgFlashTimer = null;
+				return;
+			}
+			showConnected = !showConnected;
+			connectButton.src = showConnected ? srcMap.connected : srcMap.disconnected;
+		}, 500);
+		connectImgFlashTimer = flashTimer;
+	} else {
 		connectButton.src = srcMap[state] || srcMap.disconnected;
 		connectButton.alt = altMap[state] || altMap.disconnected;
 	}
 }
 
 // 2-state sound toggle: 'off' (img/sound-off.png, volume 3) <-> 'on'
-// (img/sound-on.png, volume 10). The toggle is authoritative: device reads
-// (settings.volume.dataUpdated) never override the image.
+// (img/sound-on.png, volume 10). Device reads and notifications update the
+// image; local clicks continue to write the selected protocol value.
 const soundButton = document.getElementById("soundButton");
 let soundState = 'off';
 function setSoundImg(state) {
@@ -290,9 +316,8 @@ if (soundButton) {
 		applySoundVolume();
 	});
 }
-// Seed the boot/reload default: off at volume 3. BLEwriteTo() no-ops safely
-// while disconnected (no characteristic yet); onConnected() auto-flips to on
-// (volume 10) once the link is up.
+// Seed the boot/reload default: off. setupGatt replaces it from the device's
+// volume read without writing; later notifications keep it in sync.
 setSoundImg('off');
 applySoundVolume();
 // Boot = disconnected: sound toggle is insensitive until BLE connects
@@ -499,10 +524,6 @@ async function connect() {
 // so the full scroll is visible in the mirror instead of only its tail.
 async function onConnected(attemptId) {
 	setConnectedUI();
-	// Auto-flip sound to on (volume 10) at every connect — initial + reconnect.
-	// The boot seed no-ops while disconnected, so the device gets vol 10 here.
-	setSoundImg('on');
-	applySoundVolume();
 	// Start the live-mirror stream only now that the client is fully connected,
 	// so the firmware's frame flood can't block/delay the connect state.
 	await startBlitterStream(attemptId);
