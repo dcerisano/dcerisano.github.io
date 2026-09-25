@@ -55,9 +55,10 @@ main {
 	margin-bottom: 0.5rem;
 }
 
-/* Background: pack the five image controls tightly. */
+/* Background button grid: extra breathing room above and below. */
 .form-group.row:has(#backgroundControls) {
-	margin-bottom: 0.3rem;
+	margin-top: 1.2rem;
+	margin-bottom: 1.2rem;
 }
 /* Bluetooth: roomier so the connect action stands out from the packed cluster above. */
 .form-group.row:has(#connectButton) {
@@ -162,16 +163,19 @@ canvas {
 	gap: 10px;
 }
 
-/* Five compact background-pattern buttons (31px each plus 3px gaps = 167px). */
-#backgroundControls {
-	display: flex;
-	gap: 3px;
+/* Five background-pattern buttons in a centered 3x3 grid (four cells remain empty). */
+.form-group.row > div#backgroundControls {
+	display: grid !important;
+	grid-template-columns: repeat(3, 80px);
+	grid-template-rows: repeat(3, 80px);
+	gap: 1px;
 	justify-content: center;
 }
 .background-button {
-	width: 31px;
-	height: 31px;
-	padding: 2px;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 0;
 	border: 0;
 	border-radius: 4px;
 	background: transparent;
@@ -189,6 +193,24 @@ canvas {
 }
 .background-button:disabled {
 	cursor: default;
+}
+/* Inert grid fillers: same cell size and image fill as .background-button,
+   but never interactive (no button semantics, no events, hidden from AT). */
+.background-placeholder {
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 0;
+	border: 0;
+	border-radius: 4px;
+	overflow: hidden;
+}
+.background-placeholder img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	pointer-events: none;
 }
 
 
@@ -231,13 +253,13 @@ canvas {
 			<!-- Live Blitter matrix display: always visible, mirrors the device's 8x8 output.
 			     Click toggles fullscreen (80vmin square, canvas + overlay centered). -->
 			<div class="form-group row">
-				<div id="mirrorWrap" class="disabled" style="position: relative; width: 173px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto;">
-					<img src="img/tv.png" alt="TV" style="position: absolute; top: 0; left: 0; width: 173px; height: 173px; z-index: -1; object-fit: contain;" />
+				<div id="mirrorWrap" class="disabled" style="position: relative; width: 242px; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; flex: 0 0 auto;">
+					<img src="img/tv.png" alt="TV" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; object-fit: contain;" />
 					<canvas id="screencanvas"
 						style="position: relative; z-index: 0; background-color: #000; width: 100%; height: 100%; transform: scale(0.8); transform-origin: center center;"></canvas>
 					<div id="overlay"
 						style="background-size: contain; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; transform: scale(0.81); transform-origin: center center;"></div>
-					<img src="img/tv-glass.png" alt="TV Glass" style="position: absolute; top: 0; left: 0; width: 173px; height: 173px; z-index: 2; object-fit: contain; pointer-events: none;" />
+					<img src="img/tv-glass.png" alt="TV Glass" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; object-fit: contain; pointer-events: none;" />
 				</div>
 			</div>
 
@@ -264,6 +286,10 @@ canvas {
 						aria-label="Matrix background" aria-pressed="false" disabled>
 						<img src="img/matrix.png" alt="Matrix background" />
 					</button>
+					<span class="background-placeholder" aria-hidden="true"><img src="img/empty.png" alt="" /></span>
+					<span class="background-placeholder" aria-hidden="true"><img src="img/empty.png" alt="" /></span>
+					<span class="background-placeholder" aria-hidden="true"><img src="img/empty.png" alt="" /></span>
+					<span class="background-placeholder" aria-hidden="true"><img src="img/empty.png" alt="" /></span>
 				</div>
 			</div>
 
@@ -297,7 +323,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=6ab8cdd"></script>
+<script src="js/blitter.js?v=1f4f713"></script>
 </html>
 
 
