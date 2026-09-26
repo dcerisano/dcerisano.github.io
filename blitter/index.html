@@ -183,6 +183,17 @@ canvas {
 	outline: none;
 	cursor: pointer;
 	appearance: none;
+	/* Every unselected background sits at 50% transparency; only the active
+	   one is ever fully opaque (see the [aria-pressed] rule below). */
+	opacity: 0.5;
+}
+/* The single fully-opaque background: the current selection, and only while it
+   is actually clickable. The :not(:disabled) guard is what keeps the whole row
+   at 50% during a BLE disconnect (setBackgroundControlsEnabled(false) disables
+   every button) and for permanently unusable buttons such as Ambience on a
+   browser without getDisplayMedia. */
+.background-button[aria-pressed="true"]:not(:disabled) {
+	opacity: 1;
 }
 .background-button img {
 	display: block;
@@ -193,6 +204,9 @@ canvas {
 }
 .background-button:disabled {
 	cursor: default;
+	/* Belt-and-braces: guarantees 50% transparency for a disabled button even
+	   if it somehow carries aria-pressed="true". */
+	opacity: 0.5;
 }
 /* Inert grid fillers: same cell size and image fill as .background-button,
    but never interactive (no button semantics, no events, hidden from AT). */
@@ -286,7 +300,10 @@ canvas {
 						aria-label="Matrix background" aria-pressed="false" disabled>
 						<img src="img/matrix.png" alt="Matrix background" />
 					</button>
-					<span class="background-placeholder" aria-hidden="true"><img src="img/empty.png" alt="" /></span>
+					<button class="background-button" type="button" data-background-mode="5"
+						aria-label="TOS background" aria-pressed="false" disabled>
+						<img src="img/tos.png" alt="TOS background" />
+					</button>
 					<span class="background-placeholder" aria-hidden="true"><img src="img/empty.png" alt="" /></span>
 					<span class="background-placeholder" aria-hidden="true"><img src="img/empty.png" alt="" /></span>
 					<span class="background-placeholder" aria-hidden="true"><img src="img/empty.png" alt="" /></span>
@@ -323,7 +340,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=1f4f713"></script>
+<script src="js/blitter.js?v=daff88e"></script>
 </html>
 
 

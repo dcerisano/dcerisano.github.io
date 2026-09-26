@@ -7,17 +7,19 @@ const BRIDGE_UUID      = "8bc01404-0009-4bf4-95d1-ce27a0477183";
 const BACKGROUND_UUID = "8bc01404-0008-4bf4-95d1-ce27a0477183";
 const DIS_UUID              = "0000180a-0000-1000-8000-00805f9b34fb";
 const FIRMWARE_REV_UUID     = "00002a26-0000-1000-8000-00805f9b34fb";
-const EXPECTED_FW_VERSION   = "0.2.0";
+const EXPECTED_FW_VERSION   = "0.3.0";
 // Background modes offered by the UI, keyed to the -0008 characteristic value
 // (mirror firmware patterns.h BackgroundMode enum: 0=SOLID, 1=PLASMA,
-// 2=STATIC, 3=LAVA, 4=MATRIX). Drives the real background image controls.
+// 2=STATIC, 3=LAVA, 4=MATRIX, 5=TOS). Drives the real background image
+// controls.
 // Mode 0 (Solid) is intentionally NOT offered — it is a flat tint with no
 // pattern — and a device reporting it falls back to SOLID_MODE_FALLBACK below.
 const BACKGROUND_MODES = [
 	{ value: 1, label: "Plasma" },
 	{ value: 2, label: "Noise" },
 	{ value: 3, label: "Lava" },
-	{ value: 4, label: "Matrix" }
+	{ value: 4, label: "Matrix" },
+	{ value: 5, label: "TOS" }
 ];
 
 // Firmware mode 0 (Solid) is no longer offered; the controls display it as this
@@ -26,7 +28,8 @@ const SOLID_MODE_FALLBACK = 1;
 
 // Transient -0008 value the firmware broadcasts while ambience frames stream.
 // It is never persisted; when frames stop the firmware restores the real mode.
-const BACKGROUND_AMBIENCE = 5;
+// 6, not 5: firmware 0.3.0 gave 5 to the real TOS mode.
+const BACKGROUND_AMBIENCE = 6;
 
 // Client-only UI value for the Ambience image control. The firmware value is
 // numeric BACKGROUND_AMBIENCE; the control is always visible but disabled on
@@ -337,7 +340,7 @@ const hasScreenCapture = !!(
 
 
 // Background image controls. Real modes come from BACKGROUND_MODES (firmware
-// enum 0-4). The Ambience image is ALWAYS present (disabled/greyed when the
+// enum 1-5). The Ambience image is ALWAYS present (disabled/greyed when the
 // browser cannot capture the screen) so every client can see — via the firmware's
 // transient -0008 broadcast — when a remote client is sharing. Its click runs
 // connectAmbience(); real-mode clicks run the existing
