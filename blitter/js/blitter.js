@@ -148,9 +148,9 @@ const settings = {
 		writeValue: null,
 		dataUpdated: (self) => {
 			const volume = self.data.V[0];
-			// Volume 3 is the protocol's off value; any value above it,
+			// Volume 0 is fully off; any value above it,
 			// including 10, represents an audible/on state.
-			setSoundImg(volume > 3 ? 'on' : 'off');
+			setSoundImg(volume > 0 ? 'on' : 'off');
 		},
 	},
 	// Read/write: 256-byte 8x8 RGBA ambience frame.
@@ -295,7 +295,7 @@ function setConnectImg(state) {
 	}
 }
 
-// 2-state sound toggle: 'off' (img/sound-off.png, volume 3) <-> 'on'
+// 2-state sound toggle: 'off' (img/sound-off.png, volume 0) <-> 'on'
 // (img/sound-on.png, volume 10). Device reads and notifications update the
 // image; local clicks continue to write the selected protocol value.
 const soundButton = document.getElementById("soundButton");
@@ -309,7 +309,7 @@ function setSoundImg(state) {
 	}
 }
 function applySoundVolume() {
-	updateVolume(soundState === 'on' ? 10 : 3);
+	updateVolume(soundState === 'on' ? 10 : 0);
 }
 if (soundButton) {
 	soundButton.addEventListener("click", function(event) {
