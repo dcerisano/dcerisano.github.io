@@ -23,13 +23,21 @@ body {
 	background-color: #3f3f3f;
 }
 
-/* Center the form vertically/horizontally regardless of aspect ratio or orientation. */
+/* Center the form vertically/horizontally regardless of aspect ratio or orientation.
+   Height is 100svh, not 100dvh: dvh is dynamic and re-resolves every time the mobile
+   URL bar collapses/expands, so a dvh-sized flex container changes height mid-scroll
+   and align-items re-centers the panel, making it visibly jump. svh is stable.
+   100vh is declared first as the fallback for engines without viewport units like svh.
+   align-items is declared twice as progressive enhancement: plain `center` first, then
+   `safe center`, which degrades to `start` when the panel is taller than the container,
+   so nothing is ever clipped off the top on short screens. */
 main {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	align-items: safe center;
 	min-height: 100vh;
-	min-height: 100dvh;
+	min-height: 100svh;
 	padding: 4px 0;
 }
 
@@ -230,15 +238,12 @@ canvas {
 
 
 
-/* Portrait / short screens: compress row spacing and controls so the whole
-   control panel fits on one screen without vertical scrolling. */
+/* Portrait / short screens: tighten row spacing so the control panel fits on one
+   screen without vertical scrolling. Vertical centering is deliberately NOT changed
+   here — `main` keeps centering on every screen size (see `safe center` above). */
 @media (max-width: 480px), (max-height: 720px) {
 	.form-group.row {
 		margin-bottom: 0.5rem;
-	}
-	main {
-		align-items: flex-start;
-		padding: 6px 0;
 	}
 }
 
@@ -341,7 +346,7 @@ canvas {
 		crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@jaames/iro/dist/iro.min.js"></script>
 </body>
-<script src="js/blitter.js?v=44fb16e"></script>
+<script src="js/blitter.js?v=d5fed41"></script>
 </html>
 
 
